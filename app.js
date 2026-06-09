@@ -196,6 +196,7 @@
     h += '<aside class="home-aside">';
     h += '<div class="panel-card"><div class="panel-card-hd">' + IC.cake +
       '<span class="panel-card-ttl">' + (lang === 'es' ? 'Cumpleaños' : 'Birthdays') + '</span>' +
+       '<span class="panel-card-meta">' + (lang === 'es' ? 'Diciembre' : 'December') + '</span></div>' +
       '<div class="panel-card-body bday-grid">';
     D.BIRTHDAYS.forEach(function (b) {
       const mon = lang === 'es' ? 'DIC' : 'DEC';
