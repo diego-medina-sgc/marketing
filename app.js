@@ -335,14 +335,21 @@
   }
 
   /* ---------- INIT CON CARGA JSONP COMPATIBLE CON GOOGLE ---------- */
+/* ---------- INIT BYPASS POST CORPORATIVO ---------- */
   function init() {
     applyTheme();
     applyChrome();
 
     if (D.config && D.config.remoteUrl) {
-      const callbackName = 'tgn_callback_' + Date.now();
-      
-      window[callbackName] = function(data) {
+      // Hacemos una petición POST silenciosa para leer los datos evadiendo el bloqueo de Google
+      fetch(D.config.remoteUrl, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'read' })
+      })
+      .then(response => response.json())
+      .then(data => {
         if (data && data.content) {
           window.TGNStore = {
             get: function(key, def) {
@@ -352,29 +359,19 @@
           renderNav();
           go(current);
         }
-        delete window[callbackName];
-        const scr = document.getElementById(callbackName);
-        if (scr) scr.remove();
-      };
-
-      const urlConCallback = D.config.remoteUrl + (D.config.remoteUrl.indexOf('?') > -1 ? '&' : '?') + 'cb=' + callbackName;
-
-      const script = document.createElement('script');
-      script.id = callbackName;
-      script.src = urlConCallback;
-      script.onerror = function() {
-        console.error("No se pudieron recuperar los datos remotos (Error de red).");
+      })
+      .catch(err => {
+        console.error("Error en bypass de lectura corporativa:", err);
         renderNav();
         go(current);
-      };
-      document.head.appendChild(script);
+      });
 
     } else {
       renderNav();
       go(current);
     }
 
-    // OYENTES DE EVENTOS
+    // OYENTES DE EVENTOS ORIGINALES
     document.querySelectorAll('[data-lang]').forEach(function (b) {
       b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
     });
@@ -388,6 +385,3 @@
     const si = document.getElementById('search-input');
     si.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(si.value); });
   }
-
-  document.addEventListener('DOMContentLoaded', init);
-})();
