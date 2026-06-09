@@ -498,6 +498,7 @@
   /* ---------- INIT ---------- */
  /* ---------- INIT CORREGIDO PARA TRAER DATOS DEL BACKEND ---------- */
  /* ---------- INIT CON CARGA JSONP COMPATIBLE CON GOOGLE ---------- */
+  /* ---------- INIT CON CARGA JSONP COMPATIBLE CON GOOGLE ---------- */
   function init() {
     applyTheme();
     applyChrome();
