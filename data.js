@@ -370,5 +370,9 @@ window.TGN = {
   NEWS: _ov('news', NEWS),
   BIRTHDAYS: _ov('birthdays', BIRTHDAYS),
   VACANCIES: _ov('vacancies', VACANCIES),
-  ...
-}
+  VACANCIES: _ov('vacancies', VACANCIES),
+  QUICK_LINKS: _ov('quicklinks', QUICK_LINKS),
+  TOOL_GROUPS: _ov('tools', TOOL_GROUPS),
+  ADMISSIONS: Object.assign({}, ADMISSIONS, { groups: _ov('interviewforms', ADMISSIONS.groups) }),
+  MARKETING: MARKETING
+};
