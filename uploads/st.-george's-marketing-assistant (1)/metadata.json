@@ -1,0 +1,6 @@
+{
+  "name": "St George's Marketing Assistant",
+  "description": "Asistente interno para el equipo de staff de St George's College Argentina. Ayuda a encontrar materiales de marketing, redactar comunicaciones y realizar solicitudes al equipo.",
+  "requestFramePermissions": ["clipboard-write"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

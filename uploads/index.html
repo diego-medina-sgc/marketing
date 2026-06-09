@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SGC — Marketing &amp; Admissions Dashboard</title>
+<meta name="description" content="St. George's College Marketing &amp; Admissions Dashboard"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' data: https:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://accounts.google.com https://apis.google.com https://va.vercel-scripts.com https://vercel.live https://script.google.com https://script.googleusercontent.com; frame-src https://accounts.google.com https://script.google.com https://script.googleusercontent.com;">
+<link rel="icon" type="image/png" href="favicon.png"/>
+<link rel="apple-touch-icon" href="favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Asap:wght@300;400;500;600;700&family=Asap+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{
+  --ink:#1A1F35;--red:#DC1E33;--navy:#213463;
+  --celeste:#6AB2E2;--violet:#6B6EB3;--teal:#109AA9;
+  --cream:#F1EDE5;--paper:#EAE5DB;--gray:#6A655C;
+  --line:#E6E1D6;--hairline:#EDE9E0;--white:#fff;
+  --green:#15803d;--green-lt:#dcfce7;
+  --amber:#b45309;--amber-lt:#fef3c7;
+  --red-lt:#FBE9EB;--navy-lt:#E9ECF4;--ink-lt:#EDE8DE;
+  --card-shadow:0 1px 2px rgba(40,33,28,.04),0 4px 14px rgba(40,33,28,.05);
+  --card-shadow-hover:0 2px 6px rgba(40,33,28,.05),0 12px 30px rgba(40,33,28,.09);
+  --r-sm:8px;--r:12px;--r-lg:16px;
+  --sidebar-w:248px;--sidebar-collapsed:60px;--header-h:58px;
+  --bg:#F1EDE5;--surface:#fff;--surface2:#F5F1EA;
+  --border:rgba(14,22,40,.08);--border-strong:rgba(14,22,40,.15);
+  --text:var(--ink);--text-muted:#6E6A60;
+  --row-hover:#F4F0E9;--row-tot:#F1EDE5;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Asap',sans-serif;background:#F6F5F1;color:var(--ink);min-height:100vh;overflow-x:hidden;}
+
+/* ─── LOADING ─── */
+#loading{position:fixed;inset:0;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:900;transition:opacity .4s;}
+#loading.hidden{opacity:0;pointer-events:none;}
+.load-logo{width:180px;}
+.load-ring{width:40px;height:40px;border:2.5px solid rgba(33,52,99,.15);border-top-color:#DC1E33;border-radius:50%;animation:spin .75s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-txt{font-family:'Asap Condensed',sans-serif;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#8888A8;font-weight:600;}
+
+/* ─── LOGIN ─── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 90% at 50% -10%,#FFFFFF 0%,#F4EFE7 52%,#E9E2D6 100%);}
+.login-box{background:var(--white);border-radius:18px;box-shadow:0 1px 2px rgba(40,33,28,.04),0 18px 50px rgba(40,33,28,.12);padding:48px 46px 40px;border-top:4px solid var(--red);border-left:1px solid var(--hairline);border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline);max-width:430px;width:100%;display:flex;flex-direction:column;align-items:center;gap:22px;}
+.login-logo{width:208px;}
+.login-rule{width:36px;height:2px;border-radius:2px;background:var(--red);}
+.login-tagline{font-size:.86rem;color:var(--gray) !important;text-align:center;line-height:1.7;}
+.login-tagline strong{display:block;color:var(--ink);font-size:.98rem;font-weight:600;margin-bottom:4px;letter-spacing:-.01em;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;background:var(--white);border:1.5px solid var(--line);border-radius:9px;font-family:'Asap',sans-serif;font-size:.9rem;font-weight:500;color:var(--ink);cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s;}
+.btn-google:hover{border-color:var(--navy);background:#FCFBF9;box-shadow:0 4px 16px rgba(40,33,28,.1);}
+
+/* ─── APP SHELL ─── */
+#app{display:none;}
+
+/* ─── HEADER ─── */
+.hdr{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:var(--white);border-bottom:1px solid var(--line);border-top:3px solid var(--red);display:flex;align-items:center;padding:0 16px 0 0;z-index:300;box-shadow:0 2px 8px rgba(33,52,99,.06);}
+.hdr-brand{width:var(--sidebar-w);display:flex;align-items:center;gap:11px;padding:0 16px;flex-shrink:0;transition:width .25s;}
+.hdr-brand.collapsed{width:var(--sidebar-collapsed);}
+.hdr-logo{height:50px;width:auto;flex-shrink:0;}
+.hdr-titles{display:none;}
+.hdr-title{font-size:1rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);}
+.hdr-sub{font-size:.58rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;letter-spacing:.13em;text-transform:uppercase;margin-top:1px;}
+.hdr-mid{flex:1;display:flex;align-items:center;gap:10px;padding-left:4px;}
+.campus-group{display:flex;gap:5px;background:var(--cream);padding:3px;border-radius:22px;border:1px solid var(--line);}
+.campus-btn{padding:5px 13px;border-radius:20px;border:1.5px solid transparent;background:transparent;font-family:'Asap',sans-serif;font-size:.73rem;font-weight:500;color:var(--gray);cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;white-space:nowrap;}
+.campus-btn:hover:not(.active){background:var(--white);color:var(--ink);}
+.campus-btn.active{box-shadow:0 1px 4px rgba(40,33,28,.16);}
+.campus-btn[data-c="os"].active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.campus-btn[data-c="q"].active{background:var(--red);border-color:var(--red);color:#fff;}
+.campus-btn[data-c="n"].active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.hdr-context-lbl{font-family:'Asap Condensed',sans-serif;font-size:.56rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9C968B;margin-right:3px;white-space:nowrap;align-self:center;}
+.hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.hdr-time{font-size:.65rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;white-space:nowrap;}
+.hdr-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:var(--paper);border:1px solid var(--line);font-size:.68rem;font-family:'Asap Condensed',sans-serif;color:var(--gray);font-weight:600;}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.btn-icon{background:none;border:none;cursor:pointer;color:var(--gray);padding:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.btn-icon:hover{background:var(--paper);color:var(--ink);}
+.btn-icon svg{display:block;}
+.btn-logout{background:none;border:1.5px solid var(--line);color:var(--gray);padding:5px 12px;border-radius:6px;font-size:.72rem;font-family:'Asap',sans-serif;cursor:pointer;transition:all .15s;}
+.btn-logout:hover{border-color:var(--red);color:var(--red);}
+
+/* ─── SIDEBAR ─── */
+.sidebar{position:fixed;top:var(--header-h);left:0;bottom:0;width:var(--sidebar-w);background:var(--white);display:flex;flex-direction:column;z-index:200;border-right:1px solid var(--line);box-shadow:2px 0 14px rgba(40,33,28,.05);transition:width .25s,transform .25s ease;overflow:hidden;}
+.sidebar.collapsed{width:var(--sidebar-collapsed);}
+.sb-nav{flex:1;padding:14px 10px;overflow-y:auto;overflow-x:hidden;}
+.sb-nav::-webkit-scrollbar{width:3px;}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(40,33,28,.18);border-radius:2px;}
+.sb-lbl{font-size:.56rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#9C968B;padding:14px 10px 6px;white-space:nowrap;font-family:'Asap Condensed',sans-serif;}
+.sidebar.collapsed .sb-lbl{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;cursor:pointer;color:var(--gray);font-size:.82rem;font-weight:500;white-space:nowrap;transition:all .15s;margin-bottom:3px;border:none;background:none;width:100%;text-align:left;position:relative;}
+.nav-item:hover{background:var(--cream);color:var(--ink);}
+.nav-item.active{background:var(--red-lt);color:var(--red);font-weight:700;padding-left:9px;box-shadow:inset 3px 0 0 var(--red);}
+.nav-item.active svg{color:var(--red);}
+.nav-item svg{flex-shrink:0;width:18px;height:18px;opacity:.92;}
+.nav-item span{overflow:hidden;text-overflow:ellipsis;}
+.sidebar.collapsed .nav-item span{display:none;}
+.sb-divider{height:1px;background:var(--line);margin:10px 6px;}
+.sb-bottom{border-top:1px solid var(--line);flex-shrink:0;padding-bottom:4px;background:var(--cream);}
+.sb-update{font-size:.62rem;font-family:'Asap Condensed',sans-serif;color:#9C968B;text-align:center;line-height:1.5;padding:6px 12px 7px;}
+.sidebar.collapsed .sb-update{display:none;}.sidebar.collapsed .sb-switches{display:none !important;}
+
+/* ─── CONTENT ─── */
+.content{margin-top:var(--header-h);margin-left:var(--sidebar-w);transition:margin-left .25s;min-height:calc(100vh - var(--header-h));}
+.content.collapsed{margin-left:var(--sidebar-collapsed);}
+.panel{display:none;padding:28px 32px;max-width:1520px;}
+.panel.active{display:block;animation:panelIn .34s cubic-bezier(.22,.61,.36,1);}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ─── SECTION ─── */
+.sec{margin-bottom:36px;}
+.sec-hd{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid transparent;background-image:linear-gradient(90deg,var(--campus-color,var(--ink)) 0%,transparent 100%);background-repeat:no-repeat;background-size:100% 1px;background-position:bottom;}
+.sec-title{font-size:1.16rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1.2;flex:0 0 auto;white-space:nowrap;}
+.sec-meta{font-size:.65rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;letter-spacing:.07em;font-weight:600;}
+
+/* ─── PAGE HEADER ─── */
+.page-hd{margin-bottom:26px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+.page-hd-inner{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;}
+.page-hd-inner>div:first-child{flex:1 1 auto;min-width:0;}
+.page-title{font-size:2.15rem;font-weight:700;letter-spacing:-.045em;color:var(--ink);line-height:1.08;}
+.page-sub{font-size:.72rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;margin-top:3px;}
+.campus-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:.72rem;font-weight:700;font-family:'Asap Condensed',sans-serif;letter-spacing:.05em;white-space:nowrap;flex-shrink:0;}
+.campus-badge.os{background:var(--ink-lt);color:var(--ink);}
+.campus-badge.q{background:var(--red-lt);color:var(--red);}
+.campus-badge.n{background:var(--navy-lt);color:var(--navy);}
+.cb-dot{width:7px;height:7px;border-radius:50%;}
+.campus-badge.os .cb-dot{background:var(--ink);}
+.campus-badge.q .cb-dot{background:var(--red);}
+.campus-badge.n .cb-dot{background:var(--navy);}
+
+/* ─── STAT STRIP ─── */
+.stat-strip{display:flex;flex-wrap:wrap;background:linear-gradient(120deg,#243a6e 0%,#1d2f5b 60%,#172548 100%);border-radius:var(--r-lg);overflow:hidden;box-shadow:0 1px 2px rgba(23,37,72,.18),0 16px 38px rgba(23,37,72,.22);border:none;position:relative;}
+.stat-strip::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(220,30,51,.10));pointer-events:none;}
+.si{flex:1 1 130px;padding:22px 18px 20px;border-right:1px solid rgba(255,255,255,.1);transition:background .14s;position:relative;text-align:center;z-index:1;}
+.si-lbl,.si-val,.si-foot{text-align:center;}
+.si:last-child{border-right:none;}
+.si:hover{background:rgba(255,255,255,.05);}
+.si-lbl{font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:10px;font-family:'Asap Condensed',sans-serif;}
+.si-val{font-size:2.2rem;font-weight:700;color:#fff;line-height:.95;letter-spacing:-.05em;font-variant-numeric:tabular-nums;transition:color .2s;}
+.si-val.neg{color:#ff7a88;}
+.si-val.pos{color:#5ee0a0;}
+.si-val.c-red{color:#ff7a88;}
+.si-val.c-navy{color:#9fc0ef;}
+.si-foot{font-size:.66rem;color:rgba(255,255,255,.55);font-family:'Asap Condensed',sans-serif;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* ─── KPI CARDS ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:14px;}
+.kpi-card{background:var(--surface);border-radius:var(--r);padding:18px 18px 16px 21px;position:relative;overflow:hidden;box-shadow:var(--card-shadow);border:1px solid var(--hairline);transition:box-shadow .2s,transform .18s,border-color .2s;}
+.kpi-card::before{content:'';position:absolute;top:14px;bottom:14px;left:0;width:3px;border-radius:0 3px 3px 0;background:var(--line);transition:background .2s;}
+#main.campus-os{--campus-color:var(--navy);}
+#main.campus-q{--campus-color:var(--red);}
+#main.campus-n{--campus-color:var(--navy);}
+.campus-os .kpi-card::before{background:#CBD0DC;}.campus-q .kpi-card::before{background:var(--red);opacity:.35;}
+.campus-n .kpi-card::before{background:var(--navy);opacity:.35;}
+.kpi-card.accent::before{top:0;bottom:0;width:4px;opacity:1;border-radius:0;}
+.campus-os .kpi-card.accent::before{background:var(--ink);}
+.campus-q .kpi-card.accent::before{background:var(--red);}
+.campus-n .kpi-card.accent::before{background:var(--navy);}
+.kpi-card:hover{box-shadow:var(--card-shadow-hover);border-color:var(--line);transform:translateY(-2px);}
+.kpi-card:hover::before{opacity:1;}
+.kpi-lbl{font-size:.6rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--gray);margin-bottom:11px;font-family:'Asap Condensed',sans-serif;text-align:left;}
+.kpi-val{font-size:2.45rem;font-weight:700;color:var(--ink);line-height:.92;margin-bottom:8px;letter-spacing:-.05em;font-variant-numeric:tabular-nums;text-align:left;transition:color .2s;}
+.kpi-val.neg{color:var(--red);}
+.kpi-val.pos{color:var(--green);}
+.kpi-val.c-red{color:var(--red);}
+.kpi-val.c-navy{color:var(--navy);}
+.kpi-foot{font-size:.66rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;text-align:left;line-height:1.35;}
+.kpi-card.accent .kpi-val{font-size:2.85rem;}
+.kpi-card.accent{background:linear-gradient(180deg,var(--surface),var(--cream));}
+/* 6-up compact KPI row (Admissions headline) */
+.kpi-grid.kpi6{grid-template-columns:repeat(6,1fr);gap:10px;}
+.kpi-grid.kpi6 .kpi-card{padding:14px 12px 12px 15px;}
+.kpi-grid.kpi6 .kpi-val{font-size:1.85rem;}
+.kpi-grid.kpi6 .kpi-card.accent .kpi-val{font-size:2.05rem;}
+.kpi-grid.kpi6 .kpi-lbl{font-size:.55rem;letter-spacing:.08em;margin-bottom:8px;}
+.kpi-grid.kpi7{grid-template-columns:repeat(7,1fr);gap:9px;}
+.kpi-grid.kpi7 .kpi-card{padding:13px 10px 11px 14px;}
+.kpi-grid.kpi7 .kpi-val{font-size:1.6rem;}
+.kpi-grid.kpi7 .kpi-card.accent .kpi-val{font-size:1.8rem;}
+.kpi-grid.kpi7 .kpi-lbl{font-size:.52rem;letter-spacing:.06em;margin-bottom:7px;}
+@media(max-width:1200px){.kpi-grid.kpi6,.kpi-grid.kpi7{grid-template-columns:repeat(3,1fr);}}
+
+/* ─── COMMUNITY CARDS ─── */
+.comm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.comm-grid.c3{grid-template-columns:repeat(3,1fr);}
+.comm-grid.c4{grid-template-columns:repeat(4,1fr);}
+.comm-card{background:var(--white);border:1px solid var(--hairline);border-top:3px solid var(--teal);border-radius:var(--r);padding:17px 18px;text-align:center;box-shadow:var(--card-shadow);}
+.comm-card.lead{box-shadow:0 0 0 1px rgba(16,154,169,.4),var(--card-shadow);}
+.comm-lbl{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:6px;font-family:'Asap Condensed',sans-serif;}
+.comm-val{font-size:1.7rem;font-weight:700;color:var(--teal);letter-spacing:-.02em;font-variant-numeric:tabular-nums;transition:color .2s;}
+.comm-foot{font-size:.61rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;margin-top:3px;}
+
+/* ─── CHART CARD ─── */
+.cc{background:var(--surface);border-radius:var(--r);padding:20px 22px 22px;box-shadow:var(--card-shadow);border:1px solid var(--hairline);transition:box-shadow .2s;}
+.cc:hover{box-shadow:var(--card-shadow-hover);}
+.cc-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid var(--hairline);}
+.cc-ttl{font-size:.92rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;font-family:'Asap',sans-serif;display:flex;align-items:center;gap:9px;line-height:1.2;}
+.cc-ttl::before{content:'';width:4px;height:15px;border-radius:3px;background:var(--campus-color,var(--navy));flex-shrink:0;}
+.cc-sub{font-size:.64rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;letter-spacing:.03em;text-align:right;flex-shrink:0;}
+.chart-wrap{position:relative;}
+canvas{display:block;}
+
+/* ─── TABLES ─── */
+.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--hairline);box-shadow:var(--card-shadow);}
+.tw.scroll-y{max-height:420px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:.79rem;background:var(--white);}
+thead{position:sticky;top:0;z-index:5;}
+thead th{background:var(--ink);color:#fff;padding:11px 14px;text-align:center;font-weight:700;font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;font-family:'Asap Condensed',sans-serif;cursor:default;}
+thead th:first-child{text-align:left;}
+.campus-q thead th{background:var(--red);}
+.campus-n thead th{background:var(--navy);}
+thead th.th-q{background:var(--red) !important;}
+thead th.th-n{background:var(--navy) !important;}
+tbody tr{border-bottom:1px solid var(--line);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr.grp td{font-weight:700;font-size:.65rem;letter-spacing:.09em;text-transform:uppercase;padding:7px 14px;font-family:'Asap Condensed',sans-serif;}
+tbody tr.grp-q td{background:var(--red-lt);color:var(--red);}
+tbody tr.grp-n td{background:var(--navy-lt);color:var(--navy);}
+tbody tr.grp-k td{background:var(--ink-lt);color:var(--ink);}
+tbody tr.tot td{font-weight:600;background:#F1EDE5;}
+tbody tr.tot td:first-child{text-align:left !important;}
+tbody tr.ctot td{font-weight:700;border-top:2px solid;}
+tbody tr.ctot-q td{background:var(--red-lt);color:var(--red);border-top-color:var(--red);}
+tbody tr.ctot-n td{background:var(--navy-lt);color:var(--navy);border-top-color:var(--navy);}
+tbody tr.ctot-os td{background:var(--ink-lt);color:var(--ink);border-top-color:var(--ink);}
+tbody tr.won-row td{background:#f0fdf4;font-weight:600;}
+tbody tr.proj-row td{background:#FFFBEB;}
+tbody tr.salon-row td{background:var(--surface2);font-size:.74rem;}
+tbody tr.salon-row td:first-child{padding-left:34px;font-weight:500;color:var(--gray);}
+tbody tr:hover:not(.grp):not(.grp-q):not(.grp-n):not(.grp-k):not(.tot):not(.ctot):not(.ctot-q):not(.ctot-n):not(.ctot-os):not(.won-row):not(.proj-row){background:#F4F0E9;}
+td{padding:9px 14px;}
+td:first-child{text-align:left !important;font-weight:500;}
+td.r{text-align:center;font-family:'Asap Condensed',sans-serif;font-size:.77rem;font-variant-numeric:tabular-nums;}
+td.c-q{color:var(--red);font-weight:600;}
+td.c-n{color:var(--navy);font-weight:600;}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.6rem;font-weight:700;font-family:'Asap Condensed',sans-serif;}
+.tag.nat{background:var(--green-lt);color:var(--green);}
+.tag.exo{background:var(--amber-lt);color:var(--amber);}
+.tag.act{background:#fee2e2;color:#b91c1c;}
+.badge-proj{display:inline-block;padding:1px 5px;border-radius:3px;font-size:.57rem;font-weight:700;background:var(--amber-lt);color:var(--amber);font-family:'Asap Condensed',sans-serif;margin-left:5px;}
+.val-pos{color:var(--green);font-weight:600;}
+.val-neg{color:var(--red);font-weight:600;}
+.val-usd{color:var(--teal);font-weight:600;font-family:'Asap Condensed',sans-serif;}
+.gtog{cursor:pointer;user-select:none;}
+.gcaret{display:inline-block;width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;margin-right:8px;transition:transform .15s;vertical-align:middle;opacity:.75;}
+tr.open .gcaret{transform:rotate(90deg);}
+.sem{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;}
+.sem.g{background:var(--green);}.sem.y{background:#eab308;}.sem.r{background:var(--red);}
+
+/* ─── LAYOUT HELPERS ─── */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;align-items:stretch;}
+.two>*{min-width:0;}
+.two .tw{display:flex;flex-direction:column;}.two .tw table{flex:1;}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.col-6040{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;min-width:0;}
+.col-6040>*{min-width:0;}
+
+/* ─── INSIGHT STRIP ─── */
+.insight-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.insight{display:flex;align-items:center;gap:11px;background:var(--surface);border-radius:10px;padding:12px 16px;flex:1;min-width:160px;box-shadow:var(--card-shadow);border:1px solid var(--hairline);}
+.insight>div:last-child{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.ins-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ins-icon.green{background:var(--green-lt);}
+.ins-icon.red{background:var(--red-lt);}
+.ins-icon.amber{background:var(--amber-lt);}
+.ins-icon.teal{background:#ccfbf1;}
+.ins-icon svg{width:16px;height:16px;}
+.ins-icon.green svg{color:var(--green);}
+.ins-icon.red svg{color:var(--red);}
+.ins-icon.amber svg{color:var(--amber);}
+.ins-icon.teal svg{color:var(--teal);}
+.ins-lbl{font-size:.62rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:1.25;}
+.ins-val{font-size:.92rem;font-weight:700;color:var(--ink);line-height:1.25;}
+
+/* ─── FUNNEL ─── */
+.funnel{display:flex;flex-direction:column;gap:6px;}
+.f-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;transition:box-shadow .15s,transform .15s;}
+.f-row:hover{box-shadow:0 4px 16px rgba(14,22,40,.09);transform:translateX(3px);}
+.f-row.won{border-left:3px solid var(--teal);}
+.f-lbl{font-size:.8rem;font-weight:500;min-width:180px;}
+.f-track{flex:1;height:9px;background:var(--paper);border-radius:5px;overflow:hidden;}
+.f-fill{height:100%;border-radius:5px;width:0%;transition:width .95s cubic-bezier(.4,0,.2,1);}
+.campus-os .f-fill{background:var(--ink);}
+.campus-q .f-fill{background:var(--red);}
+.campus-n .f-fill{background:var(--navy);}
+.f-row.won .f-fill{background:var(--teal) !important;}
+.f-nums{font-family:'Asap Condensed',sans-serif;font-size:.71rem;color:var(--gray);min-width:165px;display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+.f-count{min-width:48px;text-align:right;font-weight:600;}
+.f-badge-slot{min-width:96px;text-align:left;}
+.f-badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:.62rem;font-weight:700;background:#fee2e2;color:#b91c1c;margin-left:4px;font-family:'Asap Condensed',sans-serif;}
+.f-row.won .f-badge{background:var(--green-lt);color:var(--green);}
+
+/* ─── SIMULATOR ─── */
+.sim-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.sim-card{background:var(--surface);border-radius:12px;padding:18px 20px;text-align:center;position:relative;overflow:hidden;box-shadow:var(--card-shadow);}
+.sim-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ink);}
+.sim-card.q::after{background:var(--red);}
+.sim-card.n::after{background:var(--navy);}
+.sim-lbl{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:6px;font-family:'Asap Condensed',sans-serif;}
+.sim-val{font-size:2rem;font-weight:700;color:var(--ink);letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
+.sim-fact{font-size:.8rem;font-weight:600;color:var(--teal);font-family:'Asap Condensed',sans-serif;margin-top:3px;}
+.sim-delta{font-size:.67rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;margin-top:3px;}
+.sim-controls{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+.sim-btn{padding:5px 11px;border-radius:6px;border:1.5px solid var(--line);background:var(--white);font-family:'Asap',sans-serif;font-size:.68rem;font-weight:500;color:var(--gray);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+.sim-btn:hover{border-color:var(--ink);color:var(--ink);}
+.sim-btn.primary{background:var(--ink);border-color:var(--ink);color:#fff;}
+.adj-wrap{display:flex;align-items:center;justify-content:center;gap:3px;}
+td:has(.adj-wrap){text-align:center !important;padding:5px 8px !important;}
+.adj-btn{width:20px;height:20px;border:1px solid var(--line);border-radius:3px;background:var(--white);cursor:pointer;font-size:.85rem;display:inline-flex;align-items:center;justify-content:center;color:var(--gray);transition:all .1s;font-weight:700;line-height:1;}
+.adj-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
+.adj-input{width:46px;text-align:center;border:1px solid var(--line);border-radius:3px;padding:2px 3px;font-family:'Asap Condensed',sans-serif;font-size:.75rem;color:var(--ink);background:var(--white);font-weight:600;}
+.adj-input:focus{outline:none;border-color:var(--ink);}
+.adj-input::-webkit-inner-spin-button,.adj-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.adj-input{-moz-appearance:textfield;appearance:textfield;}
+
+/* ─── CYCLE / SUB-SELECTOR PILLS ─── */
+.cycle-pills{display:inline-flex;gap:4px;background:var(--cream);padding:3px;border-radius:20px;border:1px solid var(--line);}
+.cycle-pill{padding:4px 13px;border-radius:16px;border:none;background:transparent;font-family:'Asap',sans-serif;font-size:.7rem;font-weight:600;color:var(--gray);cursor:pointer;transition:all .15s;}
+.cycle-pill.active{background:var(--ink);color:#fff;box-shadow:0 1px 3px rgba(40,33,28,.18);}
+
+/* ─── MARKETING GROUP HEADER (separa St George's App / Pauta Digital) ─── */
+.mkt-group{display:flex;align-items:center;gap:13px;margin:38px 0 18px;padding-top:26px;border-top:2px solid var(--border-strong);}
+.mkt-group.first{border-top:none;padding-top:0;margin-top:6px;}
+.mkt-group-bar{width:6px;height:38px;border-radius:3px;background:var(--teal);flex-shrink:0;}
+.mkt-group-ttl{font-size:1.42rem;font-weight:700;color:var(--text);letter-spacing:-.025em;line-height:1.1;}
+.mkt-group-sub{font-size:.64rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-top:2px;}
+[data-theme="dark"] .mkt-group{border-top-color:var(--border-strong);}
+[data-theme="dark"] .mkt-group-ttl{color:var(--text);}
+[data-theme="dark"] .mkt-group-sub{color:var(--text-muted);}
+.al-coverage{display:flex;align-items:center;gap:9px;background:rgba(16,154,169,.10);border:1px solid rgba(16,154,169,.30);border-left:4px solid var(--teal);border-radius:9px;padding:11px 15px;margin:4px 0 20px;font-size:.82rem;color:var(--text-muted);font-family:'Asap Condensed',sans-serif;line-height:1.35;}
+.al-coverage svg{color:var(--teal);flex-shrink:0;}
+.al-coverage b{color:var(--text);font-weight:700;}
+[data-theme="dark"] .al-coverage{background:rgba(38,198,214,.10);border-color:rgba(38,198,214,.28);}
+.tag.plat-meta{background:rgba(107,110,179,.16);color:#5558a8;}
+.tag.plat-google{background:rgba(16,154,169,.16);color:#0e7d89;}
+[data-theme="dark"] .tag.plat-meta{background:rgba(158,161,228,.22);color:#9ea1e4;}
+[data-theme="dark"] .tag.plat-google{background:rgba(38,198,214,.2);color:#26C6D6;}
+
+/* ─── INFO NOTE ─── */
+.info-note{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.74rem;color:var(--gray);line-height:1.5;font-family:'Asap Condensed',sans-serif;display:flex;gap:10px;align-items:flex-start;box-shadow:var(--card-shadow);}
+.info-note svg{flex-shrink:0;margin-top:1px;}
+.info-note b{color:var(--text);font-weight:700;}
+[data-theme="dark"] .info-note{background:var(--surface);border-color:var(--border);color:var(--text-muted);}
+
+/* ─── NATIONALITY BARS ─── */
+.natbars{display:flex;flex-direction:column;gap:7px;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r);padding:16px 18px;box-shadow:var(--card-shadow);}
+.natbar-row{display:flex;align-items:center;gap:12px;}
+.natbar-lbl{min-width:150px;font-size:.8rem;font-weight:500;color:var(--text);display:flex;align-items:center;}
+.natbar-track{flex:1;height:11px;background:var(--paper);border-radius:6px;overflow:hidden;}
+.natbar-fill{height:100%;border-radius:6px;background:var(--campus-color,var(--teal));transition:width .8s cubic-bezier(.4,0,.2,1);}
+.campus-q .natbar-fill{background:var(--red);}.campus-n .natbar-fill{background:var(--navy);}.campus-os .natbar-fill{background:var(--teal);}
+.natbar-val{min-width:42px;text-align:right;font-family:'Asap Condensed',sans-serif;font-size:.78rem;font-weight:600;color:var(--text-muted);}
+[data-theme="dark"] .natbars{background:var(--surface);border-color:var(--border);}
+[data-theme="dark"] .natbar-track{background:rgba(255,255,255,.08);}
+
+/* ─── EMPTY STATE ─── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:52px 24px;background:var(--surface);border:1px dashed var(--border-strong);border-radius:var(--r);text-align:center;box-shadow:var(--card-shadow);}
+.empty-icon{font-size:2.1rem;opacity:.75;}
+.empty-title{font-size:1rem;font-weight:700;color:var(--ink);}
+.empty-sub{font-size:.78rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;max-width:440px;line-height:1.55;}
+
+/* ─── ADMIN PANEL ─── */
+#admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400;backdrop-filter:blur(2px);}
+#admin-overlay.open{display:block;}
+#admin-drawer{position:fixed;top:0;right:-340px;bottom:0;width:320px;background:var(--white);z-index:401;box-shadow:-4px 0 32px rgba(14,22,40,.16);transition:right .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+#admin-drawer.open{right:0;}
+.adm-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line);background:var(--ink);}
+.adm-hdr-title{font-weight:700;font-size:.95rem;color:#fff;display:flex;align-items:center;gap:8px;}
+.adm-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.adm-close:hover{background:rgba(255,255,255,.2);}
+.adm-body{flex:1;overflow-y:auto;padding:16px;}
+.adm-section{margin-bottom:20px;}
+.adm-section-title{font-size:.6rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;font-family:'Asap Condensed',sans-serif;padding-bottom:6px;border-bottom:1px solid var(--line);}
+.pill{display:flex;align-items:center;gap:5px;background:var(--white);border:1.5px solid var(--line);border-radius:20px;padding:5px 12px;cursor:pointer;user-select:none;font-size:.71rem;color:var(--gray);font-family:'Asap',sans-serif;font-weight:500;transition:all .15s;margin-bottom:6px;}
+.pill.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.pill.teal-pill.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+.pill .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7;}
+.adm-info{background:var(--paper);border-radius:8px;padding:12px 14px;}
+.adm-info-row{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;margin-bottom:6px;}
+.adm-info-row:last-child{margin-bottom:0;}
+.adm-info-lbl{color:var(--gray);font-family:'Asap Condensed',sans-serif;font-weight:600;}
+.adm-info-val{color:var(--ink);font-weight:600;font-family:'Asap Condensed',sans-serif;}
+.adm-conn{display:inline-flex;align-items:center;gap:4px;}
+.adm-conn-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.adm-btn{display:block;width:100%;padding:9px 14px;border-radius:6px;border:1.5px solid var(--line);background:var(--white);font-family:'Asap',sans-serif;font-size:.78rem;font-weight:500;color:var(--ink);cursor:pointer;transition:all .15s;text-align:left;margin-bottom:8px;}
+.adm-btn:hover{border-color:var(--ink);background:var(--paper);}
+.adm-btn svg{vertical-align:middle;margin-right:6px;}
+
+/* ─── FOOTER ─── */
+footer{text-align:center;padding:14px 32px;font-size:.61rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;letter-spacing:.05em;border-top:1px solid var(--line);}
+
+/* ─── SIDEBAR SWITCHES ─── */
+.sb-switches{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px;}
+.sidebar.collapsed .sb-switches{display:none;}
+.sb-switch-row{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;padding:7px 10px;border-radius:9px;transition:background .15s;}
+.sb-switch-row:hover{background:var(--cream);}
+.sb-switch-name{font-size:.72rem;font-weight:600;font-family:'Asap',sans-serif;color:var(--gray);margin-right:auto;white-space:nowrap;}
+.sb-switch-ctrl{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.sb-switch-lbl{font-size:.62rem;font-weight:700;font-family:'Asap Condensed',sans-serif;letter-spacing:.05em;color:#94A3B8;min-width:16px;transition:color .2s;display:flex;align-items:center;justify-content:center;}
+.sb-switch-lbl.sw-active{color:#1A1F35;}
+.sb-switch-lbl.sw-sun.sw-active{color:#F59E0B;}
+.sb-switch-track{width:40px;height:22px;border-radius:11px;background:#CBD5E1;position:relative;flex-shrink:0;transition:background .22s;}
+.sb-switch-track.sw-on{background:#109AA9;}
+.sb-switch-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .22s;}
+.sb-switch-track.sw-on .sb-switch-thumb{transform:translateX(18px);}
+
+/* ─── HEATMAP ─── */
+.heatmap{overflow-x:auto;}
+.hm-table{width:100%;border-collapse:collapse;font-size:.76rem;font-family:'Asap Condensed',sans-serif;}
+.hm-table th{padding:6px 10px;font-weight:700;color:var(--gray);letter-spacing:.07em;text-align:center;white-space:nowrap;}
+.hm-table th:first-child{text-align:left;}
+.hm-table td{padding:7px 10px;text-align:center;font-weight:600;border:1px solid #F1EDE5;min-width:80px;}
+.hm-table td:first-child{width:80px;text-align:left;font-weight:700;}
+.hm-cell{border-radius:6px;padding:6px 10px;display:block;text-align:center;font-size:.76rem;}
+
+/* ─── DENSITY ─── */
+#main.compact tbody td{padding-top:5px;padding-bottom:5px;}
+#main.compact thead th{padding-top:7px;padding-bottom:7px;}
+#main.compact tbody td,#main.compact td.r{font-size:.72rem;}
+
+/* ─── SKELETON ─── */
+.skel-stack{display:flex;flex-direction:column;gap:22px;}
+.skel{background:linear-gradient(90deg,var(--line) 25%,var(--cream) 37%,var(--line) 63%);background-size:400% 100%;animation:skelShimmer 1.5s ease infinite;border-radius:10px;}
+@keyframes skelShimmer{0%{background-position:100% 0;}100%{background-position:0 0;}}
+.skel-row{display:grid;gap:14px;}
+.skel-band{height:104px;border-radius:var(--r-lg);}
+.skel-title{height:30px;width:230px;}
+.skel-card{height:130px;}
+.skel-table{height:300px;}
+.skel-chart{height:240px;}
+
+/* ─── A11Y ─── */
+*:focus{outline:none;}
+*:focus-visible{outline:2.5px solid var(--navy);outline-offset:2px;border-radius:5px;}
+.nav-item:focus-visible{outline-offset:-2px;}
+
+/* ─── DARK MODE ─── */
+[data-theme="dark"]{
+  --bg:#13131F;--surface:#1C1C2C;--surface2:#252538;
+  --border:rgba(255,255,255,.1);--border-strong:rgba(255,255,255,.2);
+  --text:#EDEDF0;--text-muted:#8888A8;
+  --row-hover:#252538;--row-tot:#1C1C2C;
+  --card-shadow:0 1px 4px rgba(0,0,0,.25),0 6px 20px rgba(0,0,0,.35);
+  --line:rgba(255,255,255,.09);--hairline:rgba(255,255,255,.07);--paper:#1C1C2C;--cream:#13131F;
+  --white:#1C1C2C;--ink-lt:#252538;--red-lt:rgba(220,30,51,.18);
+  --navy-lt:rgba(33,52,99,.22);--green-lt:rgba(22,163,74,.18);--amber-lt:rgba(180,83,9,.2);
+}
+[data-theme="dark"] body{background:var(--bg);color:var(--text);}
+[data-theme="dark"] .hdr{background:var(--surface);border-color:var(--border);}
+[data-theme="dark"] .hdr-title{color:var(--text);}
+[data-theme="dark"] .hdr-sub{color:var(--text-muted);}
+[data-theme="dark"] .hdr-badge{background:var(--surface2);border-color:var(--border);color:var(--text-muted);}
+[data-theme="dark"] .content,[data-theme="dark"] .panel{background:var(--bg) !important;}
+[data-theme="dark"] .kpi-card,[data-theme="dark"] .cc,[data-theme="dark"] .sim-card,
+[data-theme="dark"] .comm-card,[data-theme="dark"] .f-row,[data-theme="dark"] .insight,
+[data-theme="dark"] .tw table,[data-theme="dark"] .empty-state{background:var(--surface);}
+[data-theme="dark"] .tw{border-color:var(--border);}
+[data-theme="dark"] tbody tr:hover:not(.grp):not(.grp-q):not(.grp-n):not(.grp-k):not(.tot):not(.ctot):not(.ctot-q):not(.ctot-n):not(.ctot-os):not(.won-row):not(.proj-row){background:var(--row-hover);}
+[data-theme="dark"] tbody tr.tot td{background:var(--row-tot);}
+[data-theme="dark"] tbody tr.salon-row td{background:var(--surface2);}
+[data-theme="dark"] tbody tr{border-color:var(--border);}
+[data-theme="dark"] td,[data-theme="dark"] .kpi-lbl,[data-theme="dark"] .sim-lbl{color:var(--text-muted);}
+[data-theme="dark"] td:first-child{color:var(--text);}
+[data-theme="dark"] .kpi-val,[data-theme="dark"] .sim-val,
+[data-theme="dark"] .sec-title,[data-theme="dark"] .page-title,[data-theme="dark"] .kpi-foot{color:var(--text);}
+[data-theme="dark"] .sec-hd,[data-theme="dark"] .page-hd{border-color:var(--border);}
+[data-theme="dark"] .page-sub,[data-theme="dark"] .sec-meta,[data-theme="dark"] .comm-lbl,
+[data-theme="dark"] .comm-foot,[data-theme="dark"] .cc-sub,[data-theme="dark"] .kpi-foot,
+[data-theme="dark"] .si-foot,[data-theme="dark"] .hdr-time,[data-theme="dark"] .f-nums,
+[data-theme="dark"] .sim-delta,[data-theme="dark"] .empty-sub,[data-theme="dark"] .ins-lbl{color:var(--text-muted);}
+[data-theme="dark"] .cc-ttl,[data-theme="dark"] .f-lbl,[data-theme="dark"] .ins-val,
+[data-theme="dark"] .empty-title{color:var(--text);}
+[data-theme="dark"] .login-box,[data-theme="dark"] #admin-drawer{background:var(--surface);}
+[data-theme="dark"] .btn-google,[data-theme="dark"] .adm-btn{background:var(--surface);border-color:var(--border);color:var(--text);}
+[data-theme="dark"] .campus-btn{background:var(--surface2);border-color:var(--border);color:var(--text-muted);}
+[data-theme="dark"] .campus-btn[data-c="os"].active{background:#3D4170;border-color:#6B70AA;color:#fff;}
+[data-theme="dark"] .campus-btn[data-c="q"].active{background:#C01A2C;border-color:#E84057;color:#fff;}
+[data-theme="dark"] .campus-btn[data-c="n"].active{background:#1E3A7A;border-color:#4A6CB3;color:#fff;}
+[data-theme="dark"] footer{border-color:var(--border);color:var(--text-muted);background:var(--bg);}
+[data-theme="dark"] .adj-btn,[data-theme="dark"] .adj-input,[data-theme="dark"] .sim-btn{background:var(--surface2);border-color:var(--border);color:var(--text);}
+[data-theme="dark"] .adj-btn:hover{background:var(--text);color:var(--bg);}
+[data-theme="dark"] .sim-btn:hover{border-color:var(--text);color:var(--text);}
+[data-theme="dark"] .sim-btn.primary{background:#3D4170;border-color:#6B70AA;color:#fff;}
+[data-theme="dark"] .sim-fact{color:#5eead4;}
+[data-theme="dark"] .f-track{background:rgba(255,255,255,.08);}
+[data-theme="dark"] .campus-os .f-fill{background:#6B7FBC;}
+[data-theme="dark"] .campus-q .f-fill{background:#E84057;}
+[data-theme="dark"] .campus-n .f-fill{background:#4A6CB3;}
+[data-theme="dark"] .f-row.won .f-fill{background:var(--teal) !important;}
+[data-theme="dark"] .adm-info{background:var(--surface2);}
+[data-theme="dark"] .adm-info-lbl{color:var(--text-muted);}
+[data-theme="dark"] .adm-info-val{color:var(--text);}
+[data-theme="dark"] .adm-section-title{color:var(--text-muted);}
+[data-theme="dark"] .pill{background:var(--surface2);border-color:var(--border);color:var(--text-muted);}
+[data-theme="dark"] .won-row td{background:rgba(21,128,61,.15);}
+[data-theme="dark"] .proj-row td{background:rgba(180,83,9,.12);}
+[data-theme="dark"] .hm-table td{border-color:var(--bg);}
+[data-theme="dark"] .hm-table th{color:var(--text-muted);}
+[data-theme="dark"] #login-screen{background:#F0F4FC !important;}
+[data-theme="dark"] .login-box{background:#FFFFFF !important;border-top-color:#DC1E33 !important;}
+[data-theme="dark"] .login-tagline{color:#1A1F35 !important;}
+[data-theme="dark"] .btn-google{background:#fff !important;color:#1A1F35 !important;border-color:#E7E1D7 !important;}
+[data-theme="dark"] #loading{background:#FFFFFF !important;}
+[data-theme="dark"] .load-txt{color:#8888A8 !important;}
+[data-theme="dark"] .sidebar{background:var(--surface) !important;border-right-color:var(--border) !important;box-shadow:2px 0 12px rgba(0,0,0,.3) !important;}
+[data-theme="dark"] .sb-bottom{background:var(--surface2) !important;border-color:var(--border) !important;}
+[data-theme="dark"] .sb-divider{background:var(--border) !important;}
+[data-theme="dark"] .nav-item{color:var(--text-muted) !important;}
+[data-theme="dark"] .nav-item:hover{background:rgba(255,255,255,.06) !important;color:var(--text) !important;}
+[data-theme="dark"] .nav-item.active{background:rgba(220,30,51,.18) !important;color:#f87171 !important;box-shadow:inset 3px 0 0 #E84057 !important;}
+[data-theme="dark"] .sb-lbl,[data-theme="dark"] .sb-update{color:var(--text-muted) !important;}
+[data-theme="dark"] .sb-switch-name{color:var(--text-muted);}
+[data-theme="dark"] .sb-switch-row:hover{background:var(--surface2);}
+[data-theme="dark"] .sb-switch-lbl{color:#555570;}
+[data-theme="dark"] .sb-switch-lbl.sw-active{color:#EDEDF0;}
+[data-theme="dark"] .sb-switch-lbl.sw-sun.sw-active{color:#F59E0B;}
+[data-theme="dark"] .sb-switch-track{background:#3D3D52;}
+[data-theme="dark"] .sb-switch-track.sw-on{background:#109AA9;}
+[data-theme="dark"] .cycle-pills{background:var(--surface2);border-color:var(--border);}
+[data-theme="dark"] .cycle-pill{color:var(--text-muted);}
+[data-theme="dark"] .cycle-pill.active{background:#3D4170;color:#fff;}
+[data-theme="dark"] .val-pos{color:#4ade80;}
+[data-theme="dark"] .val-neg{color:#f87171;}
+[data-theme="dark"] .val-usd{color:#5eead4;}
+[data-theme="dark"] .comm-val{color:#5eead4;}
+[data-theme="dark"] .si-val.c-red{color:#f87171;}
+[data-theme="dark"] .si-val.c-navy{color:#93a5d8;}
+[data-theme="dark"] .kpi-val.c-red{color:#f87171;}
+[data-theme="dark"] .kpi-val.c-navy{color:#93a5d8;}
+[data-theme="dark"] .kpi-val.pos{color:#4ade80;}
+[data-theme="dark"] .kpi-val.neg{color:#f87171;}
+[data-theme="dark"] canvas{filter:brightness(1.05);}
+[data-theme="dark"] tbody tr.grp-k td{color:#A8B4CC;}
+[data-theme="dark"] tbody tr.grp-n td{color:#93A5D8;}
+[data-theme="dark"] tbody tr.ctot-os td{color:#A8B4CC;}
+[data-theme="dark"] .campus-badge.os{background:rgba(255,255,255,.08);color:#EDEDF0;}
+[data-theme="dark"] .campus-badge.n{background:rgba(33,52,99,.35);color:#93A5D8;}
+[data-theme="dark"] .f-badge{background:rgba(220,30,51,.25);color:#f87171;}
+[data-theme="dark"] .f-row.won .f-badge{background:rgba(21,128,61,.25);color:#4ade80;}
+[data-theme="dark"] .ins-icon.teal{background:rgba(16,154,169,.2);}
+[data-theme="dark"] .ins-icon.green{background:rgba(21,128,61,.2);}
+[data-theme="dark"] .ins-icon.red{background:rgba(220,30,51,.2);}
+[data-theme="dark"] .ins-icon.amber{background:rgba(180,83,9,.2);}
+[data-theme="dark"] .si:hover{background:var(--surface2);}
+[data-theme="dark"] .tag.nat{background:rgba(21,128,61,.2);color:#4ade80;}
+[data-theme="dark"] .tag.exo{background:rgba(180,83,9,.2);color:#fbbf24;}
+[data-theme="dark"] .tag.act{background:rgba(220,30,51,.2);color:#f87171;}
+[data-theme="dark"] .badge-proj{background:rgba(180,83,9,.2);color:#fbbf24;}
+[data-theme="dark"] .comm-card{background:var(--surface);border-color:var(--border);}
+[data-theme="dark"] thead th{background:#252540;}
+[data-theme="dark"] thead th.th-q{background:#7a1020 !important;}
+[data-theme="dark"] thead th.th-n{background:#1a2a55 !important;}
+[data-theme="dark"] .campus-q thead th{background:#7a1020;}
+[data-theme="dark"] .campus-n thead th{background:#1a2a55;}
+[data-theme="dark"] .btn-logout{border-color:var(--border);color:var(--text-muted);}
+[data-theme="dark"] .btn-logout:hover{border-color:var(--red);color:#f87171;}
+[data-theme="dark"] .btn-icon{color:var(--text-muted);}
+[data-theme="dark"] .btn-icon:hover{background:var(--surface2);color:var(--text);}
+[data-theme="dark"] #btn-sb-toggle{background:var(--surface2);color:#EDEDF0 !important;}
+[data-theme="dark"] .skel{background:linear-gradient(90deg,#22223400 0,#2C2C42 37%,#22223400 63%);background-color:#23233A;background-size:400% 100%;}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1024px){:root{--sidebar-w:220px;}}
+@media(max-width:768px){
+  :root{--sidebar-w:0px;--sidebar-collapsed:0px;--header-h:96px;}
+  .hdr{height:var(--header-h);flex-wrap:wrap;align-content:flex-start;padding:0;}
+  .hdr-logo{height:38px;}
+  .hdr-brand{order:1;width:auto;flex:1;padding:8px 14px;border-bottom:none;}
+  .hdr-mid{order:3;width:100%;padding:6px 14px 8px;border-top:1px solid rgba(14,22,40,.1);border-bottom:2px solid var(--line);background:var(--white);flex:none;}
+  .hdr-right{order:2;padding:0 14px;gap:4px;margin-left:0;}
+  .hdr-badge,.btn-logout{display:none;}
+  #btn-admin{display:none !important;}
+  #btn-sb-toggle{display:flex !important;padding:8px;background:var(--surface2,#f0f2f8);border-radius:8px;color:var(--text,var(--ink));}
+  .campus-group{gap:5px;width:100%;}
+  .campus-btn{flex:1;text-align:center;padding:5px 8px;font-size:.68rem;border-radius:16px;}
+  .sidebar{transform:translateX(-100%);width:280px;top:0;z-index:500;transition:transform .28s cubic-bezier(.4,0,.2,1);}
+  .sidebar.mobile-open{transform:translateX(0);box-shadow:6px 0 32px rgba(0,0,0,.5);}
+  #mob-overlay{display:block;opacity:0;pointer-events:none;transition:opacity .28s;z-index:499;}
+  #mob-overlay.active{opacity:1;pointer-events:auto !important;}
+  .content{margin-left:0 !important;}
+  thead th:first-child,tbody td:first-child{position:sticky;left:0;z-index:2;}
+  tbody td:first-child{background:var(--surface);box-shadow:1px 0 0 var(--line);}
+  thead th:first-child{z-index:3;}
+  .panel{padding:36px 14px 16px;}
+  /* compact tables so they fit the viewport width on mobile */
+  table{font-size:.72rem;}
+  thead th{padding:8px 5px;font-size:.55rem;letter-spacing:.04em;}
+  td{padding:7px 5px;}
+  td.r{font-size:.7rem;}
+  .two,.three,.col-6040{grid-template-columns:1fr;}
+  .comm-grid,.comm-grid.c3,.comm-grid.c4{grid-template-columns:repeat(2,1fr);}
+  .sim-totals{grid-template-columns:1fr;}
+  /* Key Highlights mobile: 3 per row, trailing items centered */
+  .stat-strip{display:flex;flex-wrap:wrap;justify-content:center;}
+  .stat-strip .si{flex:1 0 33.33%;max-width:33.33%;padding:14px 6px 12px;border-bottom:1px solid rgba(255,255,255,.1);}
+  .stat-strip .si-val{font-size:1.5rem;}
+  .stat-strip .si-lbl{font-size:.52rem;letter-spacing:.06em;margin-bottom:6px;}
+  .stat-strip .si-foot{font-size:.58rem;}
+  .kpi-grid,.kpi-grid.kpi6,.kpi-grid.kpi7{grid-template-columns:repeat(3,1fr);}
+  .si{border-bottom:1px solid rgba(255,255,255,.1);}
+  .f-lbl{min-width:120px;font-size:.73rem;}
+  .f-nums{min-width:110px;font-size:.65rem;}
+  .insight-strip{display:none;}
+  .sim-controls{flex-wrap:wrap;gap:5px;}
+  .sim-btn{flex:1;min-width:0;font-size:.68rem;padding:5px 9px;justify-content:center;white-space:nowrap;}
+  footer{font-size:.5rem;letter-spacing:.01em;padding:10px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sb-switches{display:flex;}
+  .sidebar.collapsed{width:280px;}
+  .sidebar.collapsed .nav-item span{display:initial;}
+  .sidebar.collapsed .sb-lbl{opacity:1;}
+  .sidebar.collapsed .sb-update{display:block;}
+  .sidebar.collapsed .sb-switches{display:flex;}
+}
+@media(max-width:460px){
+  .stat-strip .si{padding:12px 4px 10px;}
+  .stat-strip .si-val{font-size:1.3rem;}
+  .kpi-grid,.kpi-grid.kpi6,.kpi-grid.kpi7{grid-template-columns:repeat(2,1fr);}
+  .comm-grid,.comm-grid.c3,.comm-grid.c4{grid-template-columns:repeat(2,1fr);}
+}
+@media print{
+  .sidebar,.hdr,#admin-overlay,#admin-drawer,footer{display:none !important;}
+  .content{margin:0 !important;}
+  .panel{display:block !important;padding:10px !important;}
+  .cc{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <img class="load-logo" src="logo-v.png" alt="SGC" width="180" height="127"/>
+  <div class="load-ring"></div>
+  <div class="load-txt">Loading dashboard</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" role="main">
+  <div class="login-box">
+    <img class="login-logo" src="logo-v.png" alt="St George's College" width="220" height="155"/>
+    <div class="login-rule"></div>
+    <p class="login-tagline"><strong>Marketing &amp; Admissions Dashboard</strong>Restricted to authorised accounts</p>
+    <button class="btn-google" id="btn-login">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ACCESS DENIED -->
+<div id="access-denied" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:#F1EDE5;">
+  <div class="login-box" style="text-align:center;gap:20px;">
+    <img class="login-logo" src="logo-v.png" alt="St George's College" width="220" height="155"/>
+    <div class="login-rule"></div>
+    <div style="width:56px;height:56px;background:#FEE8EB;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+      <svg width="26" height="26" fill="none" stroke="#DC1E33" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;color:#1A1F35;margin-bottom:6px">Access not authorised</div>
+      <div style="font-size:.82rem;color:#64748B;line-height:1.6">The account <strong id="denied-email" style="color:#DC1E33"></strong><br>does not have permission to access this dashboard.</div>
+    </div>
+    <div style="font-size:.75rem;color:#94A3B8;line-height:1.6">If you think this is an error,<br>contact the system administrator.</div>
+    <button class="btn-google" onclick="google.accounts.oauth2.revoke(accessToken,function(){accessToken=null;userEmail='';document.getElementById('access-denied').style.display='none';document.getElementById('login-screen').style.display='flex';})">
+      Back to sign in
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="hdr">
+    <div class="hdr-brand" id="hdr-brand">
+      <img class="hdr-logo" id="hdr-logo-img" src="logo-h.png" alt="SGC" width="118" height="50"/>
+      <div class="hdr-titles">
+        <div class="hdr-title">Admissions</div>
+        <div class="hdr-sub">Analytics &middot; 2026</div>
+      </div>
+    </div>
+    <div class="hdr-mid">
+      <span class="hdr-context-lbl" id="hdr-viewing" aria-hidden="true">Viewing</span>
+      <div class="campus-group" role="group" aria-label="Select campus">
+        <button class="campus-btn active" data-c="os" aria-pressed="true">One School</button>
+        <button class="campus-btn" data-c="q" aria-pressed="false">Quilmes</button>
+        <button class="campus-btn" data-c="n" aria-pressed="false">North</button>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-badge"><span class="hdr-dot"></span><span id="h-update">–</span></span>
+      <button class="btn-icon" id="btn-admin" title="Admin panel" aria-label="Admin panel" style="display:none">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M19 8l.94-2.06L22 5l-2.06-.94L19 2l-.94 2.06L16 5l2.06.94z"/></svg>
+      </button>
+      <button class="btn-icon" id="btn-sb-toggle" title="Collapse menu" aria-label="Collapse or expand menu">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <button class="btn-logout" id="btn-out">Sign out</button>
+    </div>
+  </header>
+
+  <div id="mob-overlay" style="position:fixed;inset:0;background:rgba(14,22,40,.55);z-index:199;backdrop-filter:blur(2px);transition:opacity .25s;opacity:0;pointer-events:none;"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-bottom" id="sb-bottom">
+      <div class="sb-update" id="sb-update">–</div>
+    </div>
+  </aside>
+
+  <div id="admin-overlay"></div>
+  <div id="admin-drawer">
+    <div class="adm-hdr">
+      <div class="adm-hdr-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/></svg>
+        Admin Panel
+      </div>
+      <button class="adm-close" id="adm-close">✕</button>
+    </div>
+    <div class="adm-body">
+      <div class="adm-section">
+        <div class="adm-section-title">Visible sections</div>
+        <div id="sec-toggles"></div>
+      </div>
+      <div class="adm-section">
+        <div class="adm-section-title">Data configuration</div>
+        <div id="fact-toggle-wrap"></div>
+      </div>
+      <div class="adm-section">
+        <div class="adm-section-title">System information</div>
+        <div class="adm-info" id="adm-info"></div>
+      </div>
+      <div class="adm-section">
+        <div class="adm-section-title">Export</div>
+        <button class="adm-btn" onclick="navigator.clipboard.writeText(JSON.stringify(D,null,2)).then(()=>alert('JSON copied to clipboard'))">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy JSON (debug)
+        </button>
+        <button class="adm-btn" onclick="window.print()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print / Export PDF
+        </button>
+        <button class="adm-btn" onclick="fetchData(true)">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Force refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="content" id="content">
+    <div id="main" class="campus-os"></div>
+  </main>
+
+  <footer>St George's College &middot; Marketing &amp; Admissions Dashboard &middot; Live data &middot; <span id="f-time"></span></footer>
+</div>
+
+<script>
+/* ============================== CONFIG ============================== */
+const CLIENT_ID   = '451910290982-vudb6uk5047r19ruujlae16ouhdh0km8.apps.googleusercontent.com';
+const API_URL     = 'https://script.google.com/macros/s/AKfycbwUP6YlD0tbEbxLPNzceKHk3MMV4iUrM3J7bu4187ZszIzuZLUNgL4vy5rhtiEknC0J/exec';
+const ADMIN_EMAIL = 'diego.medina@stgeorges.edu.ar';
+
+/* ============================== STRINGS ============================== */
+const STRINGS={
+  en:{
+    nav_label:'Navigation',viewing:'Viewing',logout:'Sign out',
+    ui_language:'Language',ui_theme:'Theme',ui_density:'Density',
+    tab_resumen:'Executive Summary',tab_admissions:'Admissions',tab_retention:'Retention &amp; Community',tab_marketing:'Marketing',tab_proyeccion:'Projection 2027',tab_alumni:'Alumni',
+    ph_resumen:'Executive Summary',ph_resumen_sub:'Current students &amp; Admissions overview',
+    ph_admissions:'Admissions',ph_admissions_sub:'Pipeline &amp; conversion',
+    ph_retention:'Retention &amp; Community',ph_retention_sub:'Loyalty, cohorts &amp; community profile',
+    ph_marketing:'Marketing',ph_marketing_sub:'Channels, app &amp; paid media',
+    ph_proyeccion:'Projection 2027',ph_proyeccion_sub:'Scenario simulator by year group',
+    ph_alumni:'Alumni',ph_alumni_sub:'Old Georgian community',
+    headline:'Key Highlights',headline_meta:'',
+    community:'Community Indicators',community_meta:'',
+    s_enrolment:'Enrolment',s_enrolment_meta:'Status',
+    s_breakdown:'Current Students Breakdown',s_breakdown_meta:'2026',col_studcap:'Students / Capacity',col_won26:'Won 2026',
+    s_boarding:'Boarding Quilmes',s_boarding_meta:'2026',col_yeargroup:'Year Group',bd_weekly:'Weekly Boarders',bd_full:'Full Boarders',bd_boys:'Boys',bd_girls:'Girls',
+    evol:'Enrolment Evolution',evol_meta:'Historical 2021&ndash;2026 + 2027 projection',
+    s_active_pipeline:'Active Pipeline',s_active_pipeline_meta:'Current snapshot &mdash; Insightly',
+    s_conv_funnel:'Conversion Funnel',s_conv_funnel_meta:'2021&ndash;2027',
+    s_forecast:'Weighted Pipeline Forecast',s_forecast_meta:'2027',
+    s_occupancy:'Occupancy 2027',s_occupancy_meta:'Prospect coverage by level',
+    won:'Won',col_opportunities:'Opportunities',col_count:'Count',col_rate:'Rate %',
+    col_inquiries:'Inquiries',col_visit_n:'Visit',col_appl_n:'Application',col_yield_n:'Yield',
+    view_table:'Table',view_chart:'Chart',col_forecast:'Forecast Won',col_gap:'Gap vs 2026',
+    forecast_note:'Estimated 2027 intake from the active pipeline, weighting each prospect by the <b>historical conversion rate</b> of its stage (Visit&rarr;Won and Application&rarr;Won) per campus &amp; level. Only prospects past Visit count, so early in the cycle the forecast (and the Gap vs 2026) is naturally low &mdash; it rises as the funnel advances. <b>Status</b>: 🟢 Forecast &ge; New 2026 &middot; 🟡 80&ndash;99% &middot; 🔴 &lt;80%.',
+    s_historical_cr:'Historical Conversion Rate',s_historical_cr_meta:'2021&ndash;2026',
+    s_conv_pipeline:'Conversion Pipeline',s_conv_pipeline_meta:'Funnel 2026 &mdash; One School',
+    s_channel:'Conversion Rate per Channel',s_channel_meta:'Source attribution',
+    s_cohort_lifespan:'Cohort Lifespan',s_cohort_lifespan_meta:'Generational loyalty &mdash; ISAMS',
+    s_cohort_rates:'Grade-to-Grade Movement',s_cohort_rates_meta:'Transition retention rates',
+    s_withdrawals:'Withdrawals by Cause',s_withdrawals_meta:'2025 vs 2026',
+    s_intl_nationalities:'International Students &mdash; Nationalities',s_intl_nationalities_meta:'Demographics',
+    s_nps:'NPS',s_nps_meta:'Net Promoter Score',
+    s_app_kpis:'St George&rsquo;s College App',s_app_kpis_meta:'Key Highlights',
+    s_digital_ads:'Digital Advertising',s_digital_ads_meta:'Meta &amp; Google Ads &mdash; lead acquisition',
+    s_ads_summary:'Executive Summary',s_ads_campaign:'Campaign Performance',s_ads_temporal:'Performance Over Time',s_ads_quality:'Traffic Quality',
+    ads_spend:'Total Spend',ads_clicks:'Total Clicks',ads_ctr:'Weighted CTR',ads_cpc:'Weighted CPC',
+    col_campaign:'Campaign',col_platform:'Platform',col_spend:'Spend',col_impr:'Impressions',col_clicks:'Clicks',col_ctr:'CTR',col_cpc:'CPC',col_share:'Clicks %',
+    sort_by:'Sort:',sort_clicks:'Clicks',sort_eff:'Efficiency',sort_spend:'Spend',
+    ads_trend_title:'Spend &amp; Clicks by Month',ads_trend_sub:'Monthly trend (USD spend + clicks)',ads_quality_sub:'CTR, CPC &amp; efficiency flag',
+    s_modules:'Modules',s_modules_meta:'Attention distribution',
+    s_inbox:'Messaging &mdash; Inbox by month',s_inbox_meta:'Demand thermometer',
+    fidu_adoption:'Adoption Rate',fidu_adoption_f:'Families with access',fidu_active:'Weekly Active Users',fidu_active_f:'Active parents',
+    fidu_loyalty:'Weekly Loyalty',fidu_loyalty_f:'Weekly recurrence',fidu_open:'Real Open Rate',fidu_open_f:'Viewed vs audience',
+    col_module:'Module',col_interactions:'Interactions',col_pct:'% of total',col_month:'Month',col_inbox:'Inbox Messages',
+    col_source:'Source',col_channel_yr:'Year',col_appl:'Application Rate',col_yield:'Yield Rate',col_lost:'Lost',
+    s_proj_headline:'Projection Scenarios',s_proj_headline_meta:'2027',
+    s_proj_detail:'Classroom Breakdown',s_proj_detail_meta:'Proportional distribution by form',
+    s_alumni_headline:'Alumni Overview',s_alumni_headline_meta:'Old Georgians',
+    s_alumni_demo:'Demographics',s_alumni_demo_meta:'Graduation decade &amp; geography',
+    al_total:'Total Alumni',al_age:'Average Age',al_age_foot:'Years',al_abroad:'Outside Argentina',al_abroad_foot:'% living abroad',
+    al_mentoring:'Mentoring',al_mentoring_foot:'Opted in (Yes)',al_decade:'Graduation Decade',al_count:'Alumni',al_country:'Country',
+    al_male:'Male',al_female:'Female',al_withkids:'With Kids',al_withkids_foot:'Have children',col_sector:'Sector',col_share:'Share %',
+    s_alumni_countries:'Distribution by Country',s_alumni_sectors:'Professional Sectors',s_alumni_grad:'Form Responses',s_alumni_grad_sub:'By Graduation Year',
+    al_cov_note:'Based on <b>{r}</b> respondents to the alumni data-update form &mdash; about <b>{p}</b> of the <b>{b}</b> total alumni base. All figures below are over respondents, not the full base.',
+    s_alumni_analysis:'Alumni Analysis',s_alumni_analysis_meta:'Switch category',
+    al_cat_overview:'Overview',al_cat_demo:'Demographics',al_cat_geo:'Geography',al_cat_community:'Community',al_cat_heritage:'School Heritage',
+    al_engagement:'Engagement &amp; Reach',al_engagement_meta:'Share of respondents',
+    al_contactable:'Contactable',al_contactable_foot:'Email or LinkedIn',al_mentoring_pct:'Mentoring (Yes)',al_withkids_pct:'With Kids',al_liaison_pct:'Liaison Interest',
+    al_age_dist:'Age Distribution',al_age_dist_sub:'Respondents by age range',al_gender:'Gender',al_gender_meta:'Respondents by gender',
+    al_regions:'Distribution by Region',al_regions_meta:'Respondents by world region',al_region:'Region',
+    al_mentoring_dist:'Mentoring Willingness',al_mentoring_dist_meta:'Would mentor a current student',al_liaison:'Liaison Interest',al_liaison_meta:'Interested in being a class liaison',
+    al_companies:'Top Employers',al_companies_meta:'Most frequent companies',al_company:'Company',
+    al_dayboarding:'Day vs Boarding',al_dayboarding_meta:'Student type while enrolled',al_studenttype:'Student Type',
+    al_houses:'Houses',al_houses_meta:'House membership',al_house:'House',al_heritage_pending:'House &amp; boarding data pending in the import',
+    al_houses_prep:'Prep Houses',al_houses_college:'College Houses',
+    total_alumnos:'Total Students',var_anual:'Annual Variation',
+    ret_quilmes:'Quilmes Retention',ret_north:'North Retention',ret_rate:'Retention Rate',
+    new_students:'New Students',win_rate:'Conversion Rate',prospectos:'Active Prospects',
+    prospectos_26:'Active Prospects 2026',prospectos_27:'Active Prospects 2027',won_2026:'Won 2026',
+    og_quilmes:'OG Parent Quilmes',og_north:'OG Parent North',og_rate:'OG Parents Rate',
+    foreign:'International Students',priority:'Priority Community',actionable_with:'Actionable Withdrawals 2026',
+    og_foot:'Old Georgian Parents',os_foot:'One School',og_plus:'OG + Intl.',
+    col_year:'Year',col_section:'Section',col_level:'Level',col_enrol:'Enrolment',col_grade:'Year Group',
+    col_2025:'Students 2025',col_2026:'Students 2026',col_var:'Var',col_prosp26:'Prospects 2026',col_prosp27:'Prospects 2027',
+    col_cause:'Cause',col_type:'Type',col_cohort:'Cohort',col_enrolled:'Enrolled',col_active:'Active',col_lifespan:'Lifespan (yr)',
+    col_base:'Base 2026',col_rate:'Cohort Rate',col_projd:'Projection',col_adj:'Adjustment %',col_final:'Final 2027',col_cap:'Capacity',col_fact:'Billing USD',
+    col_stage:'Stage',col_pipeline:'Pipeline',col_won:'Won',col_wr:'Conversion Rate',
+    col_transition:'Transition',col_avg:'Average',col_use:'In use',col_visit:'Visit Rate',col_appl:'Application Rate',
+    col_salon:'Form',col_weight:'Weight %',col_proy27:'Proj. 2027',col_delta:'Δ',
+    col_prosp27_act:'Prospects 2027',col_new26:'New 2026',col_status:'Status',
+    col_occ:'Occupancy',col_vac:'Vacancies',col_reth:'Retention',col_newh:'New',col_withh:'Withdrawals',col_prosph:'Prospects',
+    s_kpis:'KPIs by Section',s_kpis_meta:'Enrolment &mdash; Occupancy &mdash; Retention',
+    kinder:'KINDER',prep:'PREP',college:'COLLEGE',total_campus:'TOTAL CAMPUS',total_lbl:'TOTAL',
+    btn_tendencial:'Trend (base)',btn_opt:'&#9650; Optimistic +2%',btn_cons:'&#9660; Conservative &minus;2%',scenario:'Scenario:',vs_base:'vs base',
+    quilmes_table:'Quilmes &mdash; Adjustment by year group',north_table:'North &mdash; Adjustment by year group',
+    quilmes_2027:'Quilmes 2027',north_2027:'North 2027',os_2027:'One School 2027',
+    enrol_chart:'Enrolment One School',enrol_sub:'Bars 2021&ndash;2026 + 2027 projection',
+    qn_chart:'Enrolment by Campus',qn_sub:'Lines 2021&ndash;2026 + 2027 projection',
+    donut_chart:'Enrolment Composition',donut_sub:'K / Prep / College',
+    wr_chart:'Conversion Rate History',wr_sub:'Pipeline vs Won vs Rate %',
+    cohort_chart:'Cohort Lifespan',cohort_sub:'Years enrolled by entry year',
+    proy_not_avail:'Projection data not available.',cycle:'Cycle:',
+    coming_soon:'Coming soon',
+    cs_channel:'Source data being validated',
+    cs_intl:'Demographics data pending ISAMS export',
+    cs_nps:'NPS integration pending',
+    cs_fidu:'Fidu KPIs pending doGet integration',
+    cs_ads:'Meta Ads &amp; Google Ads integration pending',
+    cs_alumni:'Alumni data pending Alumnia integration',
+    cs_alumni_demo:'Demographic breakdown pending',
+    classroom_note:'Proportional distribution by current form weight. Does not reflect pedagogical decisions on opening/closing divisions.',
+  },
+  es:{
+    nav_label:'Navegaci&oacute;n',viewing:'Viendo',logout:'Salir',
+    ui_language:'Idioma',ui_theme:'Tema',ui_density:'Densidad',
+    tab_resumen:'Resumen Ejecutivo',tab_admissions:'Admisiones',tab_retention:'Retenci&oacute;n y Comunidad',tab_marketing:'Marketing',tab_proyeccion:'Proyecci&oacute;n 2027',tab_alumni:'Alumni',
+    ph_resumen:'Resumen Ejecutivo',ph_resumen_sub:'Alumnos actuales y panorama de Admisiones',
+    ph_admissions:'Admisiones',ph_admissions_sub:'Embudo y conversi&oacute;n',
+    ph_retention:'Retenci&oacute;n y Comunidad',ph_retention_sub:'Fidelizaci&oacute;n, camadas y comunidad',
+    ph_marketing:'Marketing',ph_marketing_sub:'Canales, app y pauta',
+    ph_proyeccion:'Proyecci&oacute;n 2027',ph_proyeccion_sub:'Simulador de escenarios por grado',
+    ph_alumni:'Alumni',ph_alumni_sub:'Comunidad Old Georgian',
+    headline:'Indicadores Clave',headline_meta:'',
+    community:'Indicadores de Comunidad',community_meta:'',
+    s_enrolment:'Matr&iacute;cula',s_enrolment_meta:'Estado',
+    s_breakdown:'Detalle de Alumnos Actuales',s_breakdown_meta:'2026',col_studcap:'Alumnos / Capacidad',col_won26:'Won 2026',
+    s_boarding:'Boarding Quilmes',s_boarding_meta:'2026',col_yeargroup:'Year Group',bd_weekly:'Weekly Boarders',bd_full:'Full Boarders',bd_boys:'Boys',bd_girls:'Girls',
+    evol:'Evoluci&oacute;n de Matr&iacute;cula',evol_meta:'Hist&oacute;rico 2021&ndash;2026 + proyecci&oacute;n 2027',
+    s_active_pipeline:'Embudo Activo',s_active_pipeline_meta:'Estado actual &mdash; Insightly',
+    s_conv_funnel:'Embudo de Conversi&oacute;n',s_conv_funnel_meta:'2021&ndash;2027',
+    s_forecast:'Weighted Pipeline Forecast',s_forecast_meta:'2027',
+    s_occupancy:'Ocupaci&oacute;n 2027',s_occupancy_meta:'Cobertura de prospectos por nivel',
+    won:'Won',col_opportunities:'Oportunidades',col_count:'Cantidad',col_rate:'Tasa %',
+    col_inquiries:'Inquiries',col_visit_n:'Visit',col_appl_n:'Application',col_yield_n:'Yield',
+    view_table:'Tabla',view_chart:'Gr&aacute;fico',col_forecast:'Forecast Won',col_gap:'Gap vs 2026',
+    forecast_note:'Ingreso 2027 estimado desde el pipeline activo, ponderando cada prospecto por la <b>tasa de conversi&oacute;n hist&oacute;rica</b> de su etapa (Visit&rarr;Won y Application&rarr;Won) por campus y nivel. Solo cuentan los prospectos que pasaron Visit, as&iacute; que al inicio del ciclo el forecast (y el Gap vs 2026) es bajo &mdash; sube a medida que avanza el funnel. <b>Status</b>: 🟢 Forecast &ge; New 2026 &middot; 🟡 80&ndash;99% &middot; 🔴 &lt;80%.',
+    s_historical_cr:'Tasa de Conversi&oacute;n Hist&oacute;rica',s_historical_cr_meta:'2021&ndash;2026',
+    s_conv_pipeline:'Embudo de Conversi&oacute;n',s_conv_pipeline_meta:'Funnel 2026 &mdash; One School',
+    s_channel:'Tasa de Conversi&oacute;n por Canal',s_channel_meta:'Atribuci&oacute;n de origen',
+    s_cohort_lifespan:'Permanencia de Camadas',s_cohort_lifespan_meta:'Fidelizaci&oacute;n generacional &mdash; ISAMS',
+    s_cohort_rates:'Movimiento Grado a Grado',s_cohort_rates_meta:'Tasas de transici&oacute;n',
+    s_withdrawals:'Bajas por Causa',s_withdrawals_meta:'2025 vs 2026',
+    s_intl_nationalities:'Estudiantes Extranjeros &mdash; Nacionalidades',s_intl_nationalities_meta:'Demograf&iacute;a',
+    s_nps:'NPS',s_nps_meta:'Net Promoter Score',
+    s_app_kpis:'St George&rsquo;s College App',s_app_kpis_meta:'Key Highlights',
+    s_digital_ads:'Pauta Digital',s_digital_ads_meta:'Meta y Google Ads &mdash; adquisici&oacute;n de leads',
+    s_ads_summary:'Resumen Ejecutivo',s_ads_campaign:'Performance por Campa&ntilde;a',s_ads_temporal:'Performance Temporal',s_ads_quality:'Calidad de Tr&aacute;fico',
+    ads_spend:'Inversi&oacute;n Total',ads_clicks:'Clicks Totales',ads_ctr:'CTR Ponderado',ads_cpc:'CPC Ponderado',
+    col_campaign:'Campa&ntilde;a',col_platform:'Plataforma',col_spend:'Inversi&oacute;n',col_impr:'Impresiones',col_clicks:'Clicks',col_ctr:'CTR',col_cpc:'CPC',col_share:'% Clicks',
+    sort_by:'Orden:',sort_clicks:'Clicks',sort_eff:'Eficiencia',sort_spend:'Inversi&oacute;n',
+    ads_trend_title:'Inversi&oacute;n y Clicks por Mes',ads_trend_sub:'Tendencia mensual (inversi&oacute;n USD + clicks)',ads_quality_sub:'CTR, CPC y se&ntilde;al de eficiencia',
+    s_modules:'M&oacute;dulos',s_modules_meta:'Distribuci&oacute;n de la atenci&oacute;n',
+    s_inbox:'Mensajer&iacute;a &mdash; Inbox por mes',s_inbox_meta:'Term&oacute;metro de demanda',
+    fidu_adoption:'Tasa de Adopci&oacute;n',fidu_adoption_f:'Familias con acceso',fidu_active:'Usuarios Activos',fidu_active_f:'Padres activos semanales',
+    fidu_loyalty:'Fidelidad Semanal',fidu_loyalty_f:'Recurrencia semanal',fidu_open:'Tasa de Apertura Real',fidu_open_f:'Vistos vs audiencia',
+    col_module:'M&oacute;dulo',col_interactions:'Interacciones',col_pct:'% del total',col_month:'Mes',col_inbox:'Mensajes Inbox',
+    col_source:'Origen',col_channel_yr:'A&ntilde;o',col_appl:'Application Rate',col_yield:'Yield Rate',col_lost:'Perdidos',
+    s_proj_headline:'Escenarios de Proyecci&oacute;n',s_proj_headline_meta:'2027',
+    s_proj_detail:'Desglose por Sal&oacute;n',s_proj_detail_meta:'Distribuci&oacute;n proporcional por divisi&oacute;n',
+    s_alumni_headline:'Resumen Alumni',s_alumni_headline_meta:'Old Georgians',
+    s_alumni_demo:'Demograf&iacute;a',s_alumni_demo_meta:'D&eacute;cada de egreso y geograf&iacute;a',
+    al_total:'Total Alumni',al_age:'Edad Promedio',al_age_foot:'A&ntilde;os',al_abroad:'Fuera de Argentina',al_abroad_foot:'% en el exterior',
+    al_mentoring:'Mentoring',al_mentoring_foot:'Anotados (Yes)',al_decade:'D&eacute;cada de Egreso',al_count:'Alumni',al_country:'Pa&iacute;s',
+    al_male:'Hombres',al_female:'Mujeres',al_withkids:'Con Hijos',al_withkids_foot:'Tienen hijos',col_sector:'Sector',col_share:'% del total',
+    s_alumni_countries:'Distribuci&oacute;n por Pa&iacute;s',s_alumni_sectors:'Sectores Profesionales',s_alumni_grad:'Form Responses',s_alumni_grad_sub:'Por A&ntilde;o de Egreso',
+    al_cov_note:'Basado en <b>{r}</b> respondentes del formulario de actualizaci&oacute;n de datos &mdash; aprox. <b>{p}</b> de la base total de <b>{b}</b> alumni. Todos los valores son sobre respondentes, no sobre la base completa.',
+    s_alumni_analysis:'An&aacute;lisis de Alumni',s_alumni_analysis_meta:'Cambiar categor&iacute;a',
+    al_cat_overview:'Resumen',al_cat_demo:'Demograf&iacute;a',al_cat_geo:'Geograf&iacute;a',al_cat_community:'Comunidad',al_cat_heritage:'Trayectoria',
+    al_engagement:'Engagement y Alcance',al_engagement_meta:'Sobre respondentes',
+    al_contactable:'Contactables',al_contactable_foot:'Email o LinkedIn',al_mentoring_pct:'Mentoring (S&iacute;)',al_withkids_pct:'Con Hijos',al_liaison_pct:'Inter&eacute;s Liaison',
+    al_age_dist:'Distribuci&oacute;n por Edad',al_age_dist_sub:'Respondentes por rango etario',al_gender:'G&eacute;nero',al_gender_meta:'Respondentes por g&eacute;nero',
+    al_regions:'Distribuci&oacute;n por Regi&oacute;n',al_regions_meta:'Respondentes por regi&oacute;n del mundo',al_region:'Regi&oacute;n',
+    al_mentoring_dist:'Disposici&oacute;n a Mentorear',al_mentoring_dist_meta:'Mentorear&iacute;a a un alumno actual',al_liaison:'Inter&eacute;s Liaison',al_liaison_meta:'Inter&eacute;s en ser liaison de su camada',
+    al_companies:'Principales Empleadores',al_companies_meta:'Empresas m&aacute;s frecuentes',al_company:'Empresa',
+    al_dayboarding:'Externo vs Pupilo',al_dayboarding_meta:'Tipo de alumno durante la cursada',al_studenttype:'Tipo de Alumno',
+    al_houses:'Casas',al_houses_meta:'Pertenencia a casas',al_house:'Casa',al_heritage_pending:'Datos de casas y pupilos pendientes en el import',
+    al_houses_prep:'Casas Prep',al_houses_college:'Casas College',
+    total_alumnos:'Total Alumnos',var_anual:'Variaci&oacute;n Anual',
+    ret_quilmes:'Retenci&oacute;n Quilmes',ret_north:'Retenci&oacute;n North',ret_rate:'Tasa de Retenci&oacute;n',
+    new_students:'Nuevos Alumnos',win_rate:'Tasa de Conversi&oacute;n',prospectos:'Prospectos Activos',
+    prospectos_26:'Prospectos Activos 2026',prospectos_27:'Prospectos Activos 2027',won_2026:'Ganados 2026',
+    og_quilmes:'OG Parent Quilmes',og_north:'OG Parent North',og_rate:'Tasa Padres OG',
+    foreign:'Estudiantes Extranjeros',priority:'Comunidad Prioritaria',actionable_with:'Bajas Accionables 2026',
+    og_foot:'Padres Old Georgian',os_foot:'One School',og_plus:'OG + Extranj.',
+    col_year:'A&ntilde;o',col_section:'Secci&oacute;n',col_level:'Nivel',col_enrol:'Matr&iacute;cula',col_grade:'Grado',
+    col_2025:'Alumnos 2025',col_2026:'Alumnos 2026',col_var:'Var',col_prosp26:'Prospectos 2026',col_prosp27:'Prospectos 2027',
+    col_cause:'Causa',col_type:'Tipo',col_cohort:'Camada',col_enrolled:'Ingresaron',col_active:'Activos',col_lifespan:'Permanencia (a&ntilde;os)',
+    col_base:'Base 2026',col_rate:'Tasa Cohorte',col_projd:'Proyecci&oacute;n',col_adj:'Ajuste %',col_final:'Final 2027',col_cap:'Capacidad',col_fact:'Facturaci&oacute;n USD',
+    col_stage:'Etapa',col_pipeline:'Embudo',col_won:'Ganados',col_wr:'Tasa de Conversi&oacute;n',
+    col_transition:'Transici&oacute;n',col_avg:'Promedio',col_use:'A usar',col_visit:'Visit Rate',col_appl:'Application Rate',
+    col_salon:'Sal&oacute;n',col_weight:'Peso %',col_proy27:'Proy. 2027',col_delta:'Δ',
+    col_prosp27_act:'Prospectos 2027',col_new26:'Nuevos 2026',col_status:'Estado',
+    col_occ:'Ocupaci&oacute;n',col_vac:'Vacantes',col_reth:'Retenci&oacute;n',col_newh:'Nuevos',col_withh:'Bajas',col_prosph:'Prospectos',
+    s_kpis:'KPIs por Secci&oacute;n',s_kpis_meta:'Matr&iacute;cula &mdash; Ocupaci&oacute;n &mdash; Retenci&oacute;n',
+    kinder:'KINDER',prep:'PREP',college:'COLLEGE',total_campus:'TOTAL CAMPUS',total_lbl:'TOTAL',
+    btn_tendencial:'Tendencial (base)',btn_opt:'&#9650; Optimista +2%',btn_cons:'&#9660; Conservador &minus;2%',scenario:'Escenario:',vs_base:'vs base',
+    quilmes_table:'Quilmes &mdash; Ajuste por grado',north_table:'North &mdash; Ajuste por grado',
+    quilmes_2027:'Quilmes 2027',north_2027:'North 2027',os_2027:'One School 2027',
+    enrol_chart:'Matr&iacute;cula One School',enrol_sub:'Barras 2021&ndash;2026 + proyecci&oacute;n 2027',
+    qn_chart:'Matr&iacute;cula por Campus',qn_sub:'L&iacute;neas 2021&ndash;2026 + proyecci&oacute;n 2027',
+    donut_chart:'Composici&oacute;n de Matr&iacute;cula',donut_sub:'K / Prep / College',
+    wr_chart:'Evoluci&oacute;n Tasa de Conversi&oacute;n',wr_sub:'Pipeline vs Ganados vs Tasa %',
+    cohort_chart:'Permanencia de Camadas',cohort_sub:'A&ntilde;os en el colegio por a&ntilde;o de entrada',
+    proy_not_avail:'Datos de proyecci&oacute;n no disponibles.',cycle:'Ciclo:',
+    coming_soon:'Pr&oacute;ximamente',
+    cs_channel:'Datos de origen en validaci&oacute;n',
+    cs_intl:'Datos demogr&aacute;ficos pendientes de exportaci&oacute;n ISAMS',
+    cs_nps:'Integraci&oacute;n de NPS pendiente',
+    cs_fidu:'KPIs de Fidu pendientes de integraci&oacute;n al doGet',
+    cs_ads:'Integraci&oacute;n de Meta Ads y Google Ads pendiente',
+    cs_alumni:'Datos de alumni pendientes de integraci&oacute;n Alumnia',
+    cs_alumni_demo:'Desglose demogr&aacute;fico pendiente',
+    classroom_note:'Distribuci&oacute;n proporcional seg&uacute;n el peso actual de cada sal&oacute;n. No refleja decisiones pedag&oacute;gicas sobre apertura/cierre de divisiones.',
+  }
+};
+let lang='en';
+const t=k=>STRINGS[lang][k]||STRINGS.en[k]||k;
+
+/* ============================== TABS ============================== */
+const TABS=[
+  {id:'resumen',   icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'},
+  {id:'admissions',icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'},
+  {id:'retention', icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>'},
+  {id:'proyeccion',icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'},
+  {id:'marketing', icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>'},
+  {id:'alumni',    icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>'},
+];
+TABS.forEach(tab=>Object.defineProperty(tab,'label',{get:()=>t('tab_'+tab.id)}));
+
+/* ============================== GLOBALS ============================== */
+let tokenClient,accessToken,userEmail='',D={},campus='os',activeTab='resumen';
+let sVis=Object.fromEntries(TABS.map(tab=>[tab.id,true]));
+let charts={},simAdj={},showFact=true,sidebarCollapsed=false;
+let pipelineCycle='2027';
+let funnelYear=2027,channelYear=2026,histView='chart',showClassroom=false;
+let adsMonth=null,adsSort='clicks';
+let alView='community';
+const MONTH_NUM_EN=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_NUM_ES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function monthLabel(ym){const p=String(ym||'').split('-');if(p.length<2)return ym;const m=parseInt(p[1])||0;const nm=(lang==='es'?MONTH_NUM_ES:MONTH_NUM_EN)[m]||p[1];return nm+' '+p[0];}
+function cv(o){if(o==null)return null;return campus==='q'?o.q:campus==='n'?o.n:o.os;}
+let currentTheme=localStorage.getItem('sgc-theme')||'system';
+
+/* ============================== THEME ============================== */
+function applyTheme(th){
+  const root=document.documentElement;let isDark;
+  if(th==='dark'){root.setAttribute('data-theme','dark');isDark=true;}
+  else if(th==='light'){root.setAttribute('data-theme','light');isDark=false;}
+  else{isDark=window.matchMedia('(prefers-color-scheme:dark)').matches;root.setAttribute('data-theme',isDark?'dark':'light');}
+  const logo=document.getElementById('hdr-logo-img');if(logo)logo.src=isDark?'logo-h-white.png':'logo-h.png';
+}
+function setTheme(th){currentTheme=th;localStorage.setItem('sgc-theme',th);applyTheme(th);buildSidebarNav();if(D&&D.headline)drawCharts();}
+applyTheme(currentTheme);
+function isDarkMode(){return document.documentElement.getAttribute('data-theme')==='dark';}
+
+/* ============================== FORMAT ============================== */
+const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+const escHtml=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function fmt(val,type){
+  if(val===null||val===undefined||val==='')return'&mdash;';
+  const n=parseFloat(val);if(isNaN(n))return String(val);
+  if(type==='pct')return(n*100).toFixed(1)+'%';
+  if(type==='usd')return'$'+Math.round(n).toLocaleString('en-US');
+  if(type==='delta'){const s=(n*100).toFixed(1)+'%';return n>=0?'+'+s:s;}
+  return Math.round(n).toLocaleString('es-AR');
+}
+const fN=v=>fmt(v,'int');
+const fP=v=>fmt(v,'pct');
+const fUSD=v=>fmt(v,'usd');
+const fUSDd=v=>{if(v===null||v===undefined||v==='')return'&mdash;';const n=parseFloat(v);if(isNaN(n))return'&mdash;';return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
+const fSign=v=>{const n=parseFloat(v)||0;return(n>=0?'+':'')+n.toLocaleString('es-AR');};
+const fCrp=v=>{if(v===null||v===undefined||v==='')return'&mdash;';const n=parseFloat(v)*100;if(isNaN(n))return'&mdash;';const s=Math.abs(n).toFixed(2)+'%';return n<0?'<span class="val-neg">&#9660; '+s+'</span>':'<span class="val-pos">&#9650; '+s+'</span>';};
+const STAGE_EN={'Consulta':'Consultation','Pedido de Documentación':'Documentation Request','Reunión Informativa':'Informative Meeting','Entrevista de Padres':'Parents Interview','Entrevista de Alumnos':'Students Interview','Aprobación Headmaster':'Headmaster Approval','Oferta de Vacante':'Place Offering','Ganados':'Won','Perdidos':'Lost'};
+function trStage(s){return lang==='en'?(STAGE_EN[s]||s):s;}
+/* ── Data-value translations (some sheet values come in Spanish) ── */
+const MONTH_ES2EN={enero:'January',febrero:'February',marzo:'March',abril:'April',mayo:'May',junio:'June',julio:'July',agosto:'August',septiembre:'September',setiembre:'September',octubre:'October',noviembre:'November',diciembre:'December'};
+const MONTH_EN2ES={january:'Enero',february:'Febrero',march:'Marzo',april:'Abril',may:'Mayo',june:'Junio',july:'Julio',august:'Agosto',september:'Septiembre',october:'Octubre',november:'Noviembre',december:'Diciembre'};
+function trMonth(s){const p=String(s||'').trim().split(/\s+/);if(!p.length)return s;const m=p[0].toLowerCase(),rest=p.slice(1).join(' ');if(lang==='en'&&MONTH_ES2EN[m])return MONTH_ES2EN[m]+(rest?' '+rest:'');if(lang==='es'&&MONTH_EN2ES[m])return MONTH_EN2ES[m]+(rest?' '+rest:'');return s;}
+const SECTOR_EN={'Negocios / Dirección':'Business / Management','Otros':'Other','Estudiante':'Student','Sin dato':'No data','Retirado':'Retired','Tech / Nuevas profesiones':'Tech / New Professions','Médicos / Salud':'Medical / Health','Campo / Agro':'Agriculture','Abogados / Escribanos':'Lawyers / Notaries','Arquitectos':'Architects'};
+function trSector(s){return lang==='en'?(SECTOR_EN[s]||s):s;}
+const TIPO_EN={'Natural':'Natural','Exogena':'Exogenous','Exógena':'Exogenous','Accionable':'Actionable'};
+function trTipo(s){return lang==='en'?(TIPO_EN[s]||s):s;}
+const MODULE_T={'Inbox (Mensajes)':{en:'Inbox',es:'Inbox (Mensajes)'},'Behavior (Rewards & Conduct)':{en:'Behavior (Rewards & Conduct)',es:'Comportamiento (Premios y Conducta)'},'Newsfeed (Novedades)':{en:'Newsfeed',es:'Novedades'},'Groups (Grupos)':{en:'Groups',es:'Grupos'},'Events (Eventos)':{en:'Events',es:'Eventos'}};
+function trModule(s){const m=MODULE_T[s];return m?(lang==='en'?m.en:m.es):s;}
+const COUNTRY_ES={'Argentina':'Argentina','United States':'Estados Unidos','Spain':'España','United Kingdom':'Reino Unido','Chile':'Chile','Uruguay':'Uruguay','Brazil':'Brasil','Australia':'Australia','Bolivia':'Bolivia','Paraguay':'Paraguay','Other':'Otros'};
+function trCountry(s){return lang==='es'?(COUNTRY_ES[s]||s):s;}
+const NAT_ES={'Argentine':'Argentina','American':'Estadounidense','Chinese':'China','Russian':'Rusa','Brazilian':'Brasileña','Chilean':'Chilena','Uruguayan':'Uruguaya','Spanish':'Española','Mexican':'Mexicana','Italian':'Italiana','Other':'Otras'};
+function trNat(s){return lang==='es'?(NAT_ES[s]||s):s;}
+const REGION_ES={'Argentina':'Argentina','Americas':'Resto de América','Rest of Americas':'Resto de América','Europe':'Europa','Oceania':'Oceanía','Asia':'Asia','Africa':'África','Other':'Otros'};
+function trRegion(s){return lang==='es'?(REGION_ES[s]||s):s;}
+const YESNO_ES={'Yes':'Sí','No':'No','Maybe':'Tal vez','Sí':'Sí','Tal vez':'Tal vez'};
+function trYesNo(s){return lang==='es'?(YESNO_ES[s]||s):s;}
+const DAYBOARD_ES={'Day Student':'Externo','Boarding Student':'Pupilo','Boarder':'Pupilo','Day':'Externo','Boarding':'Pupilo'};
+function trDayBoard(s){return lang==='es'?(DAYBOARD_ES[s]||s):s;}
+const CAUSE_ES={'Graduate':'Egreso','Exchange Student':'Intercambio','Move Abroad':'Mudanza al exterior','Moving Locally':'Mudanza local','Financial':'Financiera','Academic':'Académica','Social':'Social','Personal':'Personal','Other':'Otra'};
+function trCause(s){return lang==='es'?(CAUSE_ES[s]||s):s;}
+const SOURCE_ES={'Unknown':'Desconocido','Organic Web':'Web orgánica'};
+function trSource(s){return lang==='es'?(SOURCE_ES[s]||s):s;}
+
+/* ============================== CAMPUS DATA ============================== */
+function mergeSection(a,b){
+  a=a||{};b=b||{};const out={};
+  const keys=new Set([...Object.keys(a),...Object.keys(b)]);
+  keys.forEach(k=>{const av=a[k]||{},bv=b[k]||{};out[k]={matricula:num(av.matricula)+num(bv.matricula),ocupacion:null,vacantes:num(av.vacantes)+num(bv.vacantes),retencion:null,new_students:num(av.new_students)+num(bv.new_students),withdrawals:num(av.withdrawals)+num(bv.withdrawals),prospectos:num(av.prospectos)+num(bv.prospectos),prospectos_2026:num(av.prospectos_2026)+num(bv.prospectos_2026)};});
+  return out;
+}
+function getCampusData(){
+  if(campus==='q')return D.quilmes;
+  if(campus==='n')return D.north;
+  const q=D.quilmes||{},n=D.north||{};
+  return{
+    kinder:mergeSection(q.kinder,n.kinder),
+    prep:mergeSection(q.prep,n.prep),
+    college:mergeSection(q.college,n.college),
+    total:{matricula:num(q.total&&q.total.matricula)+num(n.total&&n.total.matricula),new_students:num(q.total&&q.total.new_students)+num(n.total&&n.total.new_students),withdrawals:num(q.total&&q.total.withdrawals)+num(n.total&&n.total.withdrawals),prospectos:num(q.total&&q.total.prospectos)+num(n.total&&n.total.prospectos)}
+  };
+}
+function getWRF(r){if(campus==='q')return{pipeline:r.qPipeline,won:r.qWon,wr:r.qWR};if(campus==='n')return{pipeline:r.nPipeline,won:r.nWon,wr:r.nWR};return{pipeline:r.osPipeline,won:r.osWon,wr:r.osWR};}
+function getCohF(r){if(campus==='q')return{ing:r.qIngresaron,act:r.qActivos,ret:r.qRet,life:r.qLifespan};if(campus==='n')return{ing:r.nIngresaron,act:r.nActivos,ret:r.nRet,life:r.nLifespan};const i=num(r.qIngresaron)+num(r.nIngresaron),a=num(r.qActivos)+num(r.nActivos);return{ing:i,act:a,ret:i>0?a/i:null,life:r.qLifespan};}
+function campusVar(){
+  const re=D.resumen;if(!re)return num((D.headline||{}).variacion_anual);
+  const arr=campus==='q'?re.quilmes:campus==='n'?re.north:re.oneSchool;
+  if(!arr)return 0;
+  const r26=arr.find(r=>r.yr===2026)||{},r25=arr.find(r=>r.yr===2025)||{};
+  const v26=num(r26.total),v25=num(r25.total);
+  return v25>0?(v26-v25)/v25:0;
+}
+function wr2026(){const w=(D.winrate||[]).find(r=>r.yr===2026);return w?num(getWRF(w).wr):num((D.headline||{}).win_rate);}
+const CC={os:{main:'#1A1F35'},q:{main:'#DC1E33'},n:{main:'#213463'}};
+
+/* ============================== AUTH ============================== */
+function initAuth(){
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:CLIENT_ID,scope:'openid email profile',
+    callback:async r=>{
+      if(r.error){alert('Authentication error: '+r.error);return;}
+      accessToken=r.access_token;
+      try{const res=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+accessToken}});const info=await res.json();userEmail=(info.email||'').toLowerCase().trim();}catch(ex){console.warn('userinfo error',ex);}
+      if(userEmail===ADMIN_EMAIL)document.getElementById('btn-admin').style.display='flex';
+      saveSession();showApp();tryRenderCache();fetchData();
+    }
+  });
+  hideLoad();
+}
+document.getElementById('btn-login').addEventListener('click',()=>tokenClient.requestAccessToken({prompt:'select_account'}));
+document.getElementById('btn-out').addEventListener('click',()=>{
+  clearSession();
+  google.accounts.oauth2.revoke(accessToken,()=>{
+    accessToken=null;userEmail='';
+    document.getElementById('app').style.display='none';
+    document.getElementById('btn-admin').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+  });
+});
+
+/* ============================== DATA ============================== */
+let _fetchRetry=0;
+async function fetchData(force){
+  var appVisible=document.getElementById('app')&&document.getElementById('app').style.display!=='none';
+  // Only show skeleton/spinner if we have nothing on screen yet (cache already rendered = silent refresh)
+  if(appVisible){hideLoad();if(force||!(D&&D.headline))showSkeleton();}else{showLoad('Syncing data...');}
+  const old=document.getElementById('_jp');if(old)old.remove();
+  const cb='sgcCb_'+Date.now();
+  const url=API_URL+'?callback='+cb+'&t='+Date.now()+(force?'&nocache=1':'');
+  const onSuccess=data=>{
+    _fetchRetry=0;D=data;
+    if(D.allowed_emails&&Array.isArray(D.allowed_emails)&&D.allowed_emails.length>0){
+      const allowed=D.allowed_emails.map(e=>(e||'').toLowerCase().trim());
+      if(!allowed.includes(userEmail)){showAccessDenied();return;}
+    }
+    const now=D.lastUpdate||new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('h-update').textContent='Updated: '+now;
+    document.getElementById('f-time').textContent=now;
+    if(D.config&&typeof D.config.showFact!=='undefined')showFact=D.config.showFact===true||D.config.showFact==='true'||D.config.showFact===1;
+    try{localStorage.setItem('sgc_data',JSON.stringify(data));localStorage.setItem('sgc_data_t',String(Date.now()));}catch(e){}
+    updateAdminInfo();initSimAdj();render();
+    delete window[cb];const s=document.getElementById('_jp');if(s)s.remove();
+  };
+  const onError=()=>{if(_fetchRetry<2){_fetchRetry++;setTimeout(fetchData,3000);}else{_fetchRetry=0;showErrorBanner();}};
+  try{
+    const resp=await Promise.race([fetch(url,{cache:'no-store',redirect:'follow'}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),20000))]);
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const text=await resp.text();
+    if(!text.startsWith(cb+'('))throw new Error('unexpected jsonp callback');
+    const i=text.indexOf('('),j=text.lastIndexOf(')');
+    if(i<0||j<0)throw new Error('bad jsonp');
+    onSuccess(JSON.parse(text.slice(i+1,j)));return;
+  }catch(fetchErr){console.warn('fetch() failed, falling back to JSONP:',fetchErr.message);}
+  // JSONP fallback — large payload + Apps Script cold start can be slow, so be patient.
+  // Keep the callback alive so a late response still loads (avoids "cb is not defined").
+  window[cb]=function(d){try{onSuccess(d);}catch(e){console.warn(e);}};
+  const s=document.createElement('script');s.id='_jp';s.src=url;
+  const guard=setTimeout(()=>{onError();},38000);
+  s.onload=()=>clearTimeout(guard);s.onerror=()=>{clearTimeout(guard);onError();};
+  document.head.appendChild(s);
+}
+function showErrorBanner(){
+  hideLoad();const existing=document.getElementById('err-banner');if(existing)existing.remove();
+  const banner=document.createElement('div');banner.id='err-banner';
+  banner.style.cssText='position:fixed;top:var(--header-h);left:50%;transform:translateX(-50%);background:#b91c1c;color:#fff;padding:12px 20px;border-radius:0 0 10px 10px;font-size:.82rem;font-family:Asap,sans-serif;z-index:600;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.35);white-space:nowrap;';
+  banner.innerHTML='&#9888; Could not load data. <button onclick="document.getElementById(\'err-banner\').remove();fetchData();" style="background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);color:#fff;padding:4px 12px;border-radius:5px;cursor:pointer;font-family:Asap,sans-serif;font-size:.78rem;font-weight:600;">Retry</button>';
+  document.body.appendChild(banner);setTimeout(()=>{if(banner.parentNode)banner.remove();},12000);
+}
+
+/* ============================== RENDER ============================== */
+function syncCampusUI(){
+  const mkt=activeTab==='marketing';
+  document.querySelectorAll('.campus-btn').forEach(b=>{
+    if(b.dataset.c!=='os')b.style.display=mkt?'none':'';
+    if(mkt){b.classList.toggle('active',b.dataset.c==='os');b.setAttribute('aria-pressed',b.dataset.c==='os'?'true':'false');}
+  });
+}
+function render(){
+  if(activeTab==='marketing')campus='os';
+  Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};
+  const main=document.getElementById('main');main.innerHTML='';main.className='campus-'+campus;
+  TABS.forEach(function(tab){
+    if(!sVis[tab.id])return;
+    const panel=document.createElement('div');
+    panel.className='panel'+(tab.id===activeTab?' active':'');panel.id='panel-'+tab.id;
+    const content=buildPanel(tab.id);if(content)panel.appendChild(content);
+    main.appendChild(panel);
+  });
+  animateFunnels();
+  buildSidebarNav();drawCharts();applyDensity();applyHeaderStrings();syncCampusUI();hideLoad();
+}
+function buildPanel(id){
+  switch(id){
+    case'resumen':return buildResumen();
+    case'admissions':return buildAdmissions();
+    case'retention':return buildRetention();
+    case'marketing':return buildMarketing();
+    case'proyeccion':return buildProyeccion();
+    case'alumni':return buildAlumni();
+  }
+}
+function animateFunnels(){setTimeout(()=>{document.querySelectorAll('.f-fill').forEach(el=>{const w=el.dataset.w;if(w)el.style.width=w+'%';});},100);}
+
+/* ── shared builders ── */
+function pageHeader(title,sub){
+  const d=document.createElement('div');d.className='page-hd';
+  const campusName=campus==='os'?'One School':campus==='q'?'Quilmes':'North';
+  d.innerHTML='<div class="page-hd-inner"><div><div class="page-title">'+title+'</div><div class="page-sub">'+sub+'</div></div><div class="campus-badge '+campus+'"><span class="cb-dot"></span>'+campusName+'</div></div>';
+  return d;
+}
+function sec(title,meta,content){
+  const s=document.createElement('div');s.className='sec';
+  s.innerHTML='<div class="sec-hd"><span class="sec-title">'+title+'</span>'+(meta?'<span class="sec-meta">'+meta+'</span>':'')+'</div>';
+  s.appendChild(content);return s;
+}
+function elFromHTML(html){const d=document.createElement('div');d.innerHTML=html;return d;}
+function groupHeader(title,sub,first,color){
+  const d=document.createElement('div');d.className='mkt-group'+(first?' first':'');
+  d.innerHTML='<div class="mkt-group-bar" style="background:'+(color||'var(--teal)')+'"></div><div><div class="mkt-group-ttl">'+title+'</div>'+(sub?'<div class="mkt-group-sub">'+sub+'</div>':'')+'</div>';
+  return d;
+}
+function kpiGrid(cards){
+  const g=document.createElement('div');g.className='kpi-grid';
+  g.innerHTML=cards.map(c=>'<div class="kpi-card'+(c.accent?' accent':'')+'"><div class="kpi-lbl">'+c.lbl+'</div><div class="kpi-val '+(c.cls||'')+'">'+c.val+'</div><div class="kpi-foot">'+(c.foot||'')+'</div></div>').join('');
+  return g;
+}
+function statStrip(items){
+  const strip=document.createElement('div');strip.className='stat-strip';
+  strip.innerHTML=items.map(s=>'<div class="si"><div class="si-lbl">'+s.lbl+'</div><div class="si-val '+(s.cls||'')+'">'+s.val+'</div><div class="si-foot">'+(s.foot||'')+'</div></div>').join('');
+  return strip;
+}
+function emptyState(title,sub){
+  return elFromHTML('<div class="empty-state"><div class="empty-icon">&#9203;</div><div class="empty-title">'+(title||t('coming_soon'))+'</div><div class="empty-sub">'+(sub||'')+'</div></div>');
+}
+const GR_K=['K1','K2','K3','K4','K5'],GR_P=['P1','P2','P3','P4','P5','P6'],GR_C=['C1','C2','C3','C4','C5','C6'];
+
+/* ============================== EXECUTIVE SUMMARY ============================== */
+function buildResumen(){
+  const wrap=document.createElement('div');
+  wrap.appendChild(pageHeader(t('ph_resumen'),t('ph_resumen_sub')));
+  const h=D.headline||{};
+  const cd=getCampusData()||{};
+  const varDec=campusVar(),varN=varDec*100;
+  const totalStudents=campus==='os'?h.total_alumnos:(cd.total&&cd.total.matricula);
+  const newStudents=campus==='os'?h.new_students:(cd.total&&cd.total.new_students);
+  const prosp=campus==='os'?h.prospectos:(cd.total&&cd.total.prospectos);
+
+  // Headline stat-strip (campus-aware)
+  const items=[
+    {lbl:t('total_alumnos'),val:fN(totalStudents),foot:campus==='os'?'One School 2026':(campus==='q'?'Quilmes 2026':'North 2026')},
+    {lbl:t('var_anual'),val:varN.toFixed(2)+'%',foot:'2025 &rarr; 2026',cls:varN<0?'neg':'pos'},
+    {lbl:t('new_students'),val:fN(newStudents),foot:'2026'},
+    {lbl:t('win_rate'),val:fP(wr2026()),foot:'2026'},
+  ];
+  if(campus!=='n')items.push({lbl:t('ret_quilmes'),val:fP(h.retencion_quilmes),foot:t('os_foot'),cls:'c-red'});
+  if(campus!=='q')items.push({lbl:t('ret_north'),val:fP(h.retencion_north),foot:t('os_foot'),cls:'c-navy'});
+  items.push({lbl:t('prospectos_27'),val:fN(prosp),foot:'2027'});
+  wrap.appendChild(sec(t('headline'),t('headline_meta'),statStrip(items)));
+
+  // Community indicators — card set depends on campus
+  if(D.community){
+    const com=D.community;
+    let cards;
+    if(campus==='os'){
+      cards=[{lbl:t('og_quilmes'),val:fP(com.ogQuilmes),foot:t('og_foot')},
+             {lbl:t('og_north'),val:fP(com.ogNorth),foot:t('og_foot')},
+             {lbl:t('foreign'),val:fP(com.foreignStudents),foot:t('os_foot')},
+             {lbl:t('priority'),val:fP(com.priorityCommunity),foot:t('og_plus'),lead:true}];
+    }else{
+      const og=campus==='q'?com.ogQuilmes:com.ogNorth;
+      const ogLbl=campus==='q'?t('og_quilmes'):t('og_north');
+      const fr=campus==='q'?com.foreignQuilmes:com.foreignNorth;
+      const pr=campus==='q'?com.priorityQuilmes:com.priorityNorth;
+      cards=[{lbl:ogLbl,val:fP(og),foot:t('og_foot')},
+             {lbl:t('foreign'),val:fP(fr!=null?fr:com.foreignStudents),foot:''},
+             {lbl:t('priority'),val:fP(pr!=null?pr:com.priorityCommunity),foot:t('og_plus'),lead:true}];
+    }
+    const cg=document.createElement('div');cg.className='comm-grid c'+cards.length;
+    cards.forEach(c=>{cg.innerHTML+='<div class="comm-card'+(c.lead?' lead':'')+'"><div class="comm-lbl">'+c.lbl+'</div><div class="comm-val">'+c.val+'</div><div class="comm-foot">'+c.foot+'</div></div>';});
+    wrap.appendChild(sec(t('community'),t('community_meta'),cg));
+  }
+
+  // Enrolment by section (2025 vs 2026)
+  wrap.appendChild(sec(t('s_enrolment'),t('s_enrolment_meta'),buildEnrolTable()));
+
+  // Current Students Breakdown — Students/Capacity by grade
+  wrap.appendChild(sec(t('s_breakdown'),t('s_breakdown_meta'),buildKpiTable()));
+
+  // Boarding (Quilmes) — Weekly/Full by gender & Year Group; hidden on North
+  if(campus!=='n'){const bt=buildBoarding();if(bt)wrap.appendChild(sec(t('s_boarding'),t('s_boarding_meta'),bt));}
+
+  // Charts
+  if(D.resumen){
+    const two=document.createElement('div');two.className='two';
+    two.innerHTML='<div class="cc"><div class="cc-hd"><div><div class="cc-ttl">'+t('enrol_chart')+'</div><div class="cc-sub">'+t('enrol_sub')+'</div></div></div><div class="chart-wrap"><canvas id="chart-enrol" height="200"></canvas></div></div>'
+      +'<div class="cc"><div class="cc-hd"><div><div class="cc-ttl">'+t('qn_chart')+'</div><div class="cc-sub">'+t('qn_sub')+'</div></div></div><div class="chart-wrap"><canvas id="chart-qn" height="200"></canvas></div></div>';
+    const evo=sec(t('evol'),t('evol_meta'),two);wrap.appendChild(evo);
+    const donutWrap=document.createElement('div');donutWrap.style.cssText='max-width:760px;margin:8px auto 0;';
+    donutWrap.innerHTML='<div class="cc"><div class="cc-hd"><div><div class="cc-ttl">'+t('donut_chart')+'</div><div class="cc-sub">'+t('donut_sub')+'</div></div></div><div class="chart-wrap" style="height:180px"><canvas id="chart-donut"></canvas></div></div>';
+    wrap.appendChild(donutWrap);
+  }
+  return wrap;
+}
+
+function buildEnrolTable(){
+  const re=D.resumen||{};
+  const arrFor=c=>c==='q'?re.quilmes:c==='n'?re.north:null;
+  const tw=document.createElement('div');tw.className='tw';
+  const grpCls=campus==='q'?'grp-q':campus==='n'?'grp-n':'grp-k';
+  const ctotCls=campus==='q'?'ctot-q':campus==='n'?'ctot-n':'ctot-os';
+  let h='<table><thead><tr><th>'+t('col_section')+'</th><th class="r">'+t('col_2025')+'</th><th class="r">'+t('col_2026')+'</th><th class="r">'+t('col_prosp26')+'</th><th class="r">'+t('col_prosp27')+'</th></tr></thead><tbody>';
+  let tM25=0,tM26=0,tP26=0,tP27=0;
+  const cd=getCampusData()||{};
+  const ps=D.prospectsBySection;const nivMap={kinder:'Kinder',prep:'Prep',college:'College'};
+  const pget=(niv,cyc)=>{
+    if(!ps)return null;
+    const q=(ps.Quilmes&&ps.Quilmes[niv])?num(ps.Quilmes[niv]['c'+cyc]):0;
+    const n=(ps.North&&ps.North[niv])?num(ps.North[niv]['c'+cyc]):0;
+    return campus==='q'?q:campus==='n'?n:q+n;
+  };
+  const secDefs=[{key:'kinder',lbl:t('kinder')},{key:'prep',lbl:t('prep')},{key:'college',lbl:t('college')}];
+  const yr=(c,y,key)=>{const arr=arrFor(c)||[];const r=arr.find(x=>x.yr===y)||{};return num(r[key]);};
+  secDefs.forEach(sd=>{
+    const tot=(cd[sd.key]||{}).total||{};
+    const m25=campus==='os'?yr('q',2025,sd.key)+yr('n',2025,sd.key):yr(campus,2025,sd.key);
+    const m26=num(tot.matricula);
+    const niv=nivMap[sd.key];
+    const p26=ps?pget(niv,2026):num(tot.prospectos_2026);
+    const p27=ps?pget(niv,2027):num(tot.prospectos);
+    tM25+=m25;tM26+=m26;tP26+=p26;tP27+=p27;
+    h+='<tr class="grp '+grpCls+'"><td>'+sd.lbl+'</td><td class="r">'+fN(m25)+'</td><td class="r">'+fN(m26)+'</td><td class="r">'+fN(p26)+'</td><td class="r">'+fN(p27)+'</td></tr>';
+  });
+  h+='<tr class="ctot '+ctotCls+'"><td>'+t('total_campus')+'</td><td class="r">'+fN(tM25)+'</td><td class="r"><strong>'+fN(tM26)+'</strong></td><td class="r">'+fN(tP26)+'</td><td class="r">'+fN(tP27)+'</td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;
+  return tw;
+}
+function enrichOccupancy(cd){
+  // Derive occupancy% and vacancies per grade from projection capacities + 2026 enrolment
+  // (the doGet returns these as null; capacities are stable room sizes).
+  if(!cd||!D.proyeccion)return cd;
+  const py=D.proyeccion;
+  const capOf=g=>{
+    const fq=(py.quilmes||[]).find(r=>r.grado===g),fn=(py.north||[]).find(r=>r.grado===g);
+    if(campus==='q')return fq?num(fq.capacidad):null;
+    if(campus==='n')return fn?num(fn.capacidad):null;
+    const a=fq?num(fq.capacidad):0,b=fn?num(fn.capacidad):0;return(a+b)>0?(a+b):null;
+  };
+  ['kinder','prep','college'].forEach(secKey=>{
+    const obj=cd[secKey];if(!obj)return;
+    let tCap=0,tMat=0,hasCap=false;
+    Object.keys(obj).forEach(g=>{
+      if(g==='total')return;const d=obj[g];if(!d)return;
+      const cap=capOf(g);
+      if(cap!=null&&cap>0){d.ocupacion=num(d.matricula)/cap;d.vacantes=Math.max(0,cap-num(d.matricula));tCap+=cap;tMat+=num(d.matricula);hasCap=true;}
+    });
+    if(obj.total&&hasCap){obj.total.ocupacion=tCap>0?tMat/tCap:null;obj.total.vacantes=Math.max(0,tCap-tMat);}
+  });
+  return cd;
+}
+function gradeCapacity(g){
+  const py=D.proyeccion||{};
+  const fq=(py.quilmes||[]).find(r=>r.grado===g),fn=(py.north||[]).find(r=>r.grado===g);
+  if(campus==='q')return fq?num(fq.capacidad):null;
+  if(campus==='n')return fn?num(fn.capacidad):null;
+  const a=fq?num(fq.capacidad):0,b=fn?num(fn.capacidad):0;return(a+b)>0?(a+b):null;
+}
+function buildBoarding(){
+  const src=(D.boarding||[]).filter(r=>campus==='q'?r.campus==='Quilmes':campus==='n'?false:true);
+  if(!src.length)return null;
+  const order=['K1','K2','K3','K4','K5','P1','P2','P3','P4','P5','P6','C1','C2','C3','C4','C5','C6'];
+  const map={};
+  src.forEach(r=>{const k=r.yg;if(!map[k])map[k]={yg:k,wM:0,wF:0,fM:0,fF:0};map[k].wM+=num(r.weeklyM);map[k].wF+=num(r.weeklyF);map[k].fM+=num(r.fullM);map[k].fF+=num(r.fullF);});
+  const ygs=Object.keys(map).sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
+  if(!ygs.length)return null;
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th></th><th class="r">'+t('bd_weekly')+'</th><th class="r">'+t('bd_full')+'</th><th class="r">'+t('total_lbl')+'</th></tr></thead><tbody>';
+  let gWk=0,gFl=0;
+  const genders=[{key:'boys',wk:'wM',fl:'fM',lbl:t('bd_boys')},{key:'girls',wk:'wF',fl:'fF',lbl:t('bd_girls')}];
+  genders.forEach(G=>{
+    const gid='bd-'+G.key;
+    let pw=0,pf=0;ygs.forEach(yg=>{pw+=num(map[yg][G.wk]);pf+=num(map[yg][G.fl]);});
+    gWk+=pw;gFl+=pf;
+    h+='<tr class="grp gtog" onclick="toggleGroup(\''+gid+'\',this)"><td style="font-weight:700"><span class="gcaret"></span>'+G.lbl+'</td><td class="r"><strong>'+fN(pw)+'</strong></td><td class="r"><strong>'+fN(pf)+'</strong></td><td class="r"><strong>'+fN(pw+pf)+'</strong></td></tr>';
+    ygs.forEach(yg=>{const wv=num(map[yg][G.wk]),fv=num(map[yg][G.fl]);if(wv+fv===0)return;h+='<tr class="salon-row '+gid+'" style="display:none"><td>'+escHtml(yg)+'</td><td class="r">'+fN(wv)+'</td><td class="r">'+fN(fv)+'</td><td class="r">'+fN(wv+fv)+'</td></tr>';});
+  });
+  h+='<tr class="tot"><td>'+t('total_lbl')+'</td><td class="r">'+fN(gWk)+'</td><td class="r">'+fN(gFl)+'</td><td class="r">'+fN(gWk+gFl)+'</td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+function buildKpiTable(){
+  const cd=getCampusData();if(!cd)return document.createElement('div');
+  const tw=document.createElement('div');tw.className='tw';
+  const lvls=[{lbl:t('kinder'),obj:cd.kinder,grades:GR_K},{lbl:t('prep'),obj:cd.prep,grades:GR_P},{lbl:t('college'),obj:cd.college,grades:GR_C}];
+  const grpCls=campus==='q'?'grp-q':campus==='n'?'grp-n':'grp-k';
+  const ctotCls=campus==='q'?'ctot-q':campus==='n'?'ctot-n':'ctot-os';
+  const sc=(stu,cap)=>fN(stu)+' / '+(cap!=null?fN(cap):'&mdash;');
+  // Won 2026 by grade (from funnelGrade WON counts)
+  const wonMap={};(D.funnelGrade||[]).forEach(r=>{if(num(r.yr)===2026)wonMap[r.grade]=(wonMap[r.grade]||0)+num(r.won);});
+  const gWon=g=>campus==='q'?num(wonMap['Q'+g]):campus==='n'?num(wonMap['N'+g]):num(wonMap['Q'+g])+num(wonMap['N'+g]);
+  let h='<table><thead><tr><th>'+t('col_level')+'</th><th class="r">'+t('col_grade')+'</th><th class="r">'+t('col_studcap')+'</th><th class="r">'+t('col_won26')+'</th></tr></thead><tbody>';
+  let gtCap=0,gtStu=0;
+  lvls.forEach((s,si)=>{
+    const obj=s.obj||{},tot=obj.total||{};const gid='kpig-'+si;
+    let secCap=0;s.grades.forEach(g=>{const c=gradeCapacity(g);if(c!=null)secCap+=c;});
+    gtCap+=secCap;gtStu+=num(tot.matricula);
+    h+='<tr class="grp '+grpCls+' gtog" onclick="toggleGroup(\''+gid+'\',this)"><td colspan="2"><span class="gcaret"></span>'+t('total_lbl')+' '+s.lbl+'</td><td class="r"><strong>'+sc(num(tot.matricula),secCap)+'</strong></td><td class="r">'+fN(tot.new_students)+'</td></tr>';
+    s.grades.forEach(g=>{const d=obj[g];if(!d)return;const w=gWon(g);h+='<tr class="salon-row '+gid+'" style="display:none"><td></td><td class="r">'+g+'</td><td class="r">'+sc(num(d.matricula),gradeCapacity(g))+'</td><td class="r">'+fN(w)+'</td></tr>';});
+  });
+  const ct=cd.total||{};
+  h+='<tr class="ctot '+ctotCls+'"><td colspan="2">'+t('total_campus')+'</td><td class="r"><strong>'+sc(num(ct.matricula),gtCap)+'</strong></td><td class="r">'+fN(ct.new_students)+'</td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+
+/* ============================== ADMISSIONS ============================== */
+function buildAdmissions(){
+  const wrap=document.createElement('div');
+  wrap.appendChild(pageHeader(t('ph_admissions'),t('ph_admissions_sub')));
+  const cd=getCampusData()||{};const ad=D.admissions;
+  const varN=campusVar()*100;
+  const total = ad?cv(ad.totalStudents):num(cd.total&&cd.total.matricula);
+  const newS  = ad?cv(ad.newStudents):num(cd.total&&cd.total.new_students);
+  const cr    = ad?cv(ad.conversionRate):wr2026();
+  const p26   = ad?cv(ad.prospects2026):null;
+  const p27   = ad?cv(ad.prospects2027):num(cd.total&&cd.total.prospectos);
+  wrap.appendChild(sec(t('headline'),'',statStrip([
+    {lbl:t('total_alumnos'),val:fN(total),foot:'2026'},
+    {lbl:t('var_anual'),val:varN.toFixed(2)+'%',foot:'2025 &rarr; 2026',cls:varN<0?'neg':'pos'},
+    {lbl:t('won'),val:fN(newS),foot:'2026'},
+    {lbl:t('win_rate'),val:fP(cr),foot:'2026'},
+    {lbl:t('prospectos_26'),val:p26==null?'&mdash;':fN(p26),foot:'2026'},
+    {lbl:t('prospectos_27'),val:fN(p27),foot:'2027'},
+  ])));
+
+  wrap.appendChild(buildConvFunnel());
+  const fcWrap=document.createElement('div');
+  fcWrap.appendChild(elFromHTML('<div class="info-note"><svg width="15" height="15" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M12 12v4"/></svg><span>'+t('forecast_note')+'</span></div>').firstChild);
+  fcWrap.appendChild(buildOccupancy());
+  wrap.appendChild(sec(t('s_forecast'),t('s_forecast_meta'),fcWrap));
+
+  // Historical Conversion Rate — Opportunities + table/chart toggle
+  if(D.winrate){
+    const sct=document.createElement('div');sct.className='sec';
+    sct.innerHTML='<div class="sec-hd"><span class="sec-title">'+t('s_historical_cr')+'</span><span class="sec-meta">'+t('s_historical_cr_meta')+'</span><div class="cycle-pills" style="margin-left:auto"><button class="cycle-pill'+(histView==='table'?' active':'')+'" onclick="histView=\'table\';render()">'+t('view_table')+'</button><button class="cycle-pill'+(histView==='chart'?' active':'')+'" onclick="histView=\'chart\';render()">'+t('view_chart')+'</button></div></div>';
+    if(histView==='table'){
+      let h2='<div class="tw"><table><thead><tr><th>'+t('col_year')+'</th><th class="r">'+t('col_opportunities')+'</th><th class="r">'+t('col_won')+'</th><th class="r">'+t('col_wr')+'</th></tr></thead><tbody>';
+      (D.winrate||[]).forEach(r=>{const f=getWRF(r);const wr=num(f.wr)*100;const cls=wr>=15?'val-pos':wr<8?'val-neg':'';h2+='<tr><td style="font-weight:700">'+r.yr+'</td><td class="r">'+fN(f.pipeline)+'</td><td class="r">'+fN(f.won)+'</td><td class="r"><span class="'+cls+'">'+fP(f.wr)+'</span></td></tr>';});
+      h2+='</tbody></table></div>';
+      sct.appendChild(elFromHTML(h2).firstChild);
+    }else{
+      sct.appendChild(elFromHTML('<div class="cc"><div class="cc-hd"><div><div class="cc-ttl">'+t('wr_chart')+'</div><div class="cc-sub">'+t('wr_sub')+'</div></div></div><div class="chart-wrap" style="height:300px"><canvas id="chart-wr"></canvas></div></div>').firstChild);
+    }
+    wrap.appendChild(sct);
+  }
+
+  wrap.appendChild(buildConvPipeline());
+  wrap.appendChild(buildChannelSection());
+  return wrap;
+}
+
+function getFunnel(yr){
+  const rows=(D.funnelByYear||[]).filter(r=>num(r.yr)===yr);
+  if(!rows.length)return null;
+  const pick=cn=>rows.find(r=>r.campus===cn)||{};
+  let inq=0,vis=0,app=0,won=0;
+  if(campus==='q'){const r=pick('Quilmes');inq=num(r.inquiries);vis=num(r.visit);app=num(r.application);won=num(r.won);}
+  else if(campus==='n'){const r=pick('North');inq=num(r.inquiries);vis=num(r.visit);app=num(r.application);won=num(r.won);}
+  else{const q=pick('Quilmes'),n=pick('North');inq=num(q.inquiries)+num(n.inquiries);vis=num(q.visit)+num(n.visit);app=num(q.application)+num(n.application);won=num(q.won)+num(n.won);}
+  return {inquiries:inq,visit:vis,application:app,won:won,visitRate:inq>0?vis/inq:0,applRate:inq>0?app/inq:0,yieldRate:inq>0?won/inq:0};
+}
+function yearPills(cur,years,setter){
+  return '<div class="cycle-pills" style="margin-left:auto">'+years.map(y=>'<button class="cycle-pill'+(num(cur)===y?' active':'')+'" onclick="'+setter+'='+y+';render()">'+y+'</button>').join('')+'</div>';
+}
+function monthPills(cur,months){
+  return '<div class="cycle-pills" style="margin-left:auto">'+months.map(m=>'<button class="cycle-pill'+(cur===m?' active':'')+'" onclick="adsMonth=\''+m+'\';render()">'+monthLabel(m)+'</button>').join('')+'</div>';
+}
+function buildConvFunnel(){
+  const sct=document.createElement('div');sct.className='sec';
+  const years=[2021,2022,2023,2024,2025,2026,2027];
+  sct.innerHTML='<div class="sec-hd"><span class="sec-title">'+t('s_conv_funnel')+'</span><span class="sec-meta">'+t('s_conv_funnel_meta')+'</span>'+yearPills(funnelYear,years,'funnelYear')+'</div>';
+  const yr=num(funnelYear);
+  // Expandable breakdown by Year Group (when funnelGrade is available)
+  if(D.funnelGrade&&D.funnelGrade.length){
+    const campName=campus==='q'?'Quilmes':campus==='n'?'North':null;
+    const rows=D.funnelGrade.filter(r=>num(r.yr)===yr&&(campName?r.campus===campName:true));
+    if(rows.length){
+      const levelOf=g=>{const m=String(g).match(/^[QN]([KPC])/);return m?(m[1]==='K'?'kinder':m[1]==='P'?'prep':'college'):'college';};
+      const groups={kinder:[],prep:[],college:[]};
+      rows.forEach(r=>{groups[levelOf(r.grade)].push(r);});
+      const tw=document.createElement('div');tw.className='tw';
+      let h='<table><thead><tr><th>'+t('col_grade')+'</th><th class="r">'+t('col_inquiries')+'</th><th class="r">'+t('col_visit_n')+'</th><th class="r">'+t('col_appl_n')+'</th><th class="r">'+t('col_yield_n')+'</th></tr></thead><tbody>';
+      let TI=0,TV=0,TA=0,TW=0;
+      ['kinder','prep','college'].forEach(lv=>{
+        const list=groups[lv];if(!list.length)return;
+        list.sort((a,b)=>String(a.grade).localeCompare(String(b.grade)));
+        let li=0,lvv=0,la=0,lw=0;list.forEach(r=>{li+=num(r.inquiries);lvv+=num(r.visit);la+=num(r.application);lw+=num(r.won);});
+        TI+=li;TV+=lvv;TA+=la;TW+=lw;
+        const gid='fg-'+lv;
+        h+='<tr class="grp grp-k gtog" onclick="toggleGroup(\''+gid+'\',this)"><td><span class="gcaret"></span>'+t(lv)+'</td><td class="r"><strong>'+fN(li)+'</strong></td><td class="r">'+fN(lvv)+'</td><td class="r">'+fN(la)+'</td><td class="r"><strong>'+fN(lw)+'</strong></td></tr>';
+        list.forEach(r=>{h+='<tr class="salon-row '+gid+'" style="display:none"><td>'+escHtml(r.grade)+'</td><td class="r">'+fN(r.inquiries)+'</td><td class="r">'+fN(r.visit)+'</td><td class="r">'+fN(r.application)+'</td><td class="r">'+fN(r.won)+'</td></tr>';});
+      });
+      h+='<tr class="tot won-row"><td>'+t('total_lbl')+'</td><td class="r"><strong>'+fN(TI)+'</strong></td><td class="r">'+fN(TV)+'</td><td class="r">'+fN(TA)+'</td><td class="r"><strong>'+fN(TW)+'</strong></td></tr>';
+      h+='</tbody></table>';tw.innerHTML=h;sct.appendChild(tw);
+      return sct;
+    }
+  }
+  // Fallback: stage funnel (Inquiries/Visit/Application/Yield) for the selected year
+  const f=getFunnel(yr);
+  if(!f){sct.appendChild(emptyState(t('coming_soon'),''));return sct;}
+  const rows=[
+    {lbl:t('col_inquiries'),count:f.inquiries,rate:1,won:false},
+    {lbl:t('col_visit_n'),count:f.visit,rate:f.visitRate,won:false},
+    {lbl:t('col_appl_n'),count:f.application,rate:f.applRate,won:false},
+    {lbl:t('col_yield_n'),count:f.won,rate:f.yieldRate,won:true},
+  ];
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th>'+t('col_stage')+'</th><th class="r">'+t('col_count')+'</th><th class="r">'+t('col_rate')+'</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+='<tr class="'+(r.won?'won-row':'')+'"><td style="font-weight:'+(r.won?700:500)+'">'+r.lbl+'</td><td class="r"'+(r.won?' style="font-weight:700"':'')+'>'+fN(r.count)+'</td><td class="r">'+fP(r.rate)+'</td></tr>';});
+  h+='</tbody></table>';tw.innerHTML=h;sct.appendChild(tw);
+  return sct;
+}
+function buildConvPipeline(){
+  const f=getFunnel(2026)||getFunnel(num(funnelYear));
+  const sct=document.createElement('div');sct.className='sec';
+  sct.innerHTML='<div class="sec-hd"><span class="sec-title">'+t('s_conv_pipeline')+'</span><span class="sec-meta">'+t('s_conv_pipeline_meta')+'</span></div>';
+  if(!f){sct.appendChild(emptyState(t('coming_soon'),''));return sct;}
+  const stages=[
+    {lbl:t('col_inquiries'),n:f.inquiries,won:false},
+    {lbl:t('col_visit_n'),n:f.visit,won:false},
+    {lbl:t('col_appl_n'),n:f.application,won:false},
+    {lbl:t('col_yield_n'),n:f.won,won:true},
+  ];
+  const maxF=Math.max(f.inquiries,1);
+  const fd=document.createElement('div');fd.className='funnel';
+  stages.forEach((s,i)=>{
+    const pct=s.n/maxF*100;
+    const prev=i>0?stages[i-1].n:s.n;
+    const drop=prev>0?Math.round((1-s.n/prev)*100):0;
+    const div=document.createElement('div');div.className='f-row'+(s.won?' won':'');
+    div.innerHTML='<div class="f-lbl">'+s.lbl+'</div><div class="f-track"><div class="f-fill" data-w="'+pct.toFixed(1)+'"></div></div><div class="f-nums"><span class="f-count">'+fN(s.n)+'</span><span class="f-badge-slot">'+(i>0?'<span class="f-badge">'+drop+'% '+(lang==='en'?'drop':'baja')+'</span>':'')+'</span></div>';
+    fd.appendChild(div);
+  });
+  sct.appendChild(fd);return sct;
+}
+function buildChannelSection(){
+  const sct=document.createElement('div');sct.className='sec';
+  const years=[2021,2022,2023,2024,2025,2026];
+  sct.innerHTML='<div class="sec-hd"><span class="sec-title">'+t('s_channel')+'</span><span class="sec-meta">'+t('s_channel_meta')+'</span>'+yearPills(channelYear,years,'channelYear')+'</div>';
+  sct.appendChild(buildChannel());
+  return sct;
+}
+function buildChannel(){
+  const rows=D.channel||[];
+  if(!rows.length)return emptyState(t('coming_soon'),t('cs_channel'));
+  const yr=num(channelYear);
+  const campName=campus==='q'?'Quilmes':campus==='n'?'North':null;
+  const filt=rows.filter(r=>num(r.yr)===yr&&(campName?r.campus===campName:true));
+  const by={};
+  filt.forEach(r=>{const s=by[r.source]||{source:r.source,pipeline:0,won:0};s.pipeline+=num(r.pipeline);s.won+=num(r.won);by[r.source]=s;});
+  const list=Object.keys(by).map(k=>by[k]).sort((a,b)=>b.won-a.won);
+  if(!list.length)return emptyState(t('coming_soon'),'');
+  const tw=document.createElement('div');tw.className='tw';
+  let tp=0,tWon=0;
+  let h='<table><thead><tr><th>'+t('col_source')+'</th><th class="r">'+t('col_opportunities')+'</th><th class="r">'+t('col_won')+'</th><th class="r">'+t('col_wr')+'</th></tr></thead><tbody>';
+  list.forEach(s=>{const wr=s.pipeline>0?s.won/s.pipeline:0;const cls=wr>=0.15?'val-pos':wr<0.05?'val-neg':'';tp+=s.pipeline;tWon+=s.won;h+='<tr><td style="font-weight:600">'+escHtml(trSource(s.source))+'</td><td class="r">'+fN(s.pipeline)+'</td><td class="r">'+fN(s.won)+'</td><td class="r"><span class="'+cls+'">'+fP(wr)+'</span></td></tr>';});
+  h+='<tr class="tot"><td>'+t('total_lbl')+' '+yr+'</td><td class="r">'+fN(tp)+'</td><td class="r">'+fN(tWon)+'</td><td class="r">'+fP(tp>0?tWon/tp:0)+'</td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+
+function buildOccupancy(){
+  // Official OUT_admissions_occupancy — Weighted Pipeline Forecast
+  if(D.occupancy&&D.occupancy.length){
+    const campName=campus==='q'?'Quilmes':campus==='n'?'North':null;
+    const rows=D.occupancy.filter(r=>campName?r.campus===campName:true);
+    const showCamp=!campName;
+    const hasForecast=rows.some(r=>r.forecast!=null);
+    const tw0=document.createElement('div');tw0.className='tw';
+    if(hasForecast){
+      let h0='<table><thead><tr>'+(showCamp?'<th>Campus</th>':'')+'<th'+(showCamp?' class="r"':'')+'>'+t('col_level')+'</th><th class="r">'+t('col_prosp27_act')+'</th><th class="r">'+t('col_visit_n')+'</th><th class="r">'+t('col_appl_n')+'</th><th class="r">'+t('col_yield_n')+'</th><th class="r">'+t('col_forecast')+'</th><th class="r">'+t('col_new26')+'</th><th class="r">'+t('col_gap')+'</th><th class="r">'+t('col_status')+'</th></tr></thead><tbody>';
+      rows.forEach(r=>{const st=String(r.status||'').toLowerCase();const sem=st.indexOf('green')>-1?'g':st.indexOf('amber')>-1||st.indexOf('yellow')>-1?'y':'r';const gap=num(r.gap);const gcls=gap>=0?'val-pos':'val-neg';h0+='<tr class="'+(sem==='g'?'won-row':'')+'">'+(showCamp?'<td>'+escHtml(r.campus)+'</td>':'')+'<td style="font-weight:600">'+escHtml(r.nivel)+'</td><td class="r">'+fN(r.prospectos)+'</td><td class="r">'+fN(r.visit)+'</td><td class="r">'+fN(r.application)+'</td><td class="r">'+fN(r.yield)+'</td><td class="r" style="font-weight:700">'+fN(r.forecast)+'</td><td class="r">'+fN(r.newStudents)+'</td><td class="r '+gcls+'">'+fSign(gap)+'</td><td class="r"><span class="sem '+sem+'"></span></td></tr>';});
+      h0+='</tbody></table>';tw0.innerHTML=h0;return tw0;
+    }
+    // legacy rate-based layout (pre-forecast sheet)
+    let h0='<table><thead><tr>'+(showCamp?'<th>Campus</th>':'')+'<th'+(showCamp?' class="r"':'')+'>'+t('col_level')+'</th><th class="r">'+t('col_prosp27_act')+'</th><th class="r">'+t('col_new26')+'</th><th class="r">'+t('col_visit')+'</th><th class="r">'+t('col_appl')+'</th><th class="r">'+t('col_yield')+'</th><th class="r">'+t('col_status')+'</th></tr></thead><tbody>';
+    rows.forEach(r=>{const vr=num(r.visitRate);const sem=vr>=0.30?'g':vr>=0.15?'y':'r';h0+='<tr>'+(showCamp?'<td>'+escHtml(r.campus)+'</td>':'')+'<td style="font-weight:600">'+escHtml(r.nivel)+'</td><td class="r">'+fN(r.prospectos)+'</td><td class="r">'+fN(r.newStudents)+'</td><td class="r">'+fP(r.visitRate)+'</td><td class="r">'+fP(r.applRate)+'</td><td class="r">'+fP(r.yieldRate)+'</td><td class="r"><span class="sem '+sem+'"></span></td></tr>';});
+    h0+='</tbody></table>';tw0.innerHTML=h0;return tw0;
+  }
+  // Fallback: derived approximation from pipeline
+  const tw=document.createElement('div');tw.className='tw';
+  const pipe=D.pipeline||[];
+  const colT=p=>campus==='q'?num(p.qT):campus==='n'?num(p.nT):num(p.total);
+  const colK=p=>campus==='q'?num(p.qK):campus==='n'?num(p.nK):num(p.qK)+num(p.nK);
+  const colP=p=>campus==='q'?num(p.qP):campus==='n'?num(p.nP):num(p.qP)+num(p.nP);
+  const colC=p=>campus==='q'?num(p.qC):campus==='n'?num(p.nC):num(p.qC)+num(p.nC);
+  // first non-won stage = total prospects entering; later stages = "visited"
+  const open=pipe.filter(p=>!p.isWon);
+  const first=open[0]||{};
+  const totFirst={k:colK(first),p:colP(first),c:colC(first),t:colT(first)};
+  const beyond=open.slice(1);
+  const sum=(fn)=>beyond.reduce((a,p)=>a+fn(p),0);
+  const visited={k:sum(colK),p:sum(colP),c:sum(colC),t:sum(colT)};
+  const cd=getCampusData()||{};
+  const levels=[{lbl:t('kinder'),pr:totFirst.k,vis:visited.k,nw:num(cd.kinder&&cd.kinder.total&&cd.kinder.total.new_students)},
+                {lbl:t('prep'),pr:totFirst.p,vis:visited.p,nw:num(cd.prep&&cd.prep.total&&cd.prep.total.new_students)},
+                {lbl:t('college'),pr:totFirst.c,vis:visited.c,nw:num(cd.college&&cd.college.total&&cd.college.total.new_students)}];
+  let h='<table><thead><tr><th>'+t('col_level')+'</th><th class="r">'+t('col_prosp27_act')+'</th><th class="r">'+t('col_new26')+'</th><th class="r">'+t('col_visit')+'</th><th class="r">'+t('col_status')+'</th></tr></thead><tbody>';
+  levels.forEach(l=>{
+    const vr=l.pr>0?l.vis/l.pr:0;
+    const sem=vr>=0.30?'g':vr>=0.15?'y':'r';
+    h+='<tr><td style="font-weight:600">'+l.lbl+'</td><td class="r">'+fN(l.pr)+'</td><td class="r">'+fN(l.nw)+'</td><td class="r">'+(l.pr>0?fP(vr):'&mdash;')+'</td><td class="r"><span class="sem '+sem+'"></span></td></tr>';
+  });
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+function setCycle(c){pipelineCycle=c;render();}
+
+/* ============================== RETENTION & COMMUNITY ============================== */
+function buildRetention(){
+  const wrap=document.createElement('div');
+  wrap.appendChild(pageHeader(t('ph_retention'),t('ph_retention_sub')));
+  const h=D.headline||{},com=D.community||{},ret=D.retention;
+  const retVal = ret?cv(ret.rate):(campus==='n'?h.retencion_north:h.retencion_quilmes);
+  const ogVal  = ret?cv(ret.ogRate):(campus==='n'?com.ogNorth:com.ogQuilmes);
+  const intlVal= ret?cv(ret.intlRate):com.foreignStudents;
+  const priVal = campus==='q'?(com.priorityQuilmes!=null?com.priorityQuilmes:com.priorityCommunity):campus==='n'?(com.priorityNorth!=null?com.priorityNorth:com.priorityCommunity):com.priorityCommunity;
+  const actWith= ret?cv(ret.actionableWithdrawals):(D.withdrawals||[]).filter(w=>w.tipo==='Accionable').reduce((a,w)=>a+num(w.tot2026),0);
+  const retCls=campus==='n'?'c-navy':'c-red';
+  wrap.appendChild(sec(t('headline'),'',statStrip([
+    {lbl:t('ret_rate'),val:fP(retVal),foot:campus==='n'?'North':campus==='q'?'Quilmes':'One School',cls:retCls},
+    {lbl:t('og_rate'),val:fP(ogVal),foot:t('og_foot')},
+    {lbl:t('foreign'),val:fP(intlVal),foot:campus==='os'?t('os_foot'):''},
+    {lbl:t('priority'),val:fP(priVal),foot:t('og_plus')},
+    {lbl:t('actionable_with'),val:fN(actWith),foot:'2026',cls:'c-red'},
+  ])));
+
+  // Grade-to-Grade Movement (right after headline) — CALC_retention 2026
+  if(D.retentionGrades){
+    const cr=document.createElement('div');cr.className=(campus==='os')?'two':'';
+    if(campus!=='n')cr.appendChild(buildRetGrades('quilmes','Quilmes','#DC1E33'));
+    if(campus!=='q')cr.appendChild(buildRetGrades('north','North','#213463'));
+    wrap.appendChild(sec(t('s_cohort_rates'),t('s_cohort_rates_meta'),cr));
+  }
+
+  // Withdrawals
+  wrap.appendChild(sec(t('s_withdrawals'),t('s_withdrawals_meta'),buildWithdrawals()));
+
+  // International Students — Nationalities (HTML bars with flag images, excludes Argentine)
+  wrap.appendChild(sec(t('s_intl_nationalities'),t('s_intl_nationalities_meta'),buildNationalities()));
+  return wrap;
+}
+function buildNationalities(){
+  const nats=(D.nationalities||[]).filter(r=>{const nm=String(r.name||'').toLowerCase();return nm!=='argentine'&&nm!=='argentina';});
+  const valOf=r=>campus==='q'?num(r.q):campus==='n'?num(r.n):num(r.total);
+  const list=nats.map(r=>({name:r.name,v:valOf(r)})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+  if(!list.length)return emptyState(t('coming_soon'),t('cs_intl'));
+  const max=Math.max.apply(null,list.map(r=>r.v));
+  const wrap=document.createElement('div');wrap.className='natbars';
+  wrap.innerHTML=list.map(r=>'<div class="natbar-row"><div class="natbar-lbl">'+flagImg(r.name)+escHtml(trNat(r.name))+'</div><div class="natbar-track"><div class="natbar-fill" style="width:'+(r.v/max*100).toFixed(1)+'%"></div></div><div class="natbar-val">'+fN(r.v)+'</div></div>').join('');
+  return wrap;
+}
+function buildRetGrades(key,title,color){
+  const rows=(D.retentionGrades&&D.retentionGrades[key])||[];
+  const tw=document.createElement('div');tw.className='tw';
+  let to=0,td=0,tw_=0,tl=0;
+  let h='<table><thead><tr><th style="background:'+color+'">'+title+' &middot; '+t('col_grade')+'</th><th class="r" style="background:'+color+'">2025</th><th class="r" style="background:'+color+'">2026</th><th class="r" style="background:'+color+'">'+t('col_won')+'</th><th class="r" style="background:'+color+'">'+t('col_lost')+'</th><th class="r" style="background:'+color+'">'+t('col_reth')+'</th></tr></thead><tbody>';
+  rows.forEach(r=>{to+=num(r.s2025);td+=num(r.s2026);tw_+=num(r.won);tl+=num(r.lost);const ret=num(r.ret)*100;const cls=ret>=95?'val-pos':ret<80?'val-neg':'';h+='<tr><td style="font-weight:600">'+escHtml(r.yg)+'</td><td class="r">'+fN(r.s2025)+'</td><td class="r">'+fN(r.s2026)+'</td><td class="r">'+fN(r.won)+'</td><td class="r">'+fN(r.lost)+'</td><td class="r"><span class="'+cls+'">'+fP(r.ret)+'</span></td></tr>';});
+  const totRet=to>0?(td-tw_)/to:0;
+  h+='<tr class="tot"><td>'+t('total_lbl')+'</td><td class="r">'+fN(to)+'</td><td class="r">'+fN(td)+'</td><td class="r">'+fN(tw_)+'</td><td class="r">'+fN(tl)+'</td><td class="r"><strong>'+fP(totRet)+'</strong></td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+function buildCohortRates(key,title,color){
+  const rows=(D.cohortRates&&D.cohortRates[key])||[];
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th style="background:'+color+'">'+title+' &middot; '+t('col_transition')+'</th><th class="r" style="background:'+color+'">23&rarr;24</th><th class="r" style="background:'+color+'">24&rarr;25</th><th class="r" style="background:'+color+'">25&rarr;26</th><th class="r" style="background:'+color+'">'+t('col_avg')+'</th><th class="r" style="background:'+color+'">'+t('col_use')+'</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+='<tr'+(r.isEntry?' class="tot"':'')+'><td style="font-weight:600">'+escHtml(r.transicion)+'</td><td class="r">'+fP(r.r2324)+'</td><td class="r">'+fP(r.r2425)+'</td><td class="r">'+fP(r.r2526)+'</td><td class="r">'+fP(r.promedio)+'</td><td class="r" style="font-weight:700;color:'+color+'">'+fP(r.usar)+'</td></tr>';});
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+function buildWithdrawals(){
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th>'+t('col_cause')+'</th><th style="text-align:left">'+t('col_type')+'</th>';
+  if(campus==='os')h+='<th class="r th-q">Q 2025</th><th class="r th-q">Q 2026</th><th class="r th-n">N 2025</th><th class="r th-n">N 2026</th><th class="r">Total 2026</th>';
+  else h+='<th class="r">2025</th><th class="r">2026</th>';
+  h+='</tr></thead><tbody>';
+  let t25=0,t26=0;
+  (D.withdrawals||[]).forEach(w=>{
+    const tc=w.tipo==='Natural'?'nat':w.tipo==='Exogena'?'exo':'act';
+    const v25=campus==='q'?num(w.q2025):campus==='n'?num(w.n2025):num(w.tot2025);
+    const v26=campus==='q'?num(w.q2026):campus==='n'?num(w.n2026):num(w.tot2026);
+    t25+=v25;t26+=v26;
+    h+='<tr><td style="font-weight:500">'+escHtml(trCause(w.causa))+'</td><td style="text-align:left"><span class="tag '+tc+'">'+escHtml(trTipo(w.tipo))+'</span></td>';
+    if(campus==='os')h+='<td class="r c-q">'+fN(w.q2025)+'</td><td class="r c-q" style="font-weight:700">'+fN(w.q2026)+'</td><td class="r c-n">'+fN(w.n2025)+'</td><td class="r c-n" style="font-weight:700">'+fN(w.n2026)+'</td><td class="r" style="font-weight:700">'+fN(w.tot2026)+'</td>';
+    else h+='<td class="r">'+fN(v25)+'</td><td class="r" style="font-weight:700">'+fN(v26)+'</td>';
+    h+='</tr>';
+  });
+  const span=campus==='os'?2:2;
+  h+='<tr class="tot"><td colspan="2">'+t('total_lbl')+'</td>';
+  if(campus==='os')h+='<td class="r" colspan="4"></td><td class="r"><strong>'+fN(t26)+'</strong></td>';
+  else h+='<td class="r">'+fN(t25)+'</td><td class="r"><strong>'+fN(t26)+'</strong></td>';
+  h+='</tr></tbody></table>';tw.innerHTML=h;return tw;
+}
+
+/* ============================== MARKETING ============================== */
+function buildMarketing(){
+  const wrap=document.createElement('div');
+  wrap.appendChild(pageHeader(t('ph_marketing'),t('ph_marketing_sub')));
+  const mk=D.marketing&&D.marketing.fidu;
+  wrap.appendChild(groupHeader(t('s_app_kpis'),t('s_app_kpis_meta'),true));
+  if(mk){
+    wrap.appendChild(sec(t('headline'),'',statStrip([
+      {lbl:t('fidu_adoption'),val:fP(mk.adoption),foot:t('fidu_adoption_f')},
+      {lbl:t('fidu_active'),val:fN(mk.activeUsers),foot:t('fidu_active_f')},
+      {lbl:t('fidu_loyalty'),val:fP(mk.loyalty),foot:t('fidu_loyalty_f')},
+      {lbl:t('fidu_open'),val:fP(mk.openRate),foot:t('fidu_open_f')},
+    ])));
+    let h1='<div class="tw"><table><thead><tr><th>'+t('col_module')+'</th><th class="r">'+t('col_interactions')+'</th><th class="r">'+t('col_pct')+'</th></tr></thead><tbody>';
+    (mk.modules||[]).forEach(m=>{h1+='<tr><td style="font-weight:600">'+escHtml(trModule(m.name))+'</td><td class="r">'+fN(m.interactions)+'</td><td class="r">'+fP(m.pct)+'</td></tr>';});
+    h1+='</tbody></table></div>';
+    let h2='<div class="tw"><table><thead><tr><th>'+t('col_month')+'</th><th class="r">'+t('col_inbox')+'</th></tr></thead><tbody>';
+    (mk.inboxByMonth||[]).forEach(m=>{h2+='<tr><td style="font-weight:600">'+escHtml(trMonth(m.month))+'</td><td class="r">'+fN(m.inbox)+'</td></tr>';});
+    h2+='</tbody></table></div>';
+    wrap.appendChild(sec(t('s_modules'),t('s_modules_meta'),elFromHTML(h1).firstChild));
+    wrap.appendChild(sec(t('s_inbox'),t('s_inbox_meta'),elFromHTML(h2).firstChild));
+  }else{
+    wrap.appendChild(sec(t('headline'),'',emptyState(t('coming_soon'),t('cs_fidu'))));
+  }
+  wrap.appendChild(buildDigitalAds());
+  return wrap;
+}
+function adsCampMetrics(M){
+  return (M.campaigns||[]).map(c=>{
+    const sp=num(c.spend),im=num(c.impressions),cl=num(c.clicks);
+    const ctr=im>0?cl/im:0,cpc=cl>0?sp/cl:0,eff=cpc>0?ctr/cpc:(ctr>0?1e9:0);
+    return {name:c.name,platform:c.platform,spend:sp,impr:im,clicks:cl,ctr:ctr,cpc:cpc,eff:eff};
+  });
+}
+function buildDigitalAds(){
+  const out=document.createElement('div');
+  const ads=D.ads;
+  if(!ads||!ads.months||!ads.months.length){
+    out.appendChild(groupHeader(t('s_digital_ads'),t('s_digital_ads_meta'),false,'var(--violet)'));
+    out.appendChild(sec(t('s_ads_summary'),'',emptyState(t('coming_soon'),t('cs_ads'))));
+    return out;
+  }
+  const months=ads.months.slice();
+  if(!adsMonth||months.indexOf(adsMonth)<0)adsMonth=months.length>=2?months[months.length-2]:months[months.length-1];
+  const M=ads.byMonth[adsMonth]||{spend:0,impressions:0,clicks:0,campaigns:[]};
+  out.appendChild(groupHeader(t('s_digital_ads'),t('s_digital_ads_meta')));
+  const tSpend=num(M.spend),tImpr=num(M.impressions),tClicks=num(M.clicks);
+  const wctr=tImpr>0?tClicks/tImpr:0,wcpc=tClicks>0?tSpend/tClicks:0;
+  const ex=document.createElement('div');ex.className='sec';
+  ex.innerHTML='<div class="sec-hd"><span class="sec-title">'+t('headline')+'</span><span class="sec-meta">'+monthLabel(adsMonth)+'</span>'+monthPills(adsMonth,months)+'</div>';
+  ex.appendChild(statStrip([
+    {lbl:t('ads_spend'),val:fUSD(tSpend),foot:'USD'},
+    {lbl:t('ads_clicks'),val:fN(tClicks),foot:''},
+    {lbl:t('ads_ctr'),val:fP(wctr),foot:''},
+    {lbl:t('ads_cpc'),val:fUSDd(wcpc),foot:'USD/click'},
+  ]));
+  out.appendChild(ex);
+  // Campaign performance
+  const sct=document.createElement('div');sct.className='sec';
+  const sorts=[['clicks',t('sort_clicks')],['eff',t('sort_eff')],['spend',t('sort_spend')]];
+  const pills='<div class="cycle-pills" style="margin-left:auto">'+sorts.map(s=>'<button class="cycle-pill'+(adsSort===s[0]?' active':'')+'" onclick="adsSort=\''+s[0]+'\';render()">'+s[1]+'</button>').join('')+'</div>';
+  sct.innerHTML='<div class="sec-hd"><span class="sec-title">'+t('s_ads_campaign')+'</span><span class="sec-meta">'+monthLabel(adsMonth)+'</span>'+pills+'</div>';
+  const camps=adsCampMetrics(M);
+  camps.sort((a,b)=>adsSort==='spend'?b.spend-a.spend:adsSort==='eff'?b.eff-a.eff:b.clicks-a.clicks);
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th>'+t('col_campaign')+'</th><th>'+t('col_platform')+'</th><th class="r">'+t('col_spend')+'</th><th class="r">'+t('col_impr')+'</th><th class="r">'+t('col_clicks')+'</th><th class="r">'+t('col_ctr')+'</th><th class="r">'+t('col_cpc')+'</th><th class="r">'+t('col_share')+'</th></tr></thead><tbody>';
+  camps.forEach(c=>{const share=tClicks>0?c.clicks/tClicks:0;h+='<tr><td style="font-weight:600">'+escHtml(c.name)+'</td><td style="text-align:left"><span class="tag '+(c.platform==='Meta'?'plat-meta':'plat-google')+'">'+escHtml(c.platform)+'</span></td><td class="r val-usd">'+fUSD(c.spend)+'</td><td class="r">'+fN(c.impr)+'</td><td class="r" style="font-weight:700">'+fN(c.clicks)+'</td><td class="r">'+fP(c.ctr)+'</td><td class="r val-usd">'+fUSDd(c.cpc)+'</td><td class="r">'+fP(share)+'</td></tr>';});
+  h+='<tr class="tot"><td>'+t('total_lbl')+'</td><td></td><td class="r val-usd">'+fUSD(tSpend)+'</td><td class="r">'+fN(tImpr)+'</td><td class="r"><strong>'+fN(tClicks)+'</strong></td><td class="r">'+fP(wctr)+'</td><td class="r val-usd">'+fUSDd(wcpc)+'</td><td class="r">100%</td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;sct.appendChild(tw);
+  out.appendChild(sct);
+  // Temporal trend
+  const cc=elFromHTML('<div class="cc"><div class="cc-hd"><div><div class="cc-ttl">'+t('ads_trend_title')+'</div><div class="cc-sub">'+t('ads_trend_sub')+'</div></div></div><div class="chart-wrap" style="height:300px"><canvas id="chart-ads"></canvas></div></div>').firstChild;
+  out.appendChild(sec(t('s_ads_temporal'),'',cc));
+  // Traffic quality
+  out.appendChild(sec(t('s_ads_quality'),t('ads_quality_sub'),buildAdsQuality(M,wctr,wcpc)));
+  return out;
+}
+function buildAdsQuality(M,wctr,wcpc){
+  const camps=adsCampMetrics(M).sort((a,b)=>b.spend-a.spend);
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th>'+t('col_campaign')+'</th><th class="r">'+t('col_spend')+'</th><th class="r">'+t('col_clicks')+'</th><th class="r">'+t('col_ctr')+'</th><th class="r">'+t('col_cpc')+'</th><th class="r">'+t('col_status')+'</th></tr></thead><tbody>';
+  camps.forEach(c=>{
+    const good=(c.cpc<=wcpc&&c.ctr>=wctr),bad=(c.cpc>wcpc&&c.ctr<wctr);
+    const sem=good?'g':bad?'r':'y';
+    h+='<tr'+(bad?' class="proj-row"':'')+'><td style="font-weight:600">'+escHtml(c.name)+'</td><td class="r val-usd">'+fUSD(c.spend)+'</td><td class="r">'+fN(c.clicks)+'</td><td class="r">'+fP(c.ctr)+'</td><td class="r val-usd">'+fUSDd(c.cpc)+'</td><td class="r"><span class="sem '+sem+'"></span></td></tr>';
+  });
+  var tS=camps.reduce((a,c)=>a+c.spend,0),tC=camps.reduce((a,c)=>a+c.clicks,0),tI=camps.reduce((a,c)=>a+c.impr,0);
+  h+='<tr class="tot"><td>'+t('total_lbl')+'</td><td class="r val-usd">'+fUSD(tS)+'</td><td class="r"><strong>'+fN(tC)+'</strong></td><td class="r">'+fP(tI>0?tC/tI:0)+'</td><td class="r val-usd">'+fUSDd(tC>0?tS/tC:0)+'</td><td class="r"></td></tr>';
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+
+/* ============================== PROJECTION 2027 ============================== */
+function initSimAdj(){simAdj={};const py=D.proyeccion;if(!py)return;(py.quilmes||[]).forEach(r=>{simAdj['q_'+r.grado]=0;});(py.north||[]).forEach(r=>{simAdj['n_'+r.grado]=0;});}
+function calcFinal(r,adj){
+  // proy = tendential projection already computed upstream (base2026*tasa rounded),
+  // and is the only reliable figure for natural-entry grades where base2026/tasa = "—".
+  const base=num(r.proy),cap=num(r.capacidad);
+  let v=Math.round(base*(1+adj/100));
+  if(cap>0)v=Math.min(v,cap);
+  return v;
+}
+function calcFact(r,final){const proyOrig=num(r.proy);return proyOrig>0?num(r.facturacion)/proyOrig*final:0;}
+function calcSimTotal(ck){
+  const py=D.proyeccion;if(!py)return{base:0,final:0,facturacion:0,baseFact:0};
+  const rows=ck==='q'?py.quilmes:py.north;
+  const totRow=ck==='q'?py.quilmesTotal:py.northTotal;
+  let final=0,fact=0;
+  (rows||[]).forEach(r=>{const f=calcFinal(r,simAdj[ck+'_'+r.grado]||0);final+=f;fact+=calcFact(r,f);});
+  return{base:num((totRow||{}).alumnos),final,facturacion:fact,baseFact:num((totRow||{}).facturacion)};
+}
+function applyScenario(type){
+  const py=D.proyeccion;if(!py)return;
+  const set=v=>{(py.quilmes||[]).forEach(r=>{simAdj['q_'+r.grado]=v;});(py.north||[]).forEach(r=>{simAdj['n_'+r.grado]=v;});};
+  if(type==='reset')set(0);else if(type==='opt')set(2);else if(type==='cons')set(-2);
+  updateSimDisplay();
+}
+function updateSimDisplay(){
+  const py=D.proyeccion;if(!py)return;
+  ['q','n'].forEach(ck=>{
+    const rows=ck==='q'?py.quilmes:py.north;
+    (rows||[]).forEach(r=>{
+      const key=ck+'_'+r.grado,adj=simAdj[key]||0,f=calcFinal(r,adj);
+      const inp=document.getElementById('adj_'+key);if(inp)inp.value=adj;
+      const fe=document.getElementById('final_'+key);if(fe)fe.textContent=f.toLocaleString('es-AR');
+      const fa=document.getElementById('factrow_'+key);if(fa&&showFact)fa.textContent=fUSD(calcFact(r,f));
+    });
+    const tt=calcSimTotal(ck);
+    const tp=document.getElementById('tot-final-'+ck);if(tp)tp.textContent=tt.final.toLocaleString('es-AR');
+    const tf=document.getElementById('tot-fact-'+ck);if(tf&&showFact)tf.textContent=fUSD(tt.facturacion);
+  });
+  const qT=calcSimTotal('q'),nT=calcSimTotal('n');
+  const setCard=(id,final,base,fact)=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.querySelector('.sim-val').textContent=Math.round(final).toLocaleString('es-AR');
+    if(showFact){const sf=el.querySelector('.sim-fact');if(sf)sf.textContent=fUSD(fact)+' USD';}
+    const d=Math.round(final-base),pct=(base>0?(final-base)/base*100:0).toFixed(1),sign=d>=0?'+':'';
+    el.querySelector('.sim-delta').innerHTML=t('vs_base')+' '+Math.round(base).toLocaleString('es-AR')+' <span class="'+(d<0?'val-neg':'val-pos')+'">'+sign+d+' ('+sign+pct+'%)</span>';
+  };
+  setCard('sim-q',qT.final,qT.base,qT.facturacion);
+  setCard('sim-n',nT.final,nT.base,nT.facturacion);
+  setCard('sim-os',qT.final+nT.final,qT.base+nT.base,qT.facturacion+nT.facturacion);
+}
+function buildProyeccion(){
+  const wrap=document.createElement('div');
+  wrap.appendChild(pageHeader(t('ph_proyeccion'),t('ph_proyeccion_sub')));
+  const py=D.proyeccion;
+  if(!py){wrap.appendChild(emptyState(t('proy_not_avail'),''));return wrap;}
+  const qT=calcSimTotal('q'),nT=calcSimTotal('n');
+  const mkCard=(id,cls,label,final,base,fact)=>{
+    const d=Math.round(final-base),pct=(base>0?(final-base)/base*100:0).toFixed(1),sign=d>=0?'+':'';
+    return'<div class="sim-card '+cls+'" id="'+id+'"><div class="sim-lbl">'+label+'</div><div class="sim-val">'+Math.round(final).toLocaleString('es-AR')+'</div>'+(showFact?'<div class="sim-fact">'+fUSD(fact)+' USD</div>':'<div class="sim-fact" style="visibility:hidden">&ndash;</div>')+'<div class="sim-delta">'+t('vs_base')+' '+Math.round(base).toLocaleString('es-AR')+' <span class="'+(d<0?'val-neg':'val-pos')+'">'+sign+d+' ('+sign+pct+'%)</span></div></div>';
+  };
+  const totDiv=document.createElement('div');totDiv.className='sim-totals';
+  totDiv.innerHTML=mkCard('sim-q','q',t('quilmes_2027'),qT.final,qT.base,qT.facturacion)+mkCard('sim-n','n',t('north_2027'),nT.final,nT.base,nT.facturacion)+mkCard('sim-os','',t('os_2027'),qT.final+nT.final,qT.base+nT.base,qT.facturacion+nT.facturacion);
+  wrap.appendChild(totDiv);
+
+  const ctrl=document.createElement('div');ctrl.className='sim-controls';
+  ctrl.innerHTML='<span style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);font-family:Asap Condensed,sans-serif;margin-right:4px">'+t('scenario')+'</span><button class="sim-btn primary" onclick="applyScenario(\'reset\')">'+t('btn_tendencial')+'</button><button class="sim-btn" onclick="applyScenario(\'opt\')" style="border-color:var(--green);color:var(--green)">'+t('btn_opt')+'</button><button class="sim-btn" onclick="applyScenario(\'cons\')" style="border-color:var(--red);color:var(--red)">'+t('btn_cons')+'</button>';
+  wrap.appendChild(ctrl);
+
+  const tables=document.createElement('div');
+  tables.innerHTML=(campus!=='n'?mkAdjTable(t('quilmes_table'),'q',py.quilmes,'#DC1E33'):'')+(campus!=='q'?mkAdjTable(t('north_table'),'n',py.north,'#213463'):'');
+  wrap.appendChild(tables);
+
+  // Classroom breakdown (hidden unless enabled from admin panel)
+  if(showClassroom&&D.proyeccionDetalle&&D.proyeccionDetalle.length){
+    const note=elFromHTML('<div style="background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.74rem;color:var(--gray);line-height:1.5;font-family:Asap Condensed,sans-serif;display:flex;gap:10px;align-items:flex-start"><svg style="flex-shrink:0;margin-top:1px" width="15" height="15" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M12 12v4"/></svg><span>'+t('classroom_note')+'</span></div>');
+    const cwrap=document.createElement('div');cwrap.appendChild(note);
+    cwrap.appendChild(buildClassroom());
+    wrap.appendChild(sec(t('s_proj_detail'),t('s_proj_detail_meta'),cwrap));
+  }
+  return wrap;
+}
+function mkAdjTable(title,ck,rows,color){
+  if(!rows||!rows.length)return'';
+  let h='<div style="margin-bottom:24px"><div style="font-size:1rem;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid '+color+'">'+title+'</div><div class="tw"><table><thead><tr><th>'+t('col_grade')+'</th><th class="r">'+t('col_base')+'</th><th class="r">'+t('col_projd')+'</th><th class="r" style="min-width:130px">'+t('col_adj')+'</th><th class="r" style="min-width:90px">'+t('col_final')+'</th><th class="r">'+t('col_cap')+'</th>'+(showFact?'<th class="r fact-col">'+t('col_fact')+'</th>':'')+'</tr></thead><tbody>';
+  let tBase=0,tProy=0,tFinal=0,tFact=0,tCap=0;
+  rows.forEach(r=>{
+    const key=ck+'_'+r.grado,adj=simAdj[key]||0,f=calcFinal(r,adj),fact=calcFact(r,f);
+    const baseDisp=(typeof r.base2026==='number')?fN(r.base2026):escHtml(r.base2026);
+    const projDisp=(typeof r.proyD==='number')?fN(r.proyD):escHtml(r.proyD==null?'&mdash;':r.proyD);
+    tBase+=num(r.base2026);tProy+=num(r.proy);tFinal+=f;tFact+=fact;tCap+=num(r.capacidad);
+    h+='<tr><td style="font-weight:700">'+r.grado+'</td><td class="r">'+baseDisp+'</td><td class="r">'+projDisp+'</td><td class="r"><div class="adj-wrap"><button class="adj-btn" onclick="simAdj[\''+key+'\']=(simAdj[\''+key+'\']||0)-1;updateSimDisplay()">&minus;</button><input class="adj-input" id="adj_'+key+'" value="'+adj+'" type="number" onchange="simAdj[\''+key+'\']=parseInt(this.value)||0;updateSimDisplay()"/><button class="adj-btn" onclick="simAdj[\''+key+'\']=(simAdj[\''+key+'\']||0)+1;updateSimDisplay()">+</button></div></td><td class="r" style="font-weight:700;color:'+color+'" id="final_'+key+'">'+f.toLocaleString('es-AR')+'</td><td class="r">'+fN(r.capacidad)+'</td>'+(showFact?'<td class="r val-usd fact-col" id="factrow_'+key+'">'+fUSD(fact)+'</td>':'')+'</tr>';
+  });
+  h+='<tr class="tot"><td>'+t('total_lbl')+'</td><td class="r">'+fN(tBase)+'</td><td class="r">'+fN(tProy)+'</td><td class="r">&mdash;</td><td class="r" style="font-weight:700;color:'+color+'" id="tot-final-'+ck+'">'+tFinal.toLocaleString('es-AR')+'</td><td class="r"><strong>'+fN(tCap)+'</strong></td>'+(showFact?'<td class="r val-usd fact-col" id="tot-fact-'+ck+'">'+fUSD(tFact)+'</td>':'')+'</tr>';
+  h+='</tbody></table></div></div>';return h;
+}
+function buildClassroom(){
+  const det=D.proyeccionDetalle||[];
+  // group by campus->grado (ordered)
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th>'+t('col_salon')+'</th><th class="r">'+t('col_2026')+'</th><th class="r">'+t('col_weight')+'</th><th class="r">'+t('col_proy27')+'</th><th class="r">'+t('col_delta')+'</th></tr></thead><tbody>';
+  const campuses=campus==='q'?['Quilmes']:campus==='n'?['North']:['Quilmes','North'];
+  campuses.forEach(cn=>{
+    const rows=det.filter(d=>d.campus===cn);
+    if(!rows.length)return;
+    const cls=cn==='Quilmes'?'grp-q':'grp-n';const ctotCls=cn==='Quilmes'?'ctot-q':'ctot-n';
+    // group by grado preserving order
+    const grades=[];const map={};
+    rows.forEach(d=>{if(!map[d.grado]){map[d.grado]=[];grades.push(d.grado);}map[d.grado].push(d);});
+    let cM=0,cP=0;
+    h+='<tr class="grp '+cls+'"><td colspan="5">'+escHtml(cn.toUpperCase())+'</td></tr>';
+    grades.forEach((g,gi)=>{
+      const list=map[g];const gid='cls-'+cn+'-'+gi;
+      const gM=list.reduce((a,d)=>a+num(d.alumnos2026),0);
+      const gP=list.reduce((a,d)=>a+num(d.proySalon),0);
+      const gD=gP-gM;cM+=gM;cP+=gP;
+      const dCls=gD>0?'val-pos':gD<0?'val-neg':'';
+      h+='<tr class="tot gtog" onclick="toggleGroup(\''+gid+'\',this)"><td><span class="gcaret"></span>'+escHtml(g)+'</td><td class="r"><strong>'+fN(gM)+'</strong></td><td class="r">&mdash;</td><td class="r"><strong>'+fN(gP)+'</strong></td><td class="r '+dCls+'">'+fSign(gD)+'</td></tr>';
+      list.forEach(d=>{const dd=num(d.delta),dc=dd>0?'val-pos':dd<0?'val-neg':'';h+='<tr class="salon-row '+gid+'" style="display:none"><td>'+escHtml(d.salon)+'</td><td class="r">'+fN(d.alumnos2026)+'</td><td class="r">'+fP(d.peso)+'</td><td class="r">'+fN(d.proySalon)+'</td><td class="r '+dc+'">'+fSign(dd)+'</td></tr>';});
+    });
+    const cD=cP-cM;const cdc=cD>0?'val-pos':cD<0?'val-neg':'';
+    h+='<tr class="ctot '+ctotCls+'"><td>'+t('total_lbl')+' '+escHtml(cn)+'</td><td class="r">'+fN(cM)+'</td><td class="r">&mdash;</td><td class="r">'+fN(cP)+'</td><td class="r '+cdc+'">'+fSign(cD)+'</td></tr>';
+  });
+  if(campus==='os'){
+    const allM=det.reduce((a,d)=>a+num(d.alumnos2026),0),allP=det.reduce((a,d)=>a+num(d.proySalon),0),allD=allP-allM;
+    const adc=allD>0?'val-pos':allD<0?'val-neg':'';
+    h+='<tr class="ctot ctot-os"><td>ONE SCHOOL</td><td class="r">'+fN(allM)+'</td><td class="r">&mdash;</td><td class="r">'+fN(allP)+'</td><td class="r '+adc+'">'+fSign(allD)+'</td></tr>';
+  }
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+
+/* ============================== ALUMNI ============================== */
+/* ── Alumni: campus value picker (q/n/total) ── */
+function alcV(o){return o==null?null:(campus==='q'?o.q:campus==='n'?o.n:o.total);}
+/* ── Alumni: generic distribution table (sorted desc, with share) ── */
+function alTable(rows,opts){
+  opts=opts||{};rows=rows||[];
+  const list=rows.map(r=>({name:r.name,v:num(alcV(r))})).filter(r=>r.v>0).sort((x,y)=>y.v-x.v);
+  const tot=list.reduce((s,b)=>s+b.v,0)||1;
+  const tw=document.createElement('div');tw.className='tw';
+  let h='<table><thead><tr><th>'+(opts.label||'')+'</th><th class="r">'+t('al_count')+'</th><th class="r">'+t('col_share')+'</th></tr></thead><tbody>';
+  list.forEach(r=>{const nm=opts.tr?opts.tr(r.name):r.name;h+='<tr><td style="font-weight:600">'+(opts.flags?flagImg(r.name):'')+escHtml(nm)+'</td><td class="r">'+fN(r.v)+'</td><td class="r">'+fP(r.v/tot)+'</td></tr>';});
+  h+='</tbody></table>';tw.innerHTML=h;return tw;
+}
+/* ── Alumni: chart card shell ── */
+function alChartCard(id,ttl,sub,h){
+  return elFromHTML('<div class="cc"><div class="cc-hd"><div><div class="cc-ttl">'+ttl+'</div><div class="cc-sub">'+(sub||'')+'</div></div></div><div class="chart-wrap" style="height:'+(h||300)+'px"><canvas id="'+id+'"></canvas></div></div>').firstChild;
+}
+/* ── Alumni: category toggle pills ── */
+function alPills(){
+  const cats=[['community',t('al_cat_community')],['demo',t('al_cat_demo')],['geo',t('al_cat_geo')],['heritage',t('al_cat_heritage')]];
+  return '<div class="cycle-pills" style="margin-left:auto;flex-wrap:wrap">'+cats.map(c=>'<button class="cycle-pill'+(alView===c[0]?' active':'')+'" onclick="alView=\''+c[0]+'\';render()">'+c[1]+'</button>').join('')+'</div>';
+}
+function buildAlumni(){
+  const wrap=document.createElement('div');
+  wrap.appendChild(pageHeader(t('ph_alumni'),t('ph_alumni_sub')));
+  const a=D.alumni;
+  if(!a||!a.headline){
+    wrap.appendChild(sec(t('s_alumni_headline'),'',emptyState(t('coming_soon'),t('cs_alumni'))));
+    return wrap;
+  }
+  // Coverage disclaimer — data comes from the alumni data-update form (subset of the real base)
+  const cv=a.coverage;
+  if(cv){
+    const note=t('al_cov_note').replace('{r}',fN(cv.respondents)).replace('{b}',fN(cv.base)).replace('{p}',fP(cv.pct));
+    const banner=document.createElement('div');banner.className='al-coverage';
+    banner.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>'+note+'</span>';
+    wrap.appendChild(banner);
+  }
+  // Category toggle header
+  const hd=document.createElement('div');hd.className='sec';
+  hd.innerHTML='<div class="sec-hd" style="flex-wrap:wrap;gap:8px"><span class="sec-title">'+t('s_alumni_analysis')+'</span><span class="sec-meta">'+t('s_alumni_analysis_meta')+'</span>'+alPills()+'</div>';
+  wrap.appendChild(hd);
+  if(alView==='demo')buildAlDemo(wrap,a);
+  else if(alView==='geo')buildAlGeo(wrap,a);
+  else if(alView==='heritage')buildAlHeritage(wrap,a);
+  else buildAlCommunity(wrap,a);
+  return wrap;
+}
+function buildAlOverview(wrap,a){
+  const H=a.headline;
+  wrap.appendChild(sec(t('headline'),'',statStrip([
+    {lbl:t('al_total'),val:fN(alcV(H.total))},
+    {lbl:t('al_male'),val:fN(alcV(H.male))},
+    {lbl:t('al_female'),val:fN(alcV(H.female))},
+    {lbl:t('al_age'),val:alcV(H.avgAge)!=null?num(alcV(H.avgAge)).toFixed(0):'&mdash;',foot:t('al_age_foot')},
+    {lbl:t('al_withkids'),val:fN(alcV(H.withKids)),foot:t('al_withkids_foot')},
+    {lbl:t('al_abroad'),val:fP(alcV(H.abroadPct)),foot:t('al_abroad_foot')},
+    {lbl:t('al_mentoring'),val:fN(alcV(H.mentoringYes)),foot:t('al_mentoring_foot')},
+  ])));
+  const cards=[];
+  if(H.contactablePct!=null)cards.push({lbl:t('al_contactable'),val:fP(alcV(H.contactablePct)),foot:t('al_contactable_foot'),accent:true});
+  if(H.mentoringYesPct!=null)cards.push({lbl:t('al_mentoring_pct'),val:fP(alcV(H.mentoringYesPct)),foot:t('al_mentoring'),accent:true});
+  if(H.withKidsPct!=null)cards.push({lbl:t('al_withkids_pct'),val:fP(alcV(H.withKidsPct)),foot:t('al_withkids'),accent:true});
+  if(H.liaisonYesPct!=null)cards.push({lbl:t('al_liaison_pct'),val:fP(alcV(H.liaisonYesPct)),foot:t('al_liaison'),accent:true});
+  if(cards.length)wrap.appendChild(sec(t('al_engagement'),t('al_engagement_meta'),kpiGrid(cards)));
+}
+function buildAlCommunity(wrap,a){
+  wrap.appendChild(groupHeader(t('al_cat_community'),t('al_engagement_meta'),true,'var(--red)'));
+  buildAlOverview(wrap,a);
+  if(a.mentoring&&a.mentoring.length)wrap.appendChild(sec(t('al_mentoring_dist'),t('al_mentoring_dist_meta'),alTable(a.mentoring,{label:t('al_mentoring'),tr:trYesNo})));
+  if(a.liaison&&a.liaison.length)wrap.appendChild(sec(t('al_liaison'),t('al_liaison_meta'),alTable(a.liaison,{label:t('al_liaison'),tr:trYesNo})));
+  if(a.sectors&&a.sectors.length)wrap.appendChild(sec(t('s_alumni_sectors'),'',alTable(a.sectors,{label:t('col_sector'),tr:trSector})));
+  if(a.companies&&a.companies.length)wrap.appendChild(sec(t('al_companies'),t('al_companies_meta'),alTable(a.companies,{label:t('al_company')})));
+}
+function buildAlDemo(wrap,a){
+  wrap.appendChild(groupHeader(t('al_cat_demo'),t('al_age_dist_sub'),true,'var(--teal)'));
+  if(a.age&&a.age.length)wrap.appendChild(alChartCard('chart-age',t('al_age_dist'),t('al_age_dist_sub'),300));
+  if(a.gender&&a.gender.length)wrap.appendChild(sec(t('al_gender'),t('al_gender_meta'),alTable(a.gender,{label:t('al_gender'),tr:trYesNo})));
+  if(a.gradYears&&a.gradYears.length)wrap.appendChild(alChartCard('chart-grad',t('s_alumni_grad'),t('s_alumni_grad_sub'),300));
+}
+function buildAlGeo(wrap,a){
+  wrap.appendChild(groupHeader(t('al_cat_geo'),t('al_regions_meta'),true,'var(--navy)'));
+  if(a.regions&&a.regions.length)wrap.appendChild(sec(t('al_regions'),t('al_regions_meta'),alTable(a.regions,{label:t('al_region'),tr:trRegion})));
+  if(a.countries&&a.countries.length)wrap.appendChild(sec(t('s_alumni_countries'),'',alTable(a.countries,{label:t('al_country'),flags:true,tr:trCountry})));
+}
+function buildAlHeritage(wrap,a){
+  wrap.appendChild(groupHeader(t('al_cat_heritage'),t('al_dayboarding_meta'),true,'var(--violet)'));
+  if(a.dayBoarding&&a.dayBoarding.length)wrap.appendChild(sec(t('al_dayboarding'),t('al_dayboarding_meta'),alTable(a.dayBoarding,{label:t('al_studenttype'),tr:trDayBoard})));
+  const hasP=a.housesPrep&&a.housesPrep.length,hasC=a.housesCollege&&a.housesCollege.length;
+  if(hasP)wrap.appendChild(sec(t('al_houses_prep'),t('al_houses_meta'),alTable(a.housesPrep,{label:t('al_house')})));
+  if(hasC)wrap.appendChild(sec(t('al_houses_college'),t('al_houses_meta'),alTable(a.housesCollege,{label:t('al_house')})));
+  if(!hasP&&!hasC&&a.houses&&a.houses.length)wrap.appendChild(sec(t('al_houses'),t('al_houses_meta'),alTable(a.houses,{label:t('al_house')})));
+  if(!hasP&&!hasC&&!(a.houses&&a.houses.length)&&!(a.dayBoarding&&a.dayBoarding.length))wrap.appendChild(sec(t('al_houses'),'',emptyState(t('coming_soon'),t('al_heritage_pending'))));
+}
+
+/* ── collapsible toggle ── */
+function toggleGroup(gid,row){
+  const open=row.classList.toggle('open');
+  document.querySelectorAll('.'+gid).forEach(el=>{el.style.display=open?'':'none';});
+}
+
+/* ============================== CHARTS ============================== */
+const TTP={backgroundColor:'#213463',titleFont:{family:'Asap',size:12,weight:'700'},bodyFont:{family:'Asap Condensed',size:12},padding:14,cornerRadius:8,titleColor:'#fff',bodyColor:'rgba(255,255,255,.85)',displayColors:true,boxWidth:9,boxHeight:9,usePointStyle:true,borderColor:'rgba(255,255,255,.1)',borderWidth:1};
+function hexA(hex,a){hex=String(hex).replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const n=parseInt(hex,16);return'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+const FLAG={Argentine:'🇦🇷',Argentina:'🇦🇷',American:'🇺🇸','United States':'🇺🇸',Chinese:'🇨🇳',China:'🇨🇳',Russian:'🇷🇺',Russia:'🇷🇺',Brazilian:'🇧🇷',Brazil:'🇧🇷',Chilean:'🇨🇱',Chile:'🇨🇱',Uruguayan:'🇺🇾',Uruguay:'🇺🇾',Spanish:'🇪🇸',Spain:'🇪🇸','United Kingdom':'🇬🇧',British:'🇬🇧',Mexican:'🇲🇽',Mexico:'🇲🇽',Italian:'🇮🇹',Italy:'🇮🇹',Australia:'🇦🇺',Australian:'🇦🇺',Bolivia:'🇧🇴',Bolivian:'🇧🇴',Paraguay:'🇵🇾',Paraguayan:'🇵🇾',Other:'🌐',Otros:'🌐'};
+function flag(n){return FLAG[n]||'🏳️';}
+const ISO2={Argentine:'ar',Argentina:'ar',American:'us','United States':'us',Chinese:'cn',China:'cn',Russian:'ru',Russia:'ru',Brazilian:'br',Brazil:'br',Chilean:'cl',Chile:'cl',Uruguayan:'uy',Uruguay:'uy',Spanish:'es',Spain:'es','United Kingdom':'gb',British:'gb',Mexican:'mx',Mexico:'mx',Italian:'it',Italy:'it',Australia:'au',Australian:'au',Bolivia:'bo',Bolivian:'bo',Paraguay:'py',Paraguayan:'py',France:'fr',French:'fr',Switzerland:'ch',Swiss:'ch',Netherlands:'nl',Dutch:'nl',Germany:'de',German:'de',Canada:'ca',Canadian:'ca',Belgium:'be',Belgian:'be',Portugal:'pt',Portuguese:'pt',Peru:'pe',Peruvian:'pe',Ecuador:'ec',Ecuadorian:'ec','New Zealand':'nz',Ireland:'ie','Ireland (Republic)':'ie',Irish:'ie',Luxembourg:'lu',Panama:'pa',Sweden:'se',Swedish:'se',Austria:'at',Austrian:'at',Colombia:'co',Colombian:'co',Venezuela:'ve',Venezuelan:'ve','Ireland {Republic}':'ie',Denmark:'dk',Danish:'dk','Costa Rica':'cr','Dominican Republic':'do',Guatemala:'gt',Honduras:'hn',Aruba:'aw','United Arab Emirates':'ae',Belarus:'by',Zambia:'zm','Korea South':'kr','South Korea':'kr',Korean:'kr',Singapore:'sg',Armenia:'am',Indonesia:'id',Ukraine:'ua',Ukrainian:'ua',Japan:'jp',Japanese:'jp',India:'in',Indian:'in',Israel:'il'};
+// Inline SVG flags (self-contained — no external requests, work in locked-down networks)
+const FLAGSVG={
+  ar:'<rect width="21" height="15" fill="#fff"/><rect width="21" height="5" fill="#74acdf"/><rect y="10" width="21" height="5" fill="#74acdf"/><circle cx="10.5" cy="7.5" r="1.5" fill="#f6b40e"/>',
+  us:'<rect width="21" height="15" fill="#fff"/><g fill="#b22234"><rect width="21" height="2" y="0"/><rect width="21" height="2" y="4"/><rect width="21" height="2" y="8"/><rect width="21" height="1.8" y="12"/></g><rect width="9" height="8" fill="#3c3b6e"/>',
+  es:'<rect width="21" height="15" fill="#c60b1e"/><rect y="4" width="21" height="7" fill="#ffc400"/>',
+  gb:'<rect width="21" height="15" fill="#012169"/><rect x="9" width="3" height="15" fill="#fff"/><rect y="6" width="21" height="3" fill="#fff"/><rect x="9.6" width="1.8" height="15" fill="#c8102e"/><rect y="6.6" width="21" height="1.8" fill="#c8102e"/>',
+  cl:'<rect width="21" height="15" fill="#fff"/><rect y="7.5" width="21" height="7.5" fill="#d52b1e"/><rect width="7.5" height="7.5" fill="#0039a6"/>',
+  uy:'<rect width="21" height="15" fill="#fff"/><g fill="#0038a8"><rect y="3.4" width="21" height="1.7"/><rect y="6.8" width="21" height="1.7"/><rect y="10.2" width="21" height="1.7"/><rect y="13.6" width="21" height="1.4"/></g><rect width="9" height="8.5" fill="#fff"/><circle cx="4.5" cy="4.2" r="1.5" fill="#f6b40e"/>',
+  br:'<rect width="21" height="15" fill="#009b3a"/><path d="M10.5 1.5 19.5 7.5 10.5 13.5 1.5 7.5Z" fill="#fedf00"/><circle cx="10.5" cy="7.5" r="3" fill="#002776"/>',
+  it:'<rect width="7" height="15" fill="#009246"/><rect x="7" width="7" height="15" fill="#fff"/><rect x="14" width="7" height="15" fill="#ce2b37"/>',
+  ru:'<rect width="21" height="15" fill="#fff"/><rect y="5" width="21" height="5" fill="#0039a6"/><rect y="10" width="21" height="5" fill="#d52b1e"/>',
+  bo:'<rect width="21" height="15" fill="#d52b1e"/><rect y="5" width="21" height="5" fill="#f9e300"/><rect y="10" width="21" height="5" fill="#007934"/>',
+  py:'<rect width="21" height="15" fill="#fff"/><rect width="21" height="5" fill="#d52b1e"/><rect y="10" width="21" height="5" fill="#0038a8"/>',
+  mx:'<rect width="7" height="15" fill="#006847"/><rect x="7" width="7" height="15" fill="#fff"/><rect x="14" width="7" height="15" fill="#ce1126"/>',
+  cn:'<rect width="21" height="15" fill="#de2910"/><circle cx="5" cy="5" r="2.4" fill="#ffde00"/>',
+  au:'<rect width="21" height="15" fill="#00247d"/><circle cx="15" cy="9" r="1.5" fill="#fff"/><circle cx="5" cy="4" r="1" fill="#fff"/>',
+  fr:'<rect width="21" height="15" fill="#fff"/><rect width="7" height="15" fill="#0055A4"/><rect x="14" width="7" height="15" fill="#EF4135"/>',
+  nl:'<rect width="21" height="15" fill="#fff"/><rect width="21" height="5" fill="#AE1C28"/><rect y="10" width="21" height="5" fill="#21468B"/>',
+  de:'<rect width="21" height="5" fill="#000"/><rect y="5" width="21" height="5" fill="#D00"/><rect y="10" width="21" height="5" fill="#FFCE00"/>',
+  ch:'<rect width="21" height="15" fill="#D52B1E"/><rect x="9" y="3" width="3" height="9" fill="#fff"/><rect x="6" y="6" width="9" height="3" fill="#fff"/>',
+  ca:'<rect width="21" height="15" fill="#fff"/><rect width="5" height="15" fill="#FF0000"/><rect x="16" width="5" height="15" fill="#FF0000"/><path d="M10.5 4 11.2 6 13 5.6 11.8 7.3 13.2 8 11 8.2 11.3 10 10.5 8.7 9.7 10 10 8.2 7.8 8 9.2 7.3 8 5.6 9.8 6Z" fill="#FF0000"/>',
+  be:'<rect width="7" height="15" fill="#000"/><rect x="7" width="7" height="15" fill="#FAE042"/><rect x="14" width="7" height="15" fill="#ED2939"/>',
+  pt:'<rect width="21" height="15" fill="#FF0000"/><rect width="8" height="15" fill="#006600"/><circle cx="8" cy="7.5" r="2" fill="#FFD700"/>',
+  pe:'<rect width="21" height="15" fill="#fff"/><rect width="7" height="15" fill="#D91023"/><rect x="14" width="7" height="15" fill="#D91023"/>',
+  ec:'<rect width="21" height="15" fill="#FFDD00"/><rect y="7.5" width="21" height="3.75" fill="#034EA2"/><rect y="11.25" width="21" height="3.75" fill="#ED1C24"/>',
+  nz:'<rect width="21" height="15" fill="#00247d"/><circle cx="15.5" cy="5" r=".9" fill="#fff"/><circle cx="17" cy="9" r=".9" fill="#fff"/><circle cx="14" cy="10" r=".9" fill="#fff"/><circle cx="16" cy="12" r=".9" fill="#fff"/>',
+  ie:'<rect width="7" height="15" fill="#169B62"/><rect x="7" width="7" height="15" fill="#fff"/><rect x="14" width="7" height="15" fill="#FF883E"/>',
+  lu:'<rect width="21" height="15" fill="#fff"/><rect width="21" height="5" fill="#ED2939"/><rect y="10" width="21" height="5" fill="#00A1DE"/>',
+  pa:'<rect width="21" height="15" fill="#fff"/><rect x="10.5" width="10.5" height="7.5" fill="#D21034"/><rect y="7.5" width="10.5" height="7.5" fill="#072357"/>',
+  se:'<rect width="21" height="15" fill="#006AA7"/><rect x="6" width="3" height="15" fill="#FECC00"/><rect y="6" width="21" height="3" fill="#FECC00"/>',
+  at:'<rect width="21" height="15" fill="#fff"/><rect width="21" height="5" fill="#ED2939"/><rect y="10" width="21" height="5" fill="#ED2939"/>',
+  co:'<rect width="21" height="15" fill="#FCD116"/><rect y="7.5" width="21" height="3.75" fill="#003893"/><rect y="11.25" width="21" height="3.75" fill="#CE1126"/>',
+  ve:'<rect width="21" height="15" fill="#CF142B"/><rect width="21" height="5" fill="#FFCC00"/><rect y="5" width="21" height="5" fill="#00247d"/>',
+  dk:'<rect width="21" height="15" fill="#C8102E"/><rect x="6" width="3" height="15" fill="#fff"/><rect y="6" width="21" height="3" fill="#fff"/>',
+  cr:'<rect width="21" height="15" fill="#002B7F"/><rect y="2.5" width="21" height="10" fill="#fff"/><rect y="5" width="21" height="5" fill="#CE1126"/>',
+  do:'<rect width="21" height="15" fill="#fff"/><rect width="9" height="6" fill="#002D62"/><rect x="12" width="9" height="6" fill="#CE1126"/><rect y="9" width="9" height="6" fill="#CE1126"/><rect x="12" y="9" width="9" height="6" fill="#002D62"/>',
+  gt:'<rect width="21" height="15" fill="#fff"/><rect width="7" height="15" fill="#4997D0"/><rect x="14" width="7" height="15" fill="#4997D0"/>',
+  hn:'<rect width="21" height="15" fill="#fff"/><rect width="21" height="5" fill="#0073CF"/><rect y="10" width="21" height="5" fill="#0073CF"/>',
+  aw:'<rect width="21" height="15" fill="#4EADE7"/><rect y="10.5" width="21" height="1.4" fill="#F9D616"/><rect y="12.4" width="21" height="1.4" fill="#F9D616"/>',
+  ae:'<rect width="21" height="5" fill="#00732F"/><rect y="5" width="21" height="5" fill="#fff"/><rect y="10" width="21" height="5" fill="#000"/><rect width="5" height="15" fill="#FF0000"/>',
+  by:'<rect width="21" height="15" fill="#C8313E"/><rect y="10" width="21" height="5" fill="#4AA657"/>',
+  zm:'<rect width="21" height="15" fill="#198A00"/><rect x="15" width="2" height="15" fill="#EF7D00"/><rect x="17" width="2" height="15" fill="#000"/><rect x="19" width="2" height="15" fill="#DE2010"/>',
+  kr:'<rect width="21" height="15" fill="#fff"/><circle cx="10.5" cy="7.5" r="3" fill="#CD2E3A"/><path d="M10.5 4.5a3 3 0 0 0 0 6 1.5 1.5 0 0 0 0-3 1.5 1.5 0 0 1 0-3z" fill="#0047A0"/>',
+  sg:'<rect width="21" height="15" fill="#EF3340"/><rect y="7.5" width="21" height="7.5" fill="#fff"/>',
+  am:'<rect width="21" height="5" fill="#D90012"/><rect y="5" width="21" height="5" fill="#0033A0"/><rect y="10" width="21" height="5" fill="#F2A800"/>',
+  id:'<rect width="21" height="15" fill="#CE1126"/><rect y="7.5" width="21" height="7.5" fill="#fff"/>',
+  ua:'<rect width="21" height="15" fill="#0057B7"/><rect y="7.5" width="21" height="7.5" fill="#FFD700"/>',
+  jp:'<rect width="21" height="15" fill="#fff"/><circle cx="10.5" cy="7.5" r="3.5" fill="#BC002D"/>',
+  in:'<rect width="21" height="5" fill="#FF9933"/><rect y="5" width="21" height="5" fill="#fff"/><rect y="10" width="21" height="5" fill="#138808"/><circle cx="10.5" cy="7.5" r="1.4" fill="none" stroke="#000080" stroke-width=".4"/>',
+  il:'<rect width="21" height="15" fill="#fff"/><rect y="2" width="21" height="2" fill="#0038B8"/><rect y="11" width="21" height="2" fill="#0038B8"/>',
+};
+function flagImg(name){
+  const c=ISO2[name],s=c&&FLAGSVG[c];
+  if(!s)return '<span style="display:inline-block;width:21px;text-align:center;margin-right:5px">🌐</span>';
+  return '<svg width="21" height="15" viewBox="0 0 21 15" style="vertical-align:middle;margin-right:6px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)">'+s+'</svg>';
+}
+Chart.unregister(ChartDataLabels);
+function drawCharts(){
+  Chart.defaults.font.family='Asap Condensed';Chart.defaults.color='#8C857A';
+  Object.keys(charts).forEach(k=>{try{if(charts[k])charts[k].destroy();}catch(e){}});charts={};
+  const DK=isDarkMode();
+  const PBC=DK?'#1C1C2C':'#fff';
+  const kRed=DK?'#FF6371':'#DC1E33',kNavy=DK?'#7C9AE0':'#213463',kTeal=DK?'#26C6D6':'#109AA9',kCel=DK?'#86C4EE':'#6AB2E2',kViolet=DK?'#9EA1E4':'#6B6EB3',kInk=DK?'#C2CCDE':'#1A1F35';
+  const Cmain=campus==='q'?kRed:campus==='n'?kNavy:kInk;
+  const Crgb=campus==='q'?'220,30,51':campus==='n'?(DK?'124,154,224':'33,52,105'):(DK?'194,204,222':'26,31,53');
+  const kGray=DK?'#9A9AB8':'#6E6A60';
+  const GRD=DK?{color:'rgba(255,255,255,.09)'}:{color:'rgba(232,227,218,.7)'};
+  const TCK=DK?{font:{family:'Asap Condensed',size:11},color:'#9A9AB8'}:{font:{family:'Asap Condensed',size:11},color:'#8C857A'};
+  const LEG=pos=>({position:pos||'bottom',labels:{font:{family:'Asap Condensed',size:11},color:kGray,padding:14,usePointStyle:true,pointStyle:'circle'}});
+
+  // Enrolment stacked bars (2021 -> 2027 ascending; 2027 dimmed = projection)
+  const ec=document.getElementById('chart-enrol');
+  if(ec&&D.resumen){
+    const qA=(D.resumen.quilmes||[]),nA=(D.resumen.north||[]);
+    const spine=qA.length?qA:nA;
+    const getLvl=key=>spine.map((row,i)=>{const q=qA[i]||{},n=nA[i]||{};if(campus==='q')return num(q[key]);if(campus==='n')return num(n[key]);return num(q[key])+num(n[key]);});
+    const dim=DK?0.40:0.45;
+    const bg=col=>spine.map(r=>r.yr===2027?hexA(col,dim):col);
+    charts.enrol=new Chart(ec,{type:'bar',data:{labels:spine.map(r=>String(r.yr)+(r.yr===2027?' ▸':'')),datasets:[
+      {label:t('kinder'),data:getLvl('kinder'),backgroundColor:bg(kCel),stack:'s',borderSkipped:false},
+      {label:t('prep'),data:getLvl('prep'),backgroundColor:bg(kViolet),stack:'s',borderSkipped:false},
+      {label:t('college'),data:getLvl('college'),backgroundColor:bg(kNavy),stack:'s',borderRadius:{topLeft:7,topRight:7},borderSkipped:false},
+    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:LEG(),tooltip:TTP},scales:{y:{stacked:true,grid:GRD,ticks:TCK,border:{display:false}},x:{stacked:true,grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+  // Enrolment by campus — lines (per-campus toggle)
+  const qnc=document.getElementById('chart-qn');
+  if(qnc&&D.resumen){
+    const qR=(D.resumen.quilmes||[]),nR=(D.resumen.north||[]);
+    const spine=qR.length?qR:nR;
+    const ds=[];
+    if(campus!=='n')ds.push({label:'Quilmes',data:qR.map(r=>num(r.total)),borderColor:kRed,backgroundColor:DK?'rgba(255,99,113,.22)':'rgba(220,30,51,.28)',tension:.4,fill:true,borderWidth:3,pointRadius:0,pointHoverRadius:7,pointBackgroundColor:kRed,pointBorderColor:PBC,pointBorderWidth:2.5});
+    if(campus!=='q')ds.push({label:'North',data:nR.map(r=>num(r.total)),borderColor:kNavy,backgroundColor:DK?'rgba(124,154,224,.24)':'rgba(33,52,99,.26)',tension:.4,fill:true,borderWidth:3,pointRadius:0,pointHoverRadius:7,pointBackgroundColor:kNavy,pointBorderColor:PBC,pointBorderWidth:2});
+    charts.qn=new Chart(qnc,{type:'line',data:{labels:spine.map(r=>String(r.yr)+(r.yr===2027?' (p)':'')),datasets:ds},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:LEG(),tooltip:TTP},scales:{y:{grid:GRD,ticks:TCK,border:{display:false},beginAtZero:false},x:{grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+  // Donut (horizontal stacked bar)
+  const dc=document.getElementById('chart-donut');
+  if(dc){
+    const cd=getCampusData();
+    if(cd){
+      const kT=num(cd.kinder&&cd.kinder.total&&cd.kinder.total.matricula),pT=num(cd.prep&&cd.prep.total&&cd.prep.total.matricula),cT=num(cd.college&&cd.college.total&&cd.college.total.matricula);
+      const cTot=kT+pT+cT||1;
+      charts.donut=new Chart(dc,{type:'bar',data:{labels:[''],datasets:[
+        {label:t('kinder'),data:[kT],backgroundColor:kCel,stack:'s',borderRadius:{topLeft:9,bottomLeft:9},borderSkipped:false},
+        {label:t('prep'),data:[pT],backgroundColor:kViolet,stack:'s'},
+        {label:t('college'),data:[cT],backgroundColor:kTeal,stack:'s',borderRadius:{topRight:9,bottomRight:9},borderSkipped:false},
+      ]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:LEG(),tooltip:Object.assign({},TTP,{callbacks:{label:c=>' '+c.dataset.label+': '+fN(c.raw)+' ('+(c.raw/cTot*100).toFixed(0)+'%)'}})},scales:{x:{stacked:true,display:false,max:cTot},y:{stacked:true,display:false}}}});
+    }
+  }
+  // Conversion rate dual-axis
+  const wrc=document.getElementById('chart-wr');
+  if(wrc&&D.winrate){
+    const labels=D.winrate.map(r=>String(r.yr));const F=D.winrate.map(r=>getWRF(r));
+    const pipeBg=DK?'rgba(140,152,176,.4)':'rgba('+Crgb+',.24)';
+    charts.wr=new Chart(wrc,{type:'bar',data:{labels,datasets:[
+      {type:'bar',label:t('col_pipeline'),data:F.map(f=>num(f.pipeline)),backgroundColor:pipeBg,borderRadius:6,borderSkipped:false,yAxisID:'y',order:3},
+      {type:'bar',label:t('col_won'),data:F.map(f=>num(f.won)),backgroundColor:kTeal,borderRadius:6,borderSkipped:false,yAxisID:'y',order:2},
+      {type:'line',label:t('col_wr'),data:F.map(f=>+(num(f.wr)*100).toFixed(1)),borderColor:Cmain,backgroundColor:'transparent',tension:.45,borderWidth:3,pointRadius:0,pointHoverRadius:7,pointBackgroundColor:Cmain,pointBorderColor:PBC,pointBorderWidth:2,yAxisID:'y1',order:1},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:LEG(),tooltip:TTP},scales:{y:{grid:GRD,ticks:TCK,border:{display:false}},y1:{position:'right',grid:{display:false},ticks:{font:{family:'Asap Condensed',size:11},color:kGray,callback:v=>v+'%'},border:{display:false}},x:{grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+  // Cohort lifespan bars
+  const coc=document.getElementById('chart-cohort');
+  if(coc&&D.cohort){
+    const labels=D.cohort.map(r=>String(r.yr));
+    const life=D.cohort.map(r=>{const f=getCohF(r);return f.life!=null?num(f.life):null;});
+    charts.cohort=new Chart(coc,{type:'bar',data:{labels,datasets:[{label:t('col_lifespan'),data:life,backgroundColor:Cmain,borderRadius:6,borderSkipped:false}]},options:{responsive:true,plugins:{legend:LEG(),tooltip:TTP},scales:{y:{grid:GRD,ticks:TCK,border:{display:false},beginAtZero:true},x:{grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+  // Alumni graduation years (Form Responses by Graduation Year)
+  const gc=document.getElementById('chart-grad');
+  if(gc&&D.alumni&&D.alumni.gradYears){
+    const valOf=r=>campus==='q'?num(r.q):campus==='n'?num(r.n):num(r.total);
+    const gy=D.alumni.gradYears;
+    charts.grad=new Chart(gc,{type:'bar',data:{labels:gy.map(r=>String(r.year).replace('.0','')),datasets:[{label:t('al_count'),data:gy.map(valOf),backgroundColor:kTeal,borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:LEG(),tooltip:TTP},scales:{y:{grid:GRD,ticks:TCK,border:{display:false},beginAtZero:true},x:{grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+  // Alumni age distribution (respondents by age bucket)
+  const agc=document.getElementById('chart-age');
+  if(agc&&D.alumni&&D.alumni.age){
+    const av=D.alumni.age;
+    charts.age=new Chart(agc,{type:'bar',data:{labels:av.map(r=>r.bucket),datasets:[{label:t('al_count'),data:av.map(r=>num(alcV(r))),backgroundColor:kRed,borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TTP},scales:{y:{grid:GRD,ticks:TCK,border:{display:false},beginAtZero:true},x:{grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+  // Digital Ads — spend (bars, USD) + clicks (line) by month
+  const ac=document.getElementById('chart-ads');
+  if(ac&&D.ads&&D.ads.trend&&D.ads.trend.length){
+    const tr=D.ads.trend;
+    const bg=tr.map(r=>r.month===adsMonth?kTeal:hexA(kTeal,DK?0.4:0.45));
+    charts.ads=new Chart(ac,{data:{labels:tr.map(r=>monthLabel(r.month)),datasets:[
+      {type:'bar',label:t('ads_spend'),data:tr.map(r=>Math.round(num(r.spend))),backgroundColor:bg,borderRadius:6,borderSkipped:false,yAxisID:'y',order:2},
+      {type:'line',label:t('ads_clicks'),data:tr.map(r=>num(r.clicks)),borderColor:kRed,backgroundColor:'transparent',tension:.4,borderWidth:3,pointRadius:4,pointHoverRadius:7,pointBackgroundColor:kRed,pointBorderColor:PBC,pointBorderWidth:2,yAxisID:'y1',order:1},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:LEG(),tooltip:TTP},scales:{y:{grid:GRD,ticks:{font:{family:'Asap Condensed',size:11},color:kGray,callback:v=>'$'+v},border:{display:false}},y1:{position:'right',grid:{display:false},ticks:TCK,border:{display:false}},x:{grid:{display:false},ticks:TCK,border:{display:false}}}}});
+  }
+}
+
+/* ============================== SIDEBAR NAV ============================== */
+function buildSidebarNav(){
+  const nav=document.getElementById('sb-nav');
+  while(nav.firstChild)nav.removeChild(nav.firstChild);
+  const lbl=document.createElement('div');lbl.className='sb-lbl';lbl.innerHTML=t('nav_label');nav.appendChild(lbl);
+  TABS.forEach(function(tab){
+    if(!sVis[tab.id])return;
+    const btn=document.createElement('button');
+    btn.className='nav-item'+(tab.id===activeTab?' active':'');
+    btn.innerHTML=tab.icon+'<span>'+tab.label+'</span>';
+    btn.onclick=function(){
+      activeTab=tab.id;
+      if(isMobile()){document.getElementById('sidebar').classList.remove('mobile-open');document.getElementById('mob-overlay').classList.remove('active');}
+      // Marketing is One School only → if campus differs, re-render fully
+      if(tab.id==='marketing'&&campus!=='os'){campus='os';render();window.scrollTo({top:0,behavior:'smooth'});return;}
+      document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      const panel=document.getElementById('panel-'+tab.id);
+      if(panel){panel.classList.add('active');animateFunnels();drawCharts();}
+      syncCampusUI();
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+    nav.appendChild(btn);
+  });
+  const bottom=document.getElementById('sb-bottom');
+  while(bottom.firstChild)bottom.removeChild(bottom.firstChild);
+  function mkSwitch(name,leftHTML,rightHTML,isOn,onToggle){
+    var row=document.createElement('div');row.className='sb-switch-row';
+    var nm=document.createElement('div');nm.className='sb-switch-name';nm.innerHTML=name;
+    var ctrl=document.createElement('div');ctrl.className='sb-switch-ctrl';
+    var lblL=document.createElement('div');lblL.className='sb-switch-lbl'+(isOn?'':' sw-active');lblL.innerHTML=leftHTML;
+    var track=document.createElement('div');track.className='sb-switch-track'+(isOn?' sw-on':'');
+    var thumb=document.createElement('div');thumb.className='sb-switch-thumb';track.appendChild(thumb);
+    var lblR=document.createElement('div');lblR.className='sb-switch-lbl'+(isOn?' sw-active':'');lblR.innerHTML=rightHTML;
+    ctrl.appendChild(lblL);ctrl.appendChild(track);ctrl.appendChild(lblR);
+    row.appendChild(nm);row.appendChild(ctrl);row.onclick=onToggle;return row;
+  }
+  var switchWrap=document.createElement('div');switchWrap.className='sb-switches';
+  var isEN=lang==='en';
+  switchWrap.appendChild(mkSwitch(t('ui_language'),'ES','EN',isEN,function(){lang=isEN?'es':'en';document.documentElement.lang=lang;render();}));
+  var sunIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="2" x2="12" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="20" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="20" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var moonIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+  var isDark=isDarkMode();
+  var themeSwitch=mkSwitch(t('ui_theme'),sunIcon,moonIcon,isDark,function(){setTheme(isDark?'light':'dark');});
+  themeSwitch.querySelector('.sb-switch-lbl').classList.add('sw-sun');
+  switchWrap.appendChild(themeSwitch);
+  var comfyIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/></svg>';
+  var denseIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="4" y1="16" x2="20" y2="16"/><line x1="4" y1="21" x2="20" y2="21"/></svg>';
+  var isCompact=localStorage.getItem('sgc-density')==='compact';
+  switchWrap.appendChild(mkSwitch(t('ui_density'),comfyIcon,denseIcon,isCompact,function(){isCompact=!isCompact;localStorage.setItem('sgc-density',isCompact?'compact':'comfortable');applyDensity();buildSidebarNav();}));
+  bottom.appendChild(switchWrap);
+  var upd=document.createElement('div');upd.className='sb-update';
+  upd.textContent=(D&&D.lastUpdate)?D.lastUpdate:'';
+  bottom.appendChild(upd);
+}
+
+/* ============================== CAMPUS SELECTOR ============================== */
+document.querySelectorAll('.campus-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    campus=btn.dataset.c;
+    document.querySelectorAll('.campus-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});
+    btn.classList.add('active');btn.setAttribute('aria-pressed','true');
+    render();
+  });
+});
+
+/* ============================== SIDEBAR TOGGLE ============================== */
+function isMobile(){return window.matchMedia('(max-width:768px)').matches;}
+function setSidebarCollapsed(v){
+  sidebarCollapsed=v;
+  document.getElementById('sidebar').classList.toggle('collapsed',v);
+  document.getElementById('content').classList.toggle('collapsed',v);
+  document.getElementById('hdr-brand').classList.toggle('collapsed',v);
+}
+function toggleMobileSidebar(){
+  const sb=document.getElementById('sidebar'),ov=document.getElementById('mob-overlay');
+  const isOpen=sb.classList.toggle('mobile-open');ov.classList.toggle('active',isOpen);
+}
+document.getElementById('btn-sb-toggle').addEventListener('click',()=>{if(isMobile())toggleMobileSidebar();else setSidebarCollapsed(!sidebarCollapsed);});
+document.getElementById('mob-overlay').addEventListener('click',()=>{document.getElementById('sidebar').classList.remove('mobile-open');document.getElementById('mob-overlay').classList.remove('active');});
+
+/* ============================== ADMIN ============================== */
+function buildAdmin(){
+  const ctr=document.getElementById('sec-toggles');ctr.innerHTML='';
+  TABS.forEach(function(tab){
+    const p=document.createElement('div');p.className='pill active';
+    p.innerHTML='<span class="dot"></span>'+tab.label;
+    p.onclick=function(){
+      sVis[tab.id]=!sVis[tab.id];p.classList.toggle('active',sVis[tab.id]);
+      if(!sVis[tab.id]&&activeTab===tab.id)activeTab=(TABS.find(x=>sVis[x.id])||TABS[0]).id;
+      render();
+    };
+    ctr.appendChild(p);
+  });
+  const fw=document.getElementById('fact-toggle-wrap');fw.innerHTML='';
+  const fp=document.createElement('div');fp.className='pill teal-pill'+(showFact?' active':'');
+  fp.innerHTML='<span class="dot"></span>'+(lang==='en'?'Show Billing USD':'Mostrar Facturaci&oacute;n USD');
+  fp.onclick=()=>{
+    showFact=!showFact;fp.classList.toggle('active',showFact);
+    const _s=document.createElement('script');_s.src=API_URL+'?setFact='+(showFact?'1':'0')+'&tok='+encodeURIComponent(accessToken)+'&callback=_noop';
+    window._noop=()=>{};document.head.appendChild(_s);setTimeout(()=>_s.remove(),3000);
+    render();
+  };
+  fw.appendChild(fp);
+  // Classroom breakdown toggle (Projection 2027)
+  const cp=document.createElement('div');
+  cp.className='pill teal-pill'+(showClassroom?' active':'');
+  cp.innerHTML='<span class="dot"></span>'+(lang==='en'?'Show Classroom Breakdown':'Mostrar Desglose por Sal&oacute;n');
+  cp.onclick=()=>{showClassroom=!showClassroom;cp.classList.toggle('active',showClassroom);render();};
+  fw.appendChild(cp);
+}
+function updateAdminInfo(){
+  const el=document.getElementById('adm-info');if(!el)return;
+  el.innerHTML='<div class="adm-info-row"><span class="adm-info-lbl">Admin</span><span class="adm-info-val">'+escHtml(ADMIN_EMAIL)+'</span></div><div class="adm-info-row"><span class="adm-info-lbl">Connection</span><span class="adm-info-val"><span class="adm-conn"><span class="adm-conn-dot"></span> Active</span></span></div><div class="adm-info-row"><span class="adm-info-lbl">Last sync</span><span class="adm-info-val">'+escHtml(D.lastUpdate||'–')+'</span></div><div class="adm-info-row"><span class="adm-info-lbl">showFact</span><span class="adm-info-val">'+(showFact?'Visible':'Hidden')+'</span></div>';
+}
+document.getElementById('btn-admin').addEventListener('click',()=>{buildAdmin();document.getElementById('admin-drawer').classList.add('open');document.getElementById('admin-overlay').classList.add('open');});
+document.getElementById('adm-close').addEventListener('click',closeAdmin);
+document.getElementById('admin-overlay').addEventListener('click',closeAdmin);
+function closeAdmin(){document.getElementById('admin-drawer').classList.remove('open');document.getElementById('admin-overlay').classList.remove('open');}
+
+/* ============================== UI HELPERS ============================== */
+function showApp(){document.getElementById('login-screen').style.display='none';document.getElementById('access-denied').style.display='none';document.getElementById('app').style.display='block';}
+function showAccessDenied(){hideLoad();document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='none';document.getElementById('access-denied').style.display='flex';document.getElementById('denied-email').textContent=userEmail;}
+function showLoad(msg){const el=document.getElementById('loading');el.querySelector('.load-txt').textContent=msg||'Loading...';el.classList.remove('hidden');}
+function hideLoad(){document.getElementById('loading').classList.add('hidden');}
+function applyDensity(){const m=document.getElementById('main');if(m)m.classList.toggle('compact',localStorage.getItem('sgc-density')==='compact');}
+function applyHeaderStrings(){const v=document.getElementById('hdr-viewing');if(v)v.innerHTML=t('viewing');const o=document.getElementById('btn-out');if(o)o.innerHTML=t('logout');}
+function showSkeleton(){
+  const m=document.getElementById('main');if(!m)return;
+  m.innerHTML='<div class="skel-stack" aria-busy="true"><div class="skel skel-title"></div><div class="skel skel-band"></div><div class="skel-row" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div><div class="skel skel-table"></div><div class="skel-row" style="grid-template-columns:1fr 1fr"><div class="skel skel-chart"></div><div class="skel skel-chart"></div></div></div>';
+}
+function updateClock(){const now=new Date();const tt=now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});const el=document.getElementById('h-update');if(el&&!el.textContent.startsWith('Updated'))el.textContent=tt;}
+setInterval(updateClock,30000);
+
+/* ============================== SESSION ============================== */
+function saveSession(){try{sessionStorage.setItem('sgc_token',accessToken);localStorage.setItem('sgc_email',userEmail);localStorage.setItem('sgc_exp',String(Date.now()+55*60*1000));}catch(e){}}
+function loadSession(){try{const tok=sessionStorage.getItem('sgc_token');const exp=parseInt(localStorage.getItem('sgc_exp')||'0');const em=(localStorage.getItem('sgc_email')||'').toLowerCase().trim();if(tok&&exp>Date.now()&&em){accessToken=tok;userEmail=em;return true;}}catch(e){}return false;}
+function clearSession(){try{sessionStorage.removeItem('sgc_token');localStorage.removeItem('sgc_email');localStorage.removeItem('sgc_exp');}catch(e){}}
+// Instant render from the last cached payload (so reloads feel immediate); fresh data refreshes in the background.
+function tryRenderCache(){
+  try{
+    const c=localStorage.getItem('sgc_data');if(!c)return false;
+    const d=JSON.parse(c);if(!d||!d.headline)return false;
+    D=d;
+    if(D.config&&typeof D.config.showFact!=='undefined')showFact=D.config.showFact===true||D.config.showFact==='true'||D.config.showFact===1;
+    const now=D.lastUpdate||'';
+    const hu=document.getElementById('h-update');if(hu)hu.textContent='Updated: '+now;
+    const ft=document.getElementById('f-time');if(ft)ft.textContent=now;
+    updateAdminInfo();initSimAdj();render();
+    return true;
+  }catch(e){return false;}
+}
+
+/* ============================== INIT ============================== */
+buildSidebarNav();
+window.onload=()=>{
+  if(loadSession()){
+    if(userEmail===ADMIN_EMAIL)document.getElementById('btn-admin').style.display='flex';
+    showApp();
+    tryRenderCache();   // paint last data instantly, then refresh
+    fetchData();
+    return;
+  }
+  const to=setTimeout(()=>{hideLoad();document.getElementById('login-screen').style.display='flex';},10000);
+  const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
+  s.onload=()=>{clearTimeout(to);initAuth();};
+  s.onerror=()=>{clearTimeout(to);hideLoad();document.getElementById('login-screen').style.display='flex';};
+  document.head.appendChild(s);
+};
+</script>
+</body>
+</html>
