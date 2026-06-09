@@ -561,3 +561,18 @@
     const si = document.getElementById('search-input');
     si.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(si.value); });
   }
+
+ // --- OYENTES DE EVENTOS ORIGINALES (Mantenelos igual abajo) ---
+    document.querySelectorAll('[data-lang]').forEach(function (b) {
+      b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+    });
+    document.getElementById('theme-switch').addEventListener('click', toggleTheme);
+    document.getElementById('btn-sb-toggle').addEventListener('click', toggleMobileSidebar);
+    document.getElementById('scrim').addEventListener('click', closeMobileSidebar);
+    document.getElementById('modal-overlay').addEventListener('click', function (e) {
+      if (e.target === this) closeNews();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNews(); });
+    const si = document.getElementById('search-input');
+    si.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(si.value); });
+  }
