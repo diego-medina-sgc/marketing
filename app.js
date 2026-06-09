@@ -497,41 +497,56 @@
 
   /* ---------- INIT ---------- */
  /* ---------- INIT CORREGIDO PARA TRAER DATOS DEL BACKEND ---------- */
+ /* ---------- INIT CON CARGA JSONP COMPATIBLE CON GOOGLE ---------- */
   function init() {
     applyTheme();
     applyChrome();
 
     // 1. Verificar si hay una URL remota configurada
     if (D.config && D.config.remoteUrl) {
-      // Llamamos al script de Google de forma asíncrona para no trabar la carga del sitio
-      fetch(D.config.remoteUrl)
-        .then(response => response.json())
-        .then(data => {
-          // Si el backend devolvió contenido guardado, sobreescribimos los datos locales de la sesión
-          if (data && data.content) {
-            window.TGNStore = {
-              get: function(key, def) {
-                return data.content[key] !== undefined ? data.content[key] : def;
-              }
-            };
-            // Volvemos a renderizar los paneles con la información nueva del servidor
-            renderNav();
-            go(current);
-          }
-        })
-        .catch(err => {
-          console.error("Error cargando datos remotos de Google:", err);
-          // Si falla Google por alguna razón, igual pintamos el sitio con los datos por defecto
+      // Creamos un nombre de función temporal para recibir los datos de Google
+      const callbackName = 'tgn_callback_' + Date.now();
+      
+      window[callbackName] = function(data) {
+        // Cuando Google responde, procesamos el contenido
+        if (data && data.content) {
+          // Sobreescribimos la memoria interna de la app temporalmente
+          window.TGNStore = {
+            get: function(key, def) {
+              return data.content[key] !== undefined ? data.content[key] : def;
+            }
+          };
+          // Forzamos al Front-End a redibujarse con los datos nuevos que vinieron de Google
           renderNav();
           go(current);
-        });
+        }
+        // Limpiamos el script del documento
+        delete window[callbackName];
+        const scr = document.getElementById(callbackName);
+        if (scr) scr.remove();
+      };
+
+      // Construimos el link especial que Google Apps Script necesita (&cb=...)
+      const urlConCallback = D.config.remoteUrl + (D.config.remoteUrl.indexOf('?') > -1 ? '&' : '?') + 'cb=' + callbackName;
+
+      // Inyectamos el truco JSONP en el HTML para saltear el bloqueo 405 de Google
+      const script = document.createElement('script');
+      script.id = callbackName;
+      script.src = urlConCallback;
+      script.onerror = function() {
+        console.error("No se pudieron recuperar los datos remotos (Error de red).");
+        renderNav();
+        go(current);
+      };
+      document.head.appendChild(script);
+
     } else {
-      // Si no hay URL remota, corre el comportamiento estático normal
+      // Si no hay URL configurada en data.js, carga los datos estáticos por defecto
       renderNav();
       go(current);
     }
 
-    // --- OYENTES DE EVENTOS ORIGINALES (Mantenelos igual abajo) ---
+    // --- OYENTES DE EVENTOS ORIGINALES (Se mantienen exactamente igual abajo) ---
     document.querySelectorAll('[data-lang]').forEach(function (b) {
       b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
     });
