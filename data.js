@@ -123,31 +123,13 @@ const NEWS = [
 ];
 
 /* Birthdays — December. dept codes: P Prep · S Secondary · M Mgmt/Admin · Bd Boarding · EF PE */
-const DEPTS = [
-  { v: 'A', l: 'Administración' },
-  { v: 'Bd', l: 'Boarding House' },
-  { v: 'C', l: 'Catequesis' },
-  { v: 'Coun', l: 'School Counsellor' },
-  { v: 'EF', l: 'Educación Física' },
-  { v: 'G', l: 'Guardería' },
-  { v: 'Gu', l: 'Guardavida' },
-  { v: 'H', l: 'Headmaster' },
-  { v: 'IC', l: 'Isams Coordinator' },
-  { v: 'ICT', l: 'Tecnologías de la Información y Comunicación' },
-  { v: 'K', l: 'Kindergarten' },
-  { v: 'L', l: 'Library' },
-  { v: 'M', l: 'Maestranza' },
-  { v: 'MKT', l: 'Marketing & Admissions' },
-  { v: 'P', l: 'Primary' },
-  { v: 'Pr', l: 'Principal' },
-  { v: 'PS', l: 'Psicología' },
-  { v: 'S', l: 'Secondary' },
-  { v: 'San', l: 'Sanatorio' },
-  { v: 'SC', l: 'Sports Club' },
-  { v: 'Sh', l: 'Shop' },
-  { v: 'TA', l: 'Teaching Assistant' },
-  { v: 'The', l: 'Teatro' }
-];
+const DEPTS = {
+  P:  { en: 'Prep',      es: 'Prep' },
+  S:  { en: 'Secondary', es: 'Secundaria' },
+  M:  { en: 'Admin',     es: 'Administración' },
+  Bd: { en: 'Boarding',  es: 'Boarding' },
+  EF: { en: 'PE',        es: 'Ed. Física' }
+};
 /* campus: q = Quilmes (red) · n = North (navy) · one = One School (ink).
    NOTE: campus values below are placeholders — edit each person's campus
    in the Back Office so the colour coding is accurate. */
@@ -375,7 +357,7 @@ window.TGN_DEFAULTS = {
 const _ov = function (k, def) { return (window.TGNStore ? TGNStore.get(k, def) : def); };
 window.TGN = {
   I18N: I18N, DEPTS: DEPTS, EXTENSIONS: EXTENSIONS, MENUS: MENUS, PAGES: PAGES, SOCIAL: SOCIAL,
-  config: { driveApiKey: '', remoteUrl: 'https://script.google.com/macros/s/AKfycbweYv9vKruF54ln44O6LlEDRbYaasrBYy6FS-7na2JzprLq3VzEQaIKgG2mQxVjl0mV/exec' },
+  config: { driveApiKey: '', remoteUrl: '' },
   NEWS: _ov('news', NEWS),
   BIRTHDAYS: _ov('birthdays', BIRTHDAYS),
   VACANCIES: _ov('vacancies', VACANCIES),
