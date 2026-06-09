@@ -133,7 +133,7 @@ const DEPTS = [
   { v: 'Gu', l: 'Guardavida' },
   { v: 'H', l: 'Headmaster' },
   { v: 'IC', l: 'Isams Coordinator' },
-  { v: 'ICT', l: 'Tecnologías de la Información y Comunicación' },
+  { v: 'ICT', l: 'ICT' },
   { v: 'K', l: 'Kindergarten' },
   { v: 'L', l: 'Library' },
   { v: 'M', l: 'Maestranza' },
