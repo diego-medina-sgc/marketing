@@ -357,7 +357,10 @@ window.TGN_DEFAULTS = {
 const _ov = function (k, def) { return (window.TGNStore ? TGNStore.get(k, def) : def); };
 window.TGN = {
   I18N: I18N, DEPTS: DEPTS, EXTENSIONS: EXTENSIONS, MENUS: MENUS, PAGES: PAGES, SOCIAL: SOCIAL,
-  config: { driveApiKey: '', remoteUrl: '' },
+  config: {
+  driveApiKey: '',
+  remoteUrl: 'https://script.google.com/macros/s/AKfycbweYv9vKruF54ln44O6LlEDRbYaasrBYy6FS-7na2JzprLq3VzEQaIKgG2mQxVjl0mV/exec'
+}
   NEWS: _ov('news', NEWS),
   BIRTHDAYS: _ov('birthdays', BIRTHDAYS),
   VACANCIES: _ov('vacancies', VACANCIES),
