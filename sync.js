@@ -45,23 +45,41 @@
     });
   }
 
-  // Publish current local content to everyone. Returns true if a request was sent.
+  // Publish current local content to everyone. Returns a promise resolving to boolean.
   function publish() {
-    if (!URL) return false;
+    if (!URL) return Promise.resolve(false);
     var token = localStorage.getItem(TOKEN_KEY) || '';
-    if (!token) return false;
+    if (!token) return Promise.resolve(false);
     var content = window.TGNStore.all();
     var rev = Date.now();
-    try {
-      fetch(URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'save', token: token, rev: rev, content: content })
-      });
-      localStorage.setItem(REV_KEY, String(rev));
-      return true;
-    } catch (e) { return false; }
+
+    return fetch(URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({ 
+        token: token, 
+        rev: rev, 
+        content: content 
+      })
+    })
+    .then(function (response) { return response.json(); })
+    .then(function (data) {
+      if (data && data.ok) {
+        console.log("Sincronización remota exitosa:", data);
+        localStorage.setItem(REV_KEY, String(rev));
+        return true;
+      } else {
+        console.error("Error en la respuesta del servidor:", data.error);
+        return false;
+      }
+    })
+    .catch(function (err) {
+      console.error("Error de red en la sincronización:", err);
+      return false;
+    });
   }
 
   window.TGNRemote = {
