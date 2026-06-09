@@ -341,31 +341,24 @@
     applyChrome();
 
     if (D.config && D.config.remoteUrl) {
-      // Hacemos una petición POST silenciosa para leer los datos evadiendo el bloqueo de Google
-      fetch(D.config.remoteUrl, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'read' })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data && data.content) {
-          window.TGNStore = {
-            get: function(key, def) {
-              return data.content[key] !== undefined ? data.content[key] : def;
-            }
-          };
+      fetch(D.config.remoteUrl)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.content) {
+            window.TGNStore = {
+              get: function(key, def) {
+                return data.content[key] !== undefined ? data.content[key] : def;
+              }
+            };
+            renderNav();
+            go(current);
+          }
+        })
+        .catch(err => {
+          console.error("Error cargando datos remotos:", err);
           renderNav();
           go(current);
-        }
-      })
-      .catch(err => {
-        console.error("Error en bypass de lectura corporativa:", err);
-        renderNav();
-        go(current);
-      });
-
+        });
     } else {
       renderNav();
       go(current);
