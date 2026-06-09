@@ -266,7 +266,17 @@
     const key = S.get('driveApiKey', '');
     const cid = S.get('googleClientId', '');
     const emails = S.get('adminEmails', 'marketing@stgeorges.edu.ar');
-    return '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google sign-in (SSO)</span></div>' +
+    const R = window.TGNRemote || {};
+    const syncOn = !!R.configured;
+    const syncBlock = '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Publish to everyone</span></div>' +
+      '<p class="ad-sub" style="margin:0 0 12px">' + (syncOn
+        ? 'Backend connected. Enter the <b>publish password</b> (the SECRET from your Apps Script) so “Apply to site” saves changes for <b>all visitors</b>.'
+        : 'Not connected yet — edits stay on this device only. Deploy the Apps Script backend (see <b>apps-script.gs</b>) and paste its Web app URL into <b>data.js → config.remoteUrl</b>, then reload.') + '</p>' +
+      (syncOn ? '<div class="ad-field"><label class="ad-lbl">Publish password</label>' +
+        '<input class="ad-in" id="ad-pubtoken" type="password" value="' + escA(R.getToken ? R.getToken() : '') + '" placeholder="••••••" autocomplete="off"/></div>' : '') +
+      '</div>';
+    return syncBlock +
+      '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google sign-in (SSO)</span></div>' +
       '<div class="ad-field"><label class="ad-lbl">OAuth Client ID</label>' +
       '<input class="ad-in" id="ad-gclient" value="' + escA(cid) + '" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off"/></div>' +
       '<div class="ad-field"><label class="ad-lbl">Authorised admin emails</label>' +
@@ -313,6 +323,7 @@
       const k = document.getElementById('ad-drivekey'); if (k) k.addEventListener('input', function () { S.set('driveApiKey', k.value.trim()); flashSaved(); });
       const gc = document.getElementById('ad-gclient'); if (gc) gc.addEventListener('input', function () { S.set('googleClientId', gc.value.trim()); flashSaved(); });
       const ge = document.getElementById('ad-gemails'); if (ge) ge.addEventListener('input', function () { S.set('adminEmails', ge.value.trim()); flashSaved(); });
+      const pt = document.getElementById('ad-pubtoken'); if (pt && window.TGNRemote) pt.addEventListener('input', function () { window.TGNRemote.setToken(pt.value.trim()); flashSaved(); });
       return;
     }
     main.querySelectorAll('[data-toggle]').forEach(h => h.addEventListener('click', e => { if (e.target.closest('.ad-item-tools')) return; h.parentNode.classList.toggle('open'); }));
@@ -382,7 +393,14 @@
     document.querySelectorAll('.ad-nav-item').forEach(b => b.addEventListener('click', () => { state.active = b.getAttribute('data-type'); renderEditor(); }));
     document.getElementById('ad-close').addEventListener('click', close);
     document.getElementById('ad-logout').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem('tgn-admin-user'); renderShell(); });
-    document.getElementById('ad-publish').addEventListener('click', () => { location.reload(); });
+    document.getElementById('ad-publish').addEventListener('click', () => {
+      if (window.TGNRemote && window.TGNRemote.configured) {
+        if (!window.TGNRemote.hasToken()) { alert('Set the Publish password in Settings first to apply changes for everyone.'); state.active = 'settings'; renderEditor(); return; }
+        window.TGNRemote.publish();
+        alert('Changes published. The site will reload — everyone will see them on their next visit.');
+      }
+      location.reload();
+    });
     document.getElementById('ad-export').addEventListener('click', exportJson);
     document.getElementById('ad-import').addEventListener('click', () => document.getElementById('ad-file').click());
     document.getElementById('ad-file').addEventListener('change', importJson);
