@@ -20,6 +20,18 @@ const I18N = {
     nav: {
       home: 'Home', policies: 'Policies', resources: 'Resources',
       admissions: 'Admissions', marketing: 'Marketing'
+    },
+    ui: {
+      newsfeed: 'Newsfeed', staff_vacancies: 'Staff Vacancies', new: 'New',
+      extensions: 'Extensions', dining_menu: 'Dining Menu', birthdays: 'Birthdays',
+      december: 'December', calendars: 'Calendars', quilmes_calendar: 'Quilmes Calendar',
+      north_calendar: 'North Calendar', academic_events: 'Academic & events', documents: 'Documents',
+      loading_folder: 'Loading folder…', folder_empty: 'The folder is empty.',
+      drive_fallback: 'Could not read the folder via the API — showing the Drive viewer.',
+      quick_links: 'Quick links', other_tools: 'Other tools', open_presentation: 'Open presentation',
+      share_prompt: 'Want to share something with the network?', write_us: "Write to us and we'll add it.",
+      interview_forms: 'Interview forms', by_level: 'By level & section', contact: 'Contact us',
+      admissions_contact_intro: 'Reach out via email or WhatsApp. Connect with the Quilmes or North campus.'
     }
   },
   es: {
@@ -38,6 +50,18 @@ const I18N = {
     nav: {
       home: 'Inicio', policies: 'Políticas', resources: 'Recursos',
       admissions: 'Admisiones', marketing: 'Marketing'
+    },
+    ui: {
+      newsfeed: 'Novedades', staff_vacancies: 'Búsquedas laborales', new: 'Nueva',
+      extensions: 'Internos', dining_menu: 'Menú del comedor', birthdays: 'Cumpleaños',
+      december: 'Diciembre', calendars: 'Calendarios', quilmes_calendar: 'Calendario Quilmes',
+      north_calendar: 'Calendario North', academic_events: 'Académico y eventos', documents: 'Documentos',
+      loading_folder: 'Cargando carpeta…', folder_empty: 'La carpeta está vacía.',
+      drive_fallback: 'No se pudo leer la carpeta con la API — mostrando el visor de Drive.',
+      quick_links: 'Accesos rápidos', other_tools: 'Otras herramientas', open_presentation: 'Abrir presentación',
+      share_prompt: '¿Querés compartir algo con la red?', write_us: 'Escribinos y lo sumamos.',
+      interview_forms: 'Formularios de entrevista', by_level: 'Por nivel y sección', contact: 'Contacto',
+      admissions_contact_intro: 'Escribinos por email o WhatsApp. Conectate con el campus Quilmes o North.'
     }
   }
 };
@@ -355,6 +379,8 @@ window.TGN_DEFAULTS = {
   quicklinks: QUICK_LINKS, tools: TOOL_GROUPS, interviewforms: ADMISSIONS.groups
 };
 const _ov = function (k, def) { return (window.TGNStore ? TGNStore.get(k, def) : def); };
+const _arr = function (k, def) { const v = _ov(k, def); return Array.isArray(v) ? v : def; };
+const _obj = function (k, def) { const v = _ov(k, def); return (v && typeof v === 'object' && !Array.isArray(v)) ? v : def; };
 window.TGN = {
   I18N: I18N,
   DEPTS: DEPTS,
@@ -367,11 +393,11 @@ window.TGN = {
     remoteUrl: 'https://script.google.com/macros/s/AKfycbweYv9vKruF54ln44O6LlEDRbYaasrBYy6FS-7na2JzprLq3VzEQaIKgG2mQxVjl0mV/exec'
   },   // ← ESTA COMA
 
-  NEWS: _ov('news', NEWS),
-  BIRTHDAYS: _ov('birthdays', BIRTHDAYS),
-  VACANCIES: _ov('vacancies', VACANCIES),
-  QUICK_LINKS: _ov('quicklinks', QUICK_LINKS),
-  TOOL_GROUPS: _ov('tools', TOOL_GROUPS),
-  ADMISSIONS: Object.assign({}, ADMISSIONS, { groups: _ov('interviewforms', ADMISSIONS.groups) }),
+  NEWS: _arr('news', NEWS),
+  BIRTHDAYS: _arr('birthdays', BIRTHDAYS),
+  VACANCIES: _arr('vacancies', VACANCIES),
+  QUICK_LINKS: _arr('quicklinks', QUICK_LINKS),
+  TOOL_GROUPS: _arr('tools', TOOL_GROUPS),
+  ADMISSIONS: Object.assign({}, ADMISSIONS, { groups: _arr('interviewforms', ADMISSIONS.groups) }),
   MARKETING: MARKETING
 };

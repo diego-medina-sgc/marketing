@@ -38,8 +38,14 @@
     ]
   };
 
-  const PRESENTATIONS = (window.TGNStore ? TGNStore.get('presentations', DEFAULT_PRESENTATIONS) : DEFAULT_PRESENTATIONS);
-  const DOCUMENTS = (window.TGNStore ? TGNStore.get('documents', DEFAULT_DOCUMENTS) : DEFAULT_DOCUMENTS);
+  function safeStoreGet(key, fallback, validator) {
+    try {
+      const v = window.TGNStore ? TGNStore.get(key, fallback) : fallback;
+      return (!validator || validator(v)) ? v : fallback;
+    } catch (e) { return fallback; }
+  }
+  const PRESENTATIONS = safeStoreGet('presentations', DEFAULT_PRESENTATIONS, Array.isArray);
+  const DOCUMENTS = safeStoreGet('documents', DEFAULT_DOCUMENTS, function (v) { return v && typeof v === 'object' && !Array.isArray(v); });
 
   const CANVA_BRAND_KIT = 'https://www.canva.com/brand/kAFKKx1idKs';
 
@@ -245,7 +251,9 @@
 
   /* ---------- STATE ---------- */
   let root = null, lang = 'es';
-  let user = JSON.parse(localStorage.getItem('tgn-mkt-user') || '{"name":"","campus":"","role":""}');
+  function readUser() { try { return JSON.parse(localStorage.getItem('tgn-mkt-user') || '{"name":"","campus":"","role":""}'); } catch (e) { return { name: '', campus: '', role: '' }; } }
+  function saveUser(u) { try { localStorage.setItem('tgn-mkt-user', JSON.stringify(u)); } catch (e) {} }
+  let user = readUser();
   let step = user.name && user.campus && user.role ? 'menu' : 'id';
   let history = [];
   const t = (k) => (L[lang] && L[lang][k]) || L.es[k] || k;
@@ -664,7 +672,7 @@
     cont.addEventListener('click', function () {
       user.name = (nameEl.value || '').trim(); user.role = (roleEl.value || '').trim();
       if (!user.name || !user.role || !user.campus) { if (!user.name) nameEl.focus(); else if (!user.role) roleEl.focus(); cont.classList.add('shake'); setTimeout(function () { cont.classList.remove('shake'); }, 400); return; }
-      localStorage.setItem('tgn-mkt-user', JSON.stringify(user)); toMenu();
+      saveUser(user); toMenu();
     });
     [nameEl, roleEl].forEach(function (el) { el.addEventListener('input', function () { user[el === nameEl ? 'name' : 'role'] = el.value; }); });
   }
