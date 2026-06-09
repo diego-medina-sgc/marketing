@@ -146,7 +146,7 @@ const DEPTS = [
   { v: 'SC', l: 'Sports Club' },
   { v: 'Sh', l: 'Shop' },
   { v: 'TA', l: 'Teaching Assistant' },
-  { v: 'The', l: 'Teatro' }
+  { v: 'The', l: 'Teatro' },
   { v: 'EOE', l: 'Equipo de Orientación Escolar' }
 ];
 /* campus: q = Quilmes (red) · n = North (navy) · one = One School (ink).
