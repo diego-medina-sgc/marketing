@@ -1,0 +1,8 @@
+{
+  "name": "georgian-network-static",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "audit": "node scripts/audit.js"
+  }
+}

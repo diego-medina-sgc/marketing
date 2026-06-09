@@ -10,6 +10,36 @@
   const ADMIN_EMAIL = 'marketing@stgeorges.edu.ar';
   const ADMIN_PASS = 'marketingsgc2024';
   const AUTH_KEY = 'tgn-admin-ok';
+  const adminLang = (function () { try { return localStorage.getItem('tgn-lang') || 'en'; } catch (e) { return 'en'; } })();
+  const ADMIN_TX = {
+    en: {
+      backOffice: 'Back Office', saved: 'Saved', exportJson: 'Export JSON', importJson: 'Import JSON', resetAll: 'Reset all', logOut: 'Log out', apply: 'Apply to site (reload)',
+      loginTitle: 'Marketing access', googleIntro: 'Sign in with your authorised St George’s Google account.', googleNote: 'Only authorised accounts can access the Back Office.',
+      passwordIntro: 'Enter the Marketing team email and password to edit the intranet content.', passwordTip: 'Tip: set up <b>Google sign-in</b> in Settings for secure access without a shared password.',
+      incorrectPassword: 'Incorrect password.', denied: 'Those credentials do not have access.', publishPasswordMissing: 'Set the Publish password in Settings first to apply changes for everyone.',
+      publishSent: 'Publish request sent. The site will reload; verify from another browser after a few seconds.', publishLocal: 'Changes saved on this device. Remote sync is not active, so this reload applies local edits only.',
+      resetConfirm: 'Reset ALL content back to the original defaults? This clears every edit.', deleteItem: 'Delete this item?', importOk: 'Imported {n} sections. The site will reload.', importError: 'Could not read that file: ',
+      securityNotice: 'Security notice: this static Back Office is a convenience gate. Publishing should be protected by the Apps Script secret or a server-side auth layer.',
+      syncOn: 'Backend connected. Enter the <b>publish password</b> (the SECRET from your Apps Script) so “Apply to site” sends changes for <b>all visitors</b>.',
+      syncOff: 'Not connected yet — edits stay on this device only. Load <b>sync.js</b>, deploy the Apps Script backend, and configure <b>data.js → config.remoteUrl</b>.',
+      publishPassword: 'Publish password', googleSignIn: 'Google sign-in (SSO)', oauthClient: 'OAuth Client ID', adminEmails: 'Authorised admin emails', drive: 'Google Drive', driveKey: 'Drive API key',
+      news: 'Newsfeed', vacancies: 'Staff Vacancies', birthdays: 'Birthdays', quicklinks: 'Resources', tools: 'Other Tools', interviewforms: 'Interview Forms', presentations: 'Presentations', documents: 'Documents', designs: 'Designs (Canva)', settings: 'Settings'
+    },
+    es: {
+      backOffice: 'Back Office', saved: 'Guardado', exportJson: 'Exportar JSON', importJson: 'Importar JSON', resetAll: 'Restaurar todo', logOut: 'Cerrar sesión', apply: 'Aplicar al sitio (recargar)',
+      loginTitle: 'Acceso de Marketing', googleIntro: 'Iniciá sesión con tu cuenta autorizada de Google de St George’s.', googleNote: 'Solo las cuentas autorizadas pueden acceder al Back Office.',
+      passwordIntro: 'Ingresá el email y la contraseña del equipo de Marketing para editar el contenido de la intranet.', passwordTip: 'Tip: configurá <b>Google sign-in</b> en Settings para un acceso seguro sin contraseña compartida.',
+      incorrectPassword: 'Contraseña incorrecta.', denied: 'Esas credenciales no tienen acceso.', publishPasswordMissing: 'Configurá la contraseña de publicación en Settings para aplicar cambios para todos.',
+      publishSent: 'Solicitud de publicación enviada. El sitio se recargará; verificá desde otro navegador después de unos segundos.', publishLocal: 'Cambios guardados en este dispositivo. El sync remoto no está activo, así que la recarga aplica solo cambios locales.',
+      resetConfirm: '¿Restaurar TODO el contenido a los valores originales? Esto borra todas las ediciones.', deleteItem: '¿Eliminar este ítem?', importOk: 'Se importaron {n} secciones. El sitio se recargará.', importError: 'No se pudo leer ese archivo: ',
+      securityNotice: 'Aviso de seguridad: este Back Office estático es una barrera de conveniencia. La publicación debe protegerse con el secreto de Apps Script o una capa de autenticación server-side.',
+      syncOn: 'Backend conectado. Ingresá la <b>contraseña de publicación</b> (el SECRET de Apps Script) para que “Aplicar al sitio” envíe cambios para <b>todos los visitantes</b>.',
+      syncOff: 'Todavía no conectado — las ediciones quedan solo en este dispositivo. Cargá <b>sync.js</b>, deployá el backend de Apps Script y configurá <b>data.js → config.remoteUrl</b>.',
+      publishPassword: 'Contraseña de publicación', googleSignIn: 'Inicio con Google (SSO)', oauthClient: 'OAuth Client ID', adminEmails: 'Emails admin autorizados', drive: 'Google Drive', driveKey: 'Drive API key',
+      news: 'Novedades', vacancies: 'Búsquedas laborales', birthdays: 'Cumpleaños', quicklinks: 'Recursos', tools: 'Otras herramientas', interviewforms: 'Formularios de entrevista', presentations: 'Presentaciones', documents: 'Documentos', designs: 'Diseños (Canva)', settings: 'Settings'
+    }
+  };
+  function tr(k) { return (ADMIN_TX[adminLang] && ADMIN_TX[adminLang][k]) || ADMIN_TX.en[k] || k; }
 
   /* ── Google SSO helpers ── */
   function googleClientId() { return (S.get('googleClientId', '') || '').trim(); }
@@ -67,18 +97,18 @@
 
   /* ---------- TYPES config ---------- */
   const TYPES = [
-    { key: 'news', label: 'Newsfeed', icon: 'news', kind: 'flat' },
-    { key: 'vacancies', label: 'Staff Vacancies', icon: 'user', kind: 'flat' },
-    { key: 'birthdays', label: 'Birthdays', icon: 'cake', kind: 'flat' },
-    { key: 'quicklinks', label: 'Resources', icon: 'grid', kind: 'flat' },
-    { key: 'tools', label: 'Other Tools', icon: 'wrench', kind: 'groups' },
-    { key: 'interviewforms', label: 'Interview Forms', icon: 'doc', kind: 'iforms' },
+    { key: 'news', label: tr('news'), icon: 'news', kind: 'flat' },
+    { key: 'vacancies', label: tr('vacancies'), icon: 'user', kind: 'flat' },
+    { key: 'birthdays', label: tr('birthdays'), icon: 'cake', kind: 'flat' },
+    { key: 'quicklinks', label: tr('quicklinks'), icon: 'grid', kind: 'flat' },
+    { key: 'tools', label: tr('tools'), icon: 'wrench', kind: 'groups' },
+    { key: 'interviewforms', label: tr('interviewforms'), icon: 'doc', kind: 'iforms' },
     { sep: true },
-    { key: 'presentations', label: 'Presentations', icon: 'slides', kind: 'pres' },
-    { key: 'documents', label: 'Documents', icon: 'doc', kind: 'docs' },
-    { key: 'designs', label: 'Designs (Canva)', icon: 'palette', kind: 'designs' },
+    { key: 'presentations', label: tr('presentations'), icon: 'slides', kind: 'pres' },
+    { key: 'documents', label: tr('documents'), icon: 'doc', kind: 'docs' },
+    { key: 'designs', label: tr('designs'), icon: 'palette', kind: 'designs' },
     { sep: true },
-    { key: 'settings', label: 'Settings', icon: 'cog', kind: 'settings' }
+    { key: 'settings', label: tr('settings'), icon: 'cog', kind: 'settings' }
   ];
   const SUBTITLE = {
     news: 'Posts shown in the Home newsfeed. Bilingual text (EN/ES). The body supports basic HTML.',
@@ -103,11 +133,30 @@
     const def = defaultFor(key);
     return S.clone(S.get(key, def));
   }
+  function isBi(v) { return v && typeof v === 'object' && typeof v.en === 'string' && typeof v.es === 'string'; }
+  function hasUrl(v) { return typeof v === 'string' && (/^https?:\/\//i.test(v) || /^mailto:/i.test(v) || /^tel:/i.test(v)); }
+  function validateSection(key, val) {
+    const errors = [];
+    const arrKeys = ['news', 'vacancies', 'birthdays', 'quicklinks', 'tools', 'interviewforms', 'presentations'];
+    if (arrKeys.indexOf(key) > -1 && !Array.isArray(val)) errors.push(key + ' must be an array.');
+    if (key === 'documents' || key === 'designs') { if (!val || typeof val !== 'object' || Array.isArray(val)) errors.push(key + ' must be an object grouped by category.'); }
+    if (errors.length) return { ok: false, errors: errors };
+    if (key === 'news') val.forEach((n, i) => { ['id'].forEach(f => { if (!n[f]) errors.push('news[' + i + '].' + f + ' is required.'); }); ['title','cat','date','sign','excerpt','body'].forEach(f => { if (!isBi(n[f])) errors.push('news[' + i + '].' + f + ' must have en/es text.'); }); });
+    if (key === 'vacancies') val.forEach((v, i) => { ['title','site','desc'].forEach(f => { if (!isBi(v[f])) errors.push('vacancies[' + i + '].' + f + ' must have en/es text.'); }); if (!v.email) errors.push('vacancies[' + i + '].email is required.'); });
+    if (key === 'birthdays') val.forEach((b, i) => { if (!b.name || !b.d || !b.m || !b.dept) errors.push('birthdays[' + i + '] needs name, day, month and dept.'); });
+    if (key === 'quicklinks') val.forEach((q, i) => { if (!q.name || !hasUrl(q.url)) errors.push('quicklinks[' + i + '] needs a name and https URL.'); if (!isBi(q.desc)) errors.push('quicklinks[' + i + '].desc must have en/es text.'); });
+    if (key === 'tools') val.forEach((g, gi) => { if (!isBi(g.name) || !Array.isArray(g.links)) errors.push('tools[' + gi + '] needs bilingual name and links array.'); (g.links || []).forEach((l, li) => { if (!l.name || !hasUrl(l.url)) errors.push('tools[' + gi + '].links[' + li + '] needs name and https URL.'); }); });
+    if (key === 'interviewforms') val.forEach((g, gi) => { if (!isBi(g.level) || !Array.isArray(g.forms)) errors.push('interviewforms[' + gi + '] needs bilingual level and forms array.'); (g.forms || []).forEach((f, fi) => { if (!isBi(f.name) || !hasUrl(f.url)) errors.push('interviewforms[' + gi + '].forms[' + fi + '] needs bilingual name and https URL.'); }); });
+    return { ok: !errors.length, errors: errors };
+  }
+  const commitTimers = {};
+  function commitNow(key) { const check = validateSection(key, strip(wd(key))); if (!check.ok) { console.warn('[TGN CMS validation]', check.errors); return false; } try { S.set(key, strip(wd(key))); flashSaved(); return true; } catch (e) { alert('Could not save content: ' + e.message); return false; } }
+  function flushCommits() { Object.keys(commitTimers).forEach(k => { clearTimeout(commitTimers[k]); commitNow(k); delete commitTimers[k]; }); }
 
   /* ---------- state ---------- */
   let state = { active: 'news', working: {} };
   function wd(key) { if (!state.working[key]) state.working[key] = load(key); return state.working[key]; }
-  function commit(key) { S.set(key, strip(wd(key))); flashSaved(); }
+  function commit(key) { clearTimeout(commitTimers[key]); commitTimers[key] = setTimeout(() => { commitNow(key); delete commitTimers[key]; }, 350); }
 
   /* ---------- field builders ---------- */
   const inp = (o, prop, val, ph) => '<input class="ad-in" data-oid="' + oid(o) + '" data-prop="' + prop + '" value="' + escA(get(o, prop, val)) + '" placeholder="' + escA(ph || '') + '"/>';
@@ -292,22 +341,23 @@
     const emails = S.get('adminEmails', 'marketing@stgeorges.edu.ar');
     const R = window.TGNRemote || {};
     const syncOn = !!R.configured;
-    const syncBlock = '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Publish to everyone</span></div>' +
+    const syncBlock = '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">' + (adminLang === 'es' ? 'Publicar para todos' : 'Publish to everyone') + '</span></div>' +
+      '<p class="ad-sub" style="margin:0 0 12px;color:var(--red)">' + tr('securityNotice') + '</p>' +
       '<p class="ad-sub" style="margin:0 0 12px">' + (syncOn
-        ? 'Backend connected. Enter the <b>publish password</b> (the SECRET from your Apps Script) so “Apply to site” saves changes for <b>all visitors</b>.'
-        : 'Not connected yet — edits stay on this device only. Deploy the Apps Script backend (see <b>apps-script.gs</b>) and paste its Web app URL into <b>data.js → config.remoteUrl</b>, then reload.') + '</p>' +
-      (syncOn ? '<div class="ad-field"><label class="ad-lbl">Publish password</label>' +
+        ? tr('syncOn')
+        : tr('syncOff')) + '</p>' +
+      (syncOn ? '<div class="ad-field"><label class="ad-lbl">' + tr('publishPassword') + '</label>' +
         '<input class="ad-in" id="ad-pubtoken" type="password" value="' + escA(R.getToken ? R.getToken() : '') + '" placeholder="••••••" autocomplete="off"/></div>' : '') +
       '</div>';
     return syncBlock +
-      '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google sign-in (SSO)</span></div>' +
-      '<div class="ad-field"><label class="ad-lbl">OAuth Client ID</label>' +
+      '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">' + tr('googleSignIn') + '</span></div>' +
+      '<div class="ad-field"><label class="ad-lbl">' + tr('oauthClient') + '</label>' +
       '<input class="ad-in" id="ad-gclient" value="' + escA(cid) + '" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off"/></div>' +
-      '<div class="ad-field"><label class="ad-lbl">Authorised admin emails</label>' +
+      '<div class="ad-field"><label class="ad-lbl">' + tr('adminEmails') + '</label>' +
       '<input class="ad-in" id="ad-gemails" value="' + escA(emails) + '" placeholder="marketing@stgeorges.edu.ar, @stgeorges.edu.ar" autocomplete="off"/></div>' +
       '<p class="ad-sub" style="margin:6px 0 0">Comma-separated. Use a full address (marketing@stgeorges.edu.ar) or a whole domain (@stgeorges.edu.ar). With a Client ID set, a “Sign in with Google” button appears on the login. Add your site’s URL to “Authorised JavaScript origins” in Google Cloud Console.</p></div>' +
-      '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google Drive</span></div>' +
-      '<div class="ad-field"><label class="ad-lbl">Drive API key</label>' +
+      '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">' + tr('drive') + '</span></div>' +
+      '<div class="ad-field"><label class="ad-lbl">' + tr('driveKey') + '</label>' +
       '<input class="ad-in" id="ad-drivekey" value="' + escA(key) + '" placeholder="AIza…" autocomplete="off"/></div>' +
       '<p class="ad-sub" style="margin:10px 0 0">Used by the <b>Policies</b> page to list the Drive folder’s contents as cards. Enable the <b>Google Drive API</b> in Google Cloud Console and share the folder as “Anyone with the link → Viewer”. Leave blank to fall back to the embedded Drive viewer.</p></div>';
   }
@@ -371,7 +421,7 @@
     }));
     // move / delete (flat + pres)
     main.querySelectorAll('[data-move]').forEach(b => b.addEventListener('click', () => { const arr = wd(state.active); const i = +b.getAttribute('data-i'); const j = b.getAttribute('data-move') === 'up' ? i - 1 : i + 1; if (j < 0 || j >= arr.length) return; const t = arr[i]; arr[i] = arr[j]; arr[j] = t; commit(state.active); renderEditor(); }));
-    main.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { if (!confirm('Delete this item?')) return; wd(state.active).splice(+b.getAttribute('data-del'), 1); commit(state.active); renderEditor(); }));
+    main.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { if (!confirm(tr('deleteItem'))) return; wd(state.active).splice(+b.getAttribute('data-del'), 1); commit(state.active); renderEditor(); }));
     // groups
     main.querySelectorAll('[data-gmove]').forEach(b => b.addEventListener('click', () => { const arr = wd(state.active); const i = +b.getAttribute('data-gi'); const j = b.getAttribute('data-gmove') === 'up' ? i - 1 : i + 1; if (j < 0 || j >= arr.length) return; const t = arr[i]; arr[i] = arr[j]; arr[j] = t; commit(state.active); repanel(); }));
     main.querySelectorAll('[data-gdel]').forEach(b => b.addEventListener('click', () => { if (!confirm('Delete this group and all its items?')) return; wd(state.active).splice(+b.getAttribute('data-gdel'), 1); commit(state.active); repanel(); }));
@@ -402,33 +452,36 @@
     let nav = '';
     TYPES.forEach(t => { if (t.sep) { nav += '<div class="ad-nav-sep"></div>'; return; } nav += '<button class="ad-nav-item" data-type="' + t.key + '">' + IC[t.icon] + '<span class="ad-nav-lbl">' + t.label + '</span></button>'; });
     ov.innerHTML = '<div class="ad-shell">' +
-      '<div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.cog + '</span>Back Office</div>' +
+      '<div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.cog + '</span>' + tr('backOffice') + '</div>' +
       '<span class="ad-badge">The Georgian Network</span>' +
-      '<div class="ad-top-actions"><span class="ad-saved" id="ad-saved">' + IC.check + ' Saved</span>' +
+      '<div class="ad-top-actions"><span class="ad-saved" id="ad-saved">' + IC.check + ' ' + tr('saved') + '</span>' +
       '<button class="ad-x" id="ad-close">' + IC.x + '</button></div></div>' +
       '<div class="ad-body"><div class="ad-nav">' + nav + '</div><div class="ad-main" id="ad-main"></div></div>' +
       '<div class="ad-foot">' +
-      '<button class="ad-fbtn" id="ad-export">' + IC.download + ' Export JSON</button>' +
-      '<button class="ad-fbtn" id="ad-import">' + IC.upload + ' Import JSON</button>' +
-      '<button class="ad-fbtn warn" id="ad-resetall">' + IC.reset + ' Reset all</button>' +
-      '<button class="ad-fbtn" id="ad-logout">' + IC.out + ' Log out</button>' +
-      '<button class="ad-publish" id="ad-publish">' + IC.check + ' Apply to site (reload)</button>' +
+      '<button class="ad-fbtn" id="ad-export">' + IC.download + ' ' + tr('exportJson') + '</button>' +
+      '<button class="ad-fbtn" id="ad-import">' + IC.upload + ' ' + tr('importJson') + '</button>' +
+      '<button class="ad-fbtn warn" id="ad-resetall">' + IC.reset + ' ' + tr('resetAll') + '</button>' +
+      '<button class="ad-fbtn" id="ad-logout">' + IC.out + ' ' + tr('logOut') + '</button>' +
+      '<button class="ad-publish" id="ad-publish">' + IC.check + ' ' + tr('apply') + '</button>' +
       '<input type="file" id="ad-file" accept="application/json" style="display:none"/></div></div>';
     document.querySelectorAll('.ad-nav-item').forEach(b => b.addEventListener('click', () => { state.active = b.getAttribute('data-type'); renderEditor(); }));
     document.getElementById('ad-close').addEventListener('click', close);
     document.getElementById('ad-logout').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem('tgn-admin-user'); renderShell(); });
     document.getElementById('ad-publish').addEventListener('click', () => {
+      flushCommits();
       if (window.TGNRemote && window.TGNRemote.configured) {
-        if (!window.TGNRemote.hasToken()) { alert('Set the Publish password in Settings first to apply changes for everyone.'); state.active = 'settings'; renderEditor(); return; }
+        if (!window.TGNRemote.hasToken()) { alert(tr('publishPasswordMissing')); state.active = 'settings'; renderEditor(); return; }
         window.TGNRemote.publish();
-        alert('Changes published. The site will reload — everyone will see them on their next visit.');
+        alert(tr('publishSent'));
+      } else {
+        alert(tr('publishLocal'));
       }
       location.reload();
     });
     document.getElementById('ad-export').addEventListener('click', exportJson);
     document.getElementById('ad-import').addEventListener('click', () => document.getElementById('ad-file').click());
     document.getElementById('ad-file').addEventListener('change', importJson);
-    document.getElementById('ad-resetall').addEventListener('click', () => { if (confirm('Reset ALL content back to the original defaults? This clears every edit.')) { S.replaceAll({}); location.reload(); } });
+    document.getElementById('ad-resetall').addEventListener('click', () => { if (confirm(tr('resetConfirm'))) { S.replaceAll({}); location.reload(); } });
     renderEditor();
   }
 
@@ -436,20 +489,20 @@
     const cid = googleClientId();
     let body;
     if (cid) {
-      body = '<p>Sign in with your authorised St George\u2019s Google account.</p>' +
+      body = '<p>' + tr('googleIntro') + '</p>' +
         '<div class="ad-err" id="ad-err"></div>' +
         '<div id="ad-google" class="ad-google"></div>' +
-        '<p class="ad-note">Only authorised accounts can access the Back Office.</p>';
+        '<p class="ad-note">' + tr('googleNote') + '</p>';
     } else {
-      body = '<p>Enter the Marketing team email and password to edit the intranet content.</p>' +
+      body = '<p>' + tr('passwordIntro') + '</p>' +
         '<div class="ad-err" id="ad-err"></div>' +
         '<input class="ad-in" id="ad-email" type="email" placeholder="marketing@stgeorges.edu.ar" autocomplete="off"/>' +
         '<input class="ad-in" id="ad-pass" type="password" placeholder="Password" autocomplete="off"/>' +
         '<button class="ad-login-btn" id="ad-enter">Enter</button>' +
-        '<p class="ad-note">Tip: set up <b>Google sign-in</b> in Settings for secure access without a shared password.</p>';
+        '<p class="ad-note">' + tr('passwordTip') + '</p>';
     }
-    return '<div class="ad-shell" style="max-width:520px;margin:auto;align-self:center"><div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.lock + '</span>Back Office</div><div class="ad-top-actions"><button class="ad-x" id="ad-close">' + IC.x + '</button></div></div>' +
-      '<div class="ad-login"><div class="ad-login-ico">' + IC.lock + '</div><h2>Marketing access</h2>' + body + '</div></div>';
+    return '<div class="ad-shell" style="max-width:520px;margin:auto;align-self:center"><div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.lock + '</span>' + tr('backOffice') + '</div><div class="ad-top-actions"><button class="ad-x" id="ad-close">' + IC.x + '</button></div></div>' +
+      '<div class="ad-login"><div class="ad-login-ico">' + IC.lock + '</div><h2>' + tr('loginTitle') + '</h2>' + body + '</div></div>';
   }
   function bindLogin() {
     document.getElementById('ad-close').addEventListener('click', close);
@@ -464,7 +517,7 @@
       const v = (document.getElementById('ad-email').value || '').trim().toLowerCase();
       const p = (document.getElementById('ad-pass').value || '');
       if (v === ADMIN_EMAIL && p === ADMIN_PASS) { localStorage.setItem(AUTH_KEY, '1'); renderShell(); }
-      else { document.getElementById('ad-err').textContent = (v === ADMIN_EMAIL && p !== ADMIN_PASS) ? 'Incorrect password.' : 'Those credentials do not have access.'; }
+      else { document.getElementById('ad-err').textContent = (v === ADMIN_EMAIL && p !== ADMIN_PASS) ? tr('incorrectPassword') : tr('denied'); }
     };
     document.getElementById('ad-enter').addEventListener('click', go);
     document.getElementById('ad-email').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('ad-pass').focus(); });
@@ -482,7 +535,7 @@
   function importJson(e) {
     const file = e.target.files[0]; if (!file) return;
     const r = new FileReader();
-    r.onload = () => { try { const obj = JSON.parse(r.result); let n = 0; TYPES.forEach(t => { if (t.key && obj[t.key] !== undefined) { S.set(t.key, obj[t.key]); n++; } }); alert('Imported ' + n + ' sections. The site will reload.'); location.reload(); } catch (err) { alert('Could not read that file: ' + err.message); } };
+    r.onload = () => { try { const obj = JSON.parse(r.result); let n = 0; const errors = []; TYPES.forEach(t => { if (t.key && obj[t.key] !== undefined) { const check = validateSection(t.key, obj[t.key]); if (!check.ok) errors.push.apply(errors, check.errors); else { S.set(t.key, obj[t.key]); n++; } } }); if (errors.length) { alert('Import validation failed:\n' + errors.slice(0, 12).join('\n')); return; } alert(tr('importOk').replace('{n}', n)); location.reload(); } catch (err) { alert(tr('importError') + err.message); } };
     r.readAsText(file);
   }
 

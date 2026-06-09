@@ -122,3 +122,12 @@
 [data-theme="dark"] .ad-group-block{background:var(--surface2);border-color:var(--border);}
 [data-theme="dark"] .ad-item-hd:hover,[data-theme="dark"] .ad-fbtn:hover{background:var(--surface2);}
 [data-theme="dark"] .ad-item-tag{background:var(--surface2);}
+
+/* ── EXTRA MOBILE HARDENING ── */
+@media(max-width:520px){
+  .ad-top{padding:12px 14px;flex-wrap:wrap;}
+  .ad-badge{display:none;}
+  .ad-foot{gap:6px;padding:10px;}
+  .ad-fbtn,.ad-publish{flex:1 1 100%;justify-content:center;}
+  .ad-main{padding:18px 14px 28px;}
+}

@@ -11,6 +11,7 @@
   var TOKEN_KEY = 'tgn-publish-token';
   var REV_KEY = 'tgn-remote-rev';
   var APPLIED = 'tgn-remote-applied';
+  var BACKUP_KEY = 'tgn-cms-v1-backup-before-remote';
 
   function jsonp(url, cb) {
     var name = '__tgnCb' + Date.now();
@@ -25,6 +26,7 @@
   }
 
   function applyContent(content, rev) {
+    try { localStorage.setItem(BACKUP_KEY, localStorage.getItem(window.TGNStore.KEY) || '{}'); } catch (e) {}
     try { localStorage.setItem(window.TGNStore.KEY, JSON.stringify(content || {})); } catch (e) {}
     try { localStorage.setItem(REV_KEY, String(rev)); } catch (e) {}
   }
@@ -60,8 +62,8 @@
         body: JSON.stringify({ action: 'save', token: token, rev: rev, content: content })
       });
       localStorage.setItem(REV_KEY, String(rev));
-      return true;
-    } catch (e) { return false; }
+      return { ok: true, mode: 'sent' };
+    } catch (e) { return { ok: false, error: e }; }
   }
 
   window.TGNRemote = {

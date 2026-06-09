@@ -261,3 +261,12 @@
 [data-theme="dark"] .mk-canva-media{background-color:#1E1E30;}
 [data-theme="dark"] .mk-chat-input{background:var(--surface);border-color:var(--border);}
 [data-theme="dark"] .mk-copy-final{background:var(--surface2);border-color:var(--border);}
+
+/* ── EXTRA MOBILE HARDENING ── */
+@media(max-width:420px){
+  .mk-opt-grid{grid-template-columns:1fr;}
+  .mk-menu-head{align-items:flex-start;}
+  .mk-pill-campus{width:100%;justify-content:center;}
+  .mk-yesno{flex-direction:column;}
+}
+@media(max-height:640px){.mk-chat{height:calc(100vh - 170px);min-height:420px;}}

@@ -3,11 +3,25 @@
    ============================================================ */
 (function () {
   const D = window.TGN;
-  let lang = localStorage.getItem('tgn-lang') || 'en';
-  let theme = localStorage.getItem('tgn-theme') || 'light';
-  let current = localStorage.getItem('tgn-panel') || 'home';
-  const T = () => D.I18N[lang];
+  function bootError(message) {
+    console.error('[TGN boot]', message);
+    const render = function () {
+      const panel = document.getElementById('panel') || document.body;
+      panel.innerHTML = '<div class="empty-state" style="margin:30px"><div class="empty-title">The Georgian Network could not load</div><div class="empty-sub">Content configuration is unavailable. Please contact Marketing or refresh after deployment is complete.</div></div>';
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
+  }
+  if (!D || !D.I18N) { bootError('window.TGN / I18N is missing. Check data.js syntax and script order.'); return; }
+
+  function safeGet(key, fallback) { try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; } }
+  function safeSet(key, val) { try { localStorage.setItem(key, val); } catch (e) { console.warn('[TGN storage]', key, e); } }
+  let lang = safeGet('tgn-lang', 'en');
+  if (!D.I18N[lang]) lang = 'en';
+  let theme = safeGet('tgn-theme', 'light');
+  let current = safeGet('tgn-panel', 'home');
+  const T = () => D.I18N[lang] || D.I18N.en;
   const L = (o) => (o && typeof o === 'object' && 'en' in o) ? (o[lang] || o.en) : o;
+  const UI = (key) => (T().ui && T().ui[key]) || ((D.I18N.en || {}).ui || {})[key] || key;
 
   /* ---------- ICONS ---------- */
   const IC = {
@@ -84,6 +98,37 @@
 
   /* ---------- RENDER: panels ---------- */
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function escAttr(s) { return esc(s).replace(/'/g, '&#39;'); }
+  function safeUrl(u, fallback) {
+    u = String(u == null ? '' : u).trim();
+    if (!u || u === '#') return fallback || '';
+    try {
+      const parsed = new URL(u, location.href);
+      if (/^(https?:|mailto:|tel:)$/i.test(parsed.protocol)) return escAttr(u);
+    } catch (e) {}
+    return fallback || '';
+  }
+  function sanitizeHtml(html) {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(html == null ? '' : html);
+    const allowed = { P:1, BR:1, B:1, STRONG:1, I:1, EM:1, U:1, UL:1, OL:1, LI:1, A:1 };
+    (function walk(node) {
+      Array.from(node.childNodes).forEach(function (child) {
+        if (child.nodeType === 1) {
+          if (!allowed[child.nodeName]) { child.replaceWith(document.createTextNode(child.textContent || '')); return; }
+          Array.from(child.attributes).forEach(function (attr) {
+            const n = attr.name.toLowerCase();
+            if (n.indexOf('on') === 0 || n === 'style') child.removeAttribute(attr.name);
+            else if (child.nodeName === 'A' && n === 'href') { if (!safeUrl(attr.value, '')) child.removeAttribute('href'); }
+            else if (!(child.nodeName === 'A' && (n === 'href' || n === 'target' || n === 'rel'))) child.removeAttribute(attr.name);
+          });
+          if (child.nodeName === 'A') { child.setAttribute('target', '_blank'); child.setAttribute('rel', 'noopener'); }
+          walk(child);
+        } else if (child.nodeType !== 3) child.remove();
+      });
+    })(tpl.content);
+    return tpl.innerHTML;
+  }
   function rootDomain(host) {
     var p = host.split('.');
     var sld = ['com', 'edu', 'co', 'org', 'net', 'gov', 'ac'];
@@ -92,18 +137,20 @@
   }
   function tile(accent, abbr, name, desc, url, favicon) {
     var ico;
-    if (favicon) {
+    var href = safeUrl(url, '#');
+    if (favicon && href !== '#') {
       var host = rootDomain(String(url || '').replace(/^https?:\/\//, '').split('/')[0]);
-      var fb = "if(!this.dataset.f){this.dataset.f=1;this.src='https://www.google.com/s2/favicons?sz=64&domain=" + host + "';}else{this.parentNode.classList.remove('has-fav');this.parentNode.textContent='" + abbr + "';}";
-      ico = '<div class="tile-ico has-fav"><img class="tile-fav" src="https://icons.duckduckgo.com/ip3/' + host + '.ico" alt="" referrerpolicy="no-referrer" onerror="' + fb + '"/></div>';
+      var safeAbbr = escAttr(abbr);
+      var fb = "if(!this.dataset.f){this.dataset.f=1;this.src='https://www.google.com/s2/favicons?sz=64&domain=" + escAttr(host) + "';}else{this.parentNode.classList.remove('has-fav');this.parentNode.textContent='" + safeAbbr + "';}";
+      ico = '<div class="tile-ico has-fav"><img class="tile-fav" src="https://icons.duckduckgo.com/ip3/' + escAttr(host) + '.ico" alt="" referrerpolicy="no-referrer" onerror="' + fb + '"/></div>';
     } else {
-      ico = '<div class="tile-ico">' + abbr + '</div>';
+      ico = '<div class="tile-ico">' + esc(abbr) + '</div>';
     }
-    return '<a class="tile" style="--accent:' + accent + '" href="' + url + '" target="_blank" rel="noopener">' +
+    return '<a class="tile" style="--accent:' + escAttr(accent) + '" href="' + href + '" target="_blank" rel="noopener">' +
       '<div class="tile-top">' + ico +
       '<span class="tile-arrow">' + IC.arrow + '</span></div>' +
-      '<div class="tile-name">' + name + '</div>' +
-      '<div class="tile-desc">' + desc + '</div></a>';
+      '<div class="tile-name">' + esc(name) + '</div>' +
+      '<div class="tile-desc">' + esc(desc) + '</div></a>';
   }
 
   function pageHead(p) {
@@ -143,7 +190,7 @@
 
     // newsfeed
     h += '<section class="sec" style="--accent:var(--red)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.news + (lang === 'es' ? 'Novedades' : 'Newsfeed') + '</h2>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.news + UI('newsfeed') + '</h2>' +
       '<span class="sec-meta">' + D.NEWS.length + (lang === 'es' ? ' publicaciones' : ' posts') + '</span></div>';
     h += '<div class="news-list">';
     D.NEWS.forEach(function (n) { h += newsCard(n); });
@@ -151,13 +198,13 @@
 
     // vacancies
     h += '<section class="sec" style="--accent:var(--red)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.user + (lang === 'es' ? 'Búsquedas laborales' : 'Staff Vacancies') + '</h2>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.user + UI('staff_vacancies') + '</h2>' +
       '<span class="sec-meta">' + D.VACANCIES.length + (lang === 'es' ? ' abiertas' : ' open') + '</span></div>' +
       '<div class="vac-grid">';
     D.VACANCIES.forEach(function (v) {
       h += '<div class="vac-card' + (v.campus === 'n' ? '' : '') + '">' +
         '<div class="vac-top"><span class="vac-campus ' + v.campus + '">' + (v.campus === 'q' ? 'Quilmes' : 'North') + '</span>' +
-        (v.isNew ? '<span class="vac-new">● ' + (lang === 'es' ? 'Nueva' : 'New') + '</span>' : '') + '</div>' +
+        (v.isNew ? '<span class="vac-new">● ' + UI('new') + '</span>' : '') + '</div>' +
         '<h3 class="vac-title">' + L(v.title) + '</h3>' +
         '<div class="news-date" style="margin-bottom:9px">' + L(v.site) + '</div>' +
         '<p class="vac-desc">' + L(v.desc) + '</p>' +
@@ -169,10 +216,10 @@
 
     // extensions + menu (dual)
     h += '<section class="sec" style="--accent:var(--navy)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.phone + (lang === 'es' ? 'Internos' : 'Extensions') + '</h2></div>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.phone + UI('extensions') + '</h2></div>' +
       '<div class="dual-grid">';
     D.EXTENSIONS.forEach(function (e) {
-      h += '<a class="doc-card ' + e.campus + '" href="' + e.url + '" target="_blank" rel="noopener">' +
+      h += '<a class="doc-card ' + e.campus + '" href="' + safeUrl(e.url, '#') + '" target="_blank" rel="noopener">' +
         '<div class="doc-ico">' + IC.phone + '</div>' +
         '<div class="doc-info"><div class="doc-campus">' + L(e.label) + '</div><div class="doc-name">' + L(e.name) + '</div></div>' +
         '<span class="doc-arrow">' + IC.arrow + '</span></a>';
@@ -180,10 +227,10 @@
     h += '</div></section>';
 
     h += '<section class="sec" style="--accent:var(--teal)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.food + (lang === 'es' ? 'Menú del comedor' : 'Dining Menu') + '</h2></div>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.food + UI('dining_menu') + '</h2></div>' +
       '<div class="dual-grid">';
     D.MENUS.forEach(function (e) {
-      h += '<a class="doc-card ' + e.campus + '" href="' + e.url + '" target="_blank" rel="noopener">' +
+      h += '<a class="doc-card ' + e.campus + '" href="' + safeUrl(e.url, '#') + '" target="_blank" rel="noopener">' +
         '<div class="doc-ico">' + IC.food + '</div>' +
         '<div class="doc-info"><div class="doc-campus">' + L(e.label) + '</div><div class="doc-name">' + L(e.name) + '</div></div>' +
         '<span class="doc-arrow">' + IC.arrow + '</span></a>';
@@ -195,8 +242,8 @@
     // aside: birthdays + calendar
     h += '<aside class="home-aside">';
     h += '<div class="panel-card"><div class="panel-card-hd">' + IC.cake +
-      '<span class="panel-card-ttl">' + (lang === 'es' ? 'Cumpleaños' : 'Birthdays') + '</span>' +
-      '<span class="panel-card-meta">' + (lang === 'es' ? 'Diciembre' : 'December') + '</span></div>' +
+      '<span class="panel-card-ttl">' + UI('birthdays') + '</span>' +
+      '<span class="panel-card-meta">' + UI('december') + '</span></div>' +
       '<div class="panel-card-body bday-grid">';
     D.BIRTHDAYS.forEach(function (b) {
       const mon = lang === 'es' ? 'DIC' : 'DEC';
@@ -213,12 +260,12 @@
       '</div></div>';
 
     h += '<div class="panel-card"><div class="panel-card-hd">' + IC.calendar +
-      '<span class="panel-card-ttl">' + (lang === 'es' ? 'Calendarios' : 'Calendars') + '</span></div>' +
+      '<span class="panel-card-ttl">' + UI('calendars') + '</span></div>' +
       '<div class="panel-card-body">' +
       '<a class="cal-row q" href="#" target="_blank" rel="noopener"><span class="cal-ico">' + IC.calendar + '</span>' +
-      '<span class="cal-txt"><span class="cal-name">' + (lang === 'es' ? 'Calendario Quilmes' : 'Quilmes Calendar') + '</span><span class="cal-sub">' + (lang === 'es' ? 'Académico y eventos' : 'Academic & events') + '</span></span>' + '<span class="cal-arrow">' + IC.arrow + '</span></a>' +
+      '<span class="cal-txt"><span class="cal-name">' + UI('quilmes_calendar') + '</span><span class="cal-sub">' + UI('academic_events') + '</span></span>' + '<span class="cal-arrow">' + IC.arrow + '</span></a>' +
       '<a class="cal-row n" href="#" target="_blank" rel="noopener"><span class="cal-ico">' + IC.calendar + '</span>' +
-      '<span class="cal-txt"><span class="cal-name">' + (lang === 'es' ? 'Calendario North' : 'North Calendar') + '</span><span class="cal-sub">' + (lang === 'es' ? 'Académico y eventos' : 'Academic & events') + '</span></span>' + '<span class="cal-arrow">' + IC.arrow + '</span></a>' +
+      '<span class="cal-txt"><span class="cal-name">' + UI('north_calendar') + '</span><span class="cal-sub">' + UI('academic_events') + '</span></span>' + '<span class="cal-arrow">' + IC.arrow + '</span></a>' +
       '</div></div>';
     h += '</aside>';
 
@@ -231,9 +278,9 @@
     let h = pageHead(p);
     h += '<p class="intro">' + L(p.intro) + '</p>';
     h += '<section class="sec" style="--accent:var(--navy)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.folder + (lang === 'es' ? 'Documentos' : 'Documents') + '</h2>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.folder + UI('documents') + '</h2>' +
       '<a class="sec-link" href="https://drive.google.com/drive/folders/' + p.folderId + '" target="_blank" rel="noopener">' + T().open_folder + ' ' + IC.ext + '</a></div>' +
-      '<div id="drive-cards" class="dual-grid" data-folder="' + p.folderId + '"><div class="drive-loading">' + (lang === 'es' ? 'Cargando carpeta…' : 'Loading folder…') + '</div></div>' +
+      '<div id="drive-cards" class="dual-grid" data-folder="' + p.folderId + '"><div class="drive-loading">' + UI('loading_folder') + '</div></div>' +
       '</section>';
     h += contactStrip();
     return h;
@@ -277,10 +324,10 @@
       if (!res.ok) throw new Error('http ' + res.status);
       const data = await res.json();
       const files = (data.files || []);
-      if (!files.length) { box.innerHTML = '<div class="drive-loading">' + (lang === 'es' ? 'La carpeta está vacía.' : 'The folder is empty.') + '</div>'; return; }
+      if (!files.length) { box.innerHTML = '<div class="drive-loading">' + UI('folder_empty') + '</div>'; return; }
       box.innerHTML = files.map(driveCard).join('');
     } catch (e) {
-      box.innerHTML = driveEmbedFallback(folderId, lang === 'es' ? 'No se pudo leer la carpeta con la API — mostrando el visor de Drive.' : 'Could not read the folder via the API — showing the Drive viewer.');
+      box.innerHTML = driveEmbedFallback(folderId, UI('drive_fallback'));
     }
   }
 
@@ -289,7 +336,7 @@
     let h = pageHead(p);
     // quick links
     h += '<section class="sec" style="--accent:var(--navy)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.sparkle + (lang === 'es' ? 'Accesos rápidos' : 'Quick links') + '</h2></div>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.sparkle + UI('quick_links') + '</h2></div>' +
       '<p class="intro" style="margin-bottom:18px">' + L(p.isamsNote) + '</p>' +
       '<div class="tile-grid">';
     D.QUICK_LINKS.forEach(function (t) {
@@ -299,12 +346,12 @@
 
     // other tools
     h += '<section class="sec" style="--accent:var(--teal)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.resources + (lang === 'es' ? 'Otras herramientas' : 'Other tools') + '</h2></div>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.resources + UI('other_tools') + '</h2></div>' +
       '<div class="tool-cols">';
     D.TOOL_GROUPS.forEach(function (g) {
       h += '<div class="tool-group" style="--accent:' + g.accent + '"><div class="tool-group-hd"><span class="dot"></span>' + L(g.name) + '</div>';
       g.links.forEach(function (l) {
-        h += '<a class="tool-link" href="' + l.url + '" target="_blank" rel="noopener">' + l.name + IC.ext + '</a>';
+        h += '<a class="tool-link" href="' + safeUrl(l.url, '#') + '" target="_blank" rel="noopener">' + l.name + IC.ext + '</a>';
       });
       h += '</div>';
     });
@@ -314,11 +361,11 @@
     const s = p.strategies;
     h += '<section class="sec" style="--accent:var(--violet)">' +
       '<div class="sec-hd"><h2 class="sec-title">' + IC.slides + L(s.title) + '</h2>' +
-      '<a class="sec-link" href="' + s.link + '" target="_blank" rel="noopener">' + (lang === 'es' ? 'Abrir presentaci\u00f3n' : 'Open presentation') + ' ' + IC.ext + '</a></div>' +
+      '<a class="sec-link" href="' + safeUrl(s.link, '#') + '" target="_blank" rel="noopener">' + UI('open_presentation') + ' ' + IC.ext + '</a></div>' +
       '<div class="cc" style="--accent:var(--violet)"><div class="cc-hd"><div class="cc-ttl">' + L(s.linkLabel) + '</div>' +
       '<div class="cc-sub">Google Slides</div></div>' +
       '<p class="tile-desc" style="font-size:.82rem;line-height:1.5;margin-bottom:14px">' + L(s.desc) + '</p>' +
-      '<div class="embed-frame slides-embed"><iframe src="' + s.embed + '" allowfullscreen title="' + L(s.linkLabel) + '"></iframe></div>' +
+      '<div class="embed-frame slides-embed"><iframe src="' + safeUrl(s.embed, '') + '" allowfullscreen title="' + L(s.linkLabel) + '"></iframe></div>' +
       '</div></section>';
     return h;
   }
@@ -339,8 +386,8 @@
 
   function contactStrip() {
     return '<div class="contact-strip" style="margin-top:8px">' +
-      '<div class="contact-txt"><div class="contact-ttl">' + (lang === 'es' ? '¿Querés compartir algo con la red?' : 'Want to share something with the network?') + '</div>' +
-      '<div class="contact-sub">' + (lang === 'es' ? 'Escribinos y lo sumamos.' : 'Write to us and we\'ll add it.') + '</div></div>' +
+      '<div class="contact-txt"><div class="contact-ttl">' + UI('share_prompt') + '</div>' +
+      '<div class="contact-sub">' + UI('write_us') + '</div></div>' +
       '<a class="contact-cta" href="mailto:marketing@stgeorges.edu.ar">' + IC.mail + ' marketing@stgeorges.edu.ar</a></div>';
   }
 
@@ -359,13 +406,13 @@
     let h = pageHead(p);
     h += '<p class="intro">' + L(p.intro) + '</p>';
     h += '<section class="sec" style="--accent:var(--red)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.doc + (lang === 'es' ? 'Formularios de entrevista' : 'Interview forms') + '</h2>' +
-      '<span class="sec-meta">' + (lang === 'es' ? 'Por nivel y secci\u00f3n' : 'By level & section') + '</span></div>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.doc + UI('interview_forms') + '</h2>' +
+      '<span class="sec-meta">' + UI('by_level') + '</span></div>' +
       '<div class="tool-cols">';
     A.groups.forEach(function (g) {
       h += '<div class="tool-group" style="--accent:' + g.accent + '"><div class="tool-group-hd"><span class="dot"></span>' + L(g.level) + '</div>';
       g.forms.forEach(function (f) {
-        h += '<a class="form-link" style="--accent:' + g.accent + '" href="' + f.url + '" target="_blank" rel="noopener">' +
+        h += '<a class="form-link" style="--accent:' + g.accent + '" href="' + safeUrl(f.url, '#') + '" target="_blank" rel="noopener">' +
           '<span class="fl-ico">' + IC.doc + '</span>' + L(f.name) + '<span class="fl-go">' + IC.ext + '</span></a>';
       });
       h += '</div>';
@@ -375,15 +422,15 @@
     // contact
     const c = A.contact;
     h += '<section class="sec" style="--accent:var(--navy)">' +
-      '<div class="sec-hd"><h2 class="sec-title">' + IC.phone + (lang === 'es' ? 'Contacto' : 'Contact us') + '</h2></div>' +
-      '<p class="intro" style="margin-bottom:16px">' + (lang === 'es' ? 'Escribinos por email o WhatsApp. Conectate con el campus Quilmes o North.' : 'Reach out via email or WhatsApp. Connect with the Quilmes or North campus.') + '</p>' +
+      '<div class="sec-hd"><h2 class="sec-title">' + IC.phone + UI('contact') + '</h2></div>' +
+      '<p class="intro" style="margin-bottom:16px">' + UI('admissions_contact_intro') + '</p>' +
       '<div class="contact-grid">' +
       '<div class="contact-card"><div class="contact-campus">Quilmes</div>' +
       '<a class="contact-line" href="mailto:' + c.quilmesEmail + '">' + IC.mail + c.quilmesEmail + '</a>' +
-      '<a class="contact-line" href="' + c.quilmesWa.url + '" target="_blank" rel="noopener">' + IC.phone + 'WhatsApp · ' + c.quilmesWa.label + '</a></div>' +
+      '<a class="contact-line" href="' + safeUrl(c.quilmesWa.url, '#') + '" target="_blank" rel="noopener">' + IC.phone + 'WhatsApp · ' + c.quilmesWa.label + '</a></div>' +
       '<div class="contact-card n"><div class="contact-campus">North</div>' +
       '<a class="contact-line" href="mailto:' + c.northEmail + '">' + IC.mail + c.northEmail + '</a>' +
-      '<a class="contact-line" href="' + c.northWa.url + '" target="_blank" rel="noopener">' + IC.phone + 'WhatsApp · ' + c.northWa.label + '</a></div>' +
+      '<a class="contact-line" href="' + safeUrl(c.northWa.url, '#') + '" target="_blank" rel="noopener">' + IC.phone + 'WhatsApp · ' + c.northWa.label + '</a></div>' +
       '</div></section>';
     return h;
   }
@@ -392,7 +439,7 @@
   function go(id) {
     if (!RENDERERS[id]) id = 'home';
     current = id;
-    localStorage.setItem('tgn-panel', id);
+    safeSet('tgn-panel', id);
     const panel = document.getElementById('panel');
     panel.classList.remove('active');
     panel.innerHTML = RENDERERS[id]();
@@ -429,7 +476,7 @@
       '<span class="modal-cat" style="background:color-mix(in srgb,' + cm + ' 14%,transparent);color:' + cm + '">' + L(n.cat) + '</span>' +
       '<div class="modal-date">' + L(n.date) + '</div>' +
       '<h2 class="modal-title">' + L(n.title) + '</h2>' +
-      '<div class="modal-text">' + L(n.body) + '</div>' +
+      '<div class="modal-text">' + sanitizeHtml(L(n.body)) + '</div>' +
       '<div class="modal-sign">— ' + L(n.sign) + '</div>' +
       '</div></div></div>';
     ov.classList.add('open');
@@ -456,7 +503,7 @@
     });
   }
   function setLang(l) {
-    lang = l; localStorage.setItem('tgn-lang', l);
+    lang = l; safeSet('tgn-lang', l);
     applyChrome(); renderNav(); go(current);
   }
   function applyTheme() {
@@ -471,7 +518,7 @@
   }
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('tgn-theme', theme); applyTheme();
+    safeSet('tgn-theme', theme); applyTheme();
   }
 
   /* ---------- SIDEBAR MOBILE ---------- */
