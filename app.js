@@ -496,12 +496,42 @@
   }
 
   /* ---------- INIT ---------- */
+ /* ---------- INIT CORREGIDO PARA TRAER DATOS DEL BACKEND ---------- */
   function init() {
     applyTheme();
     applyChrome();
-    renderNav();
-    go(current);
 
+    // 1. Verificar si hay una URL remota configurada
+    if (D.config && D.config.remoteUrl) {
+      // Llamamos al script de Google de forma asíncrona para no trabar la carga del sitio
+      fetch(D.config.remoteUrl)
+        .then(response => response.json())
+        .then(data => {
+          // Si el backend devolvió contenido guardado, sobreescribimos los datos locales de la sesión
+          if (data && data.content) {
+            window.TGNStore = {
+              get: function(key, def) {
+                return data.content[key] !== undefined ? data.content[key] : def;
+              }
+            };
+            // Volvemos a renderizar los paneles con la información nueva del servidor
+            renderNav();
+            go(current);
+          }
+        })
+        .catch(err => {
+          console.error("Error cargando datos remotos de Google:", err);
+          // Si falla Google por alguna razón, igual pintamos el sitio con los datos por defecto
+          renderNav();
+          go(current);
+        });
+    } else {
+      // Si no hay URL remota, corre el comportamiento estático normal
+      renderNav();
+      go(current);
+    }
+
+    // --- OYENTES DE EVENTOS ORIGINALES (Mantenelos igual abajo) ---
     document.querySelectorAll('[data-lang]').forEach(function (b) {
       b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
     });
@@ -515,7 +545,3 @@
     const si = document.getElementById('search-input');
     si.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(si.value); });
   }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-})();
