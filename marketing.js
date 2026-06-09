@@ -586,9 +586,25 @@
     chat._busy = true;
     renderChatOnly(true);
     try {
-      const convo = chat.filter(function (m) { return !m.typing; }).map(function (m) { return (m.role === 'user' ? 'Usuario' : 'Asistente') + ': ' + m.text; }).join('\n\n');
-      const prompt = SYSTEM + '\nDatos del usuario — Nombre: ' + user.name + ', Campus: ' + user.campus + ', Rol: ' + user.role + '.\n\n[Conversación]\n' + convo + '\n\nAsistente:';
-      const out = await window.claude.complete(prompt);
+      const sys = SYSTEM + '\nDatos del usuario — Nombre: ' + user.name + ', Campus: ' + user.campus + ', Rol: ' + user.role + '.';
+      const msgs = chat.filter(function (m) { return !m.typing; }).map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', text: m.text }; });
+      let out;
+      const remoteUrl = (window.TGN && window.TGN.config && window.TGN.config.remoteUrl) || '';
+      if (remoteUrl) {
+        const res = await fetch(remoteUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'chat', system: sys, messages: msgs })
+        });
+        const data = await res.json();
+        if (!data || data.ok === false) throw new Error((data && data.error) || 'backend');
+        out = data.text;
+      } else if (window.claude && window.claude.complete) {
+        const convo = msgs.map(function (m) { return (m.role === 'user' ? 'Usuario' : 'Asistente') + ': ' + m.text; }).join('\n\n');
+        out = await window.claude.complete(sys + '\n\n[Conversación]\n' + convo + '\n\nAsistente:');
+      } else {
+        throw new Error('no-backend');
+      }
       const parts = String(out || '').split('//--SPLIT--//').map(function (p) { return p.trim(); }).filter(Boolean);
       if (parts.length > 1) parts.forEach(function (p) { chat.push({ role: 'model', text: p }); });
       else chat.push({ role: 'model', text: out || (lang === 'es' ? 'No pude generar una respuesta. Probá de nuevo.' : 'Could not generate a reply. Try again.') });
