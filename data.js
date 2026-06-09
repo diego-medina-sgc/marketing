@@ -123,13 +123,31 @@ const NEWS = [
 ];
 
 /* Birthdays — December. dept codes: P Prep · S Secondary · M Mgmt/Admin · Bd Boarding · EF PE */
-const DEPTS = {
-  P:  { en: 'Prep',      es: 'Prep' },
-  S:  { en: 'Secondary', es: 'Secundaria' },
-  M:  { en: 'Admin',     es: 'Administración' },
-  Bd: { en: 'Boarding',  es: 'Boarding' },
-  EF: { en: 'PE',        es: 'Ed. Física' }
-};
+const DEPTS = [
+  { v: 'A', l: 'Administración' },
+  { v: 'Bd', l: 'Boarding House' },
+  { v: 'C', l: 'Catequesis' },
+  { v: 'Coun', l: 'School Counsellor' },
+  { v: 'EF', l: 'Educación Física' },
+  { v: 'G', l: 'Guardería' },
+  { v: 'Gu', l: 'Guardavida' },
+  { v: 'H', l: 'Headmaster' },
+  { v: 'IC', l: 'Isams Coordinator' },
+  { v: 'ICT', l: 'Tecnologías de la Información y Comunicación' },
+  { v: 'K', l: 'Kindergarten' },
+  { v: 'L', l: 'Library' },
+  { v: 'M', l: 'Maestranza' },
+  { v: 'MKT', l: 'Marketing & Admissions' },
+  { v: 'P', l: 'Primary' },
+  { v: 'Pr', l: 'Principal' },
+  { v: 'PS', l: 'Psicología' },
+  { v: 'S', l: 'Secondary' },
+  { v: 'San', l: 'Sanatorio' },
+  { v: 'SC', l: 'Sports Club' },
+  { v: 'Sh', l: 'Shop' },
+  { v: 'TA', l: 'Teaching Assistant' },
+  { v: 'The', l: 'Teatro' }
+];
 /* campus: q = Quilmes (red) · n = North (navy) · one = One School (ink).
    NOTE: campus values below are placeholders — edit each person's campus
    in the Back Office so the colour coding is accurate. */
