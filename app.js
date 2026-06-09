@@ -199,12 +199,13 @@
        '<span class="panel-card-meta">' + (lang === 'es' ? '🥳' : '🥳') + '</span></div>' +
       '<div class="panel-card-body bday-grid">';
     D.BIRTHDAYS.forEach(function (b) {
-      const mon = lang === 'es' ? 'DIC' : 'DEC';
-      const cc = (b.campus === 'q' || b.campus === 'n') ? b.campus : 'one';
-      h += '<div class="bday-row ' + cc + '"><div class="bday-date"><div class="bday-day">' + b.d + '</div><div class="bday-mon">' + mon + '</div></div>' +
-        '<div class="bday-info"><div class="bday-name">' + b.name + '</div><div class="bday-dept">' + L(D.DEPTS[b.dept]) + '</div></div>' +
-        '<span class="bday-cake">' + IC.cake + '</span></div>';
-    });
+  const mon = lang === 'es' ? 'DIC' : 'DEC';
+  const cc = (b.campus === 'q' || b.campus === 'n') ? b.campus : 'one';
+  const dept = D.DEPTS.find(d => d.v === b.dept);
+  h += '<div class="bday-row ' + cc + '"><div class="bday-date"><div class="bday-day">' + b.d + '</div><div class="bday-mon">' + mon + '</div></div>' +
+    '<div class="bday-info"><div class="bday-name">' + b.name + '</div><div class="bday-dept">' + (dept ? dept.l : b.dept) + '</div></div>' +
+    '<span class="bday-cake">' + IC.cake + '</span></div>';
+});
     h += '</div>' +
       '<div class="bday-legend">' +
       '<span class="bday-leg q">' + (lang === 'es' ? 'Quilmes' : 'Quilmes') + '</span>' +
