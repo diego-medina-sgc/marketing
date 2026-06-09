@@ -11,6 +11,19 @@
   const ADMIN_PASS = 'marketingsgc2024';
   const AUTH_KEY = 'tgn-admin-ok';
 
+  /* ── Google SSO helpers ── */
+  function googleClientId() { return (S.get('googleClientId', '') || '').trim(); }
+  function adminEmails() { const raw = S.get('adminEmails', 'marketing@stgeorges.edu.ar'); return String(raw).split(',').map(s => s.trim().toLowerCase()).filter(Boolean); }
+  function emailAllowed(e) { e = (e || '').toLowerCase(); const list = adminEmails(); if (list.indexOf(e) > -1) return true; return list.some(function (a) { return a.charAt(0) === '@' && e.slice(-a.length) === a; }); }
+  function decodeJwt(t) { try { const p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(p)))); } catch (e) { return null; } }
+  function loadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.id) return res(); const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = function () { res(); }; s.onerror = function () { rej(); }; document.head.appendChild(s); }); }
+  function handleGoogleCredential(resp) {
+    const data = decodeJwt(resp.credential); const email = data && data.email;
+    const err = document.getElementById('ad-err');
+    if (email && data.email_verified !== false && emailAllowed(email)) { localStorage.setItem(AUTH_KEY, '1'); localStorage.setItem('tgn-admin-user', email); renderShell(); }
+    else if (err) { err.textContent = email ? (email + ' is not authorised for the Back Office.') : 'Could not sign in with Google.'; }
+  }
+
   const IC = {
     lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
     cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 2h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 22h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6A7 7 0 0 0 19 12z"/></svg>',
@@ -63,7 +76,9 @@
     { sep: true },
     { key: 'presentations', label: 'Presentations', icon: 'slides', kind: 'pres' },
     { key: 'documents', label: 'Documents', icon: 'doc', kind: 'docs' },
-    { key: 'designs', label: 'Designs (Canva)', icon: 'palette', kind: 'designs' }
+    { key: 'designs', label: 'Designs (Canva)', icon: 'palette', kind: 'designs' },
+    { sep: true },
+    { key: 'settings', label: 'Settings', icon: 'cog', kind: 'settings' }
   ];
   const SUBTITLE = {
     news: 'Posts shown in the Home newsfeed. Bilingual text (EN/ES). The body supports basic HTML.',
@@ -74,7 +89,8 @@
     interviewforms: 'Admissions interview forms, grouped by level. Each form is a link.',
     presentations: 'Direct presentation templates in Marketing › Presentations.',
     documents: 'Letterhead documents in Marketing › Documents, grouped by campus.',
-    designs: 'Canva templates shown in Marketing › Designs. These sync live from the Google Sheet “Canva Brand Templates”. Edits here act only as a fallback if the sheet can’t be reached.'
+    designs: 'Canva templates shown in Marketing › Designs. These sync live from the Google Sheet “Canva Brand Templates”. Edits here act only as a fallback if the sheet can’t be reached.',
+    settings: 'Site-wide settings. The Google Drive API key lets the Policies page list a Drive folder’s contents as live cards.'
   };
 
   function defaultFor(key) {
@@ -246,6 +262,22 @@
     return h;
   }
 
+  function settingsPanel() {
+    const key = S.get('driveApiKey', '');
+    const cid = S.get('googleClientId', '');
+    const emails = S.get('adminEmails', 'marketing@stgeorges.edu.ar');
+    return '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google sign-in (SSO)</span></div>' +
+      '<div class="ad-field"><label class="ad-lbl">OAuth Client ID</label>' +
+      '<input class="ad-in" id="ad-gclient" value="' + escA(cid) + '" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off"/></div>' +
+      '<div class="ad-field"><label class="ad-lbl">Authorised admin emails</label>' +
+      '<input class="ad-in" id="ad-gemails" value="' + escA(emails) + '" placeholder="marketing@stgeorges.edu.ar, @stgeorges.edu.ar" autocomplete="off"/></div>' +
+      '<p class="ad-sub" style="margin:6px 0 0">Comma-separated. Use a full address (marketing@stgeorges.edu.ar) or a whole domain (@stgeorges.edu.ar). With a Client ID set, a “Sign in with Google” button appears on the login. Add your site’s URL to “Authorised JavaScript origins” in Google Cloud Console.</p></div>' +
+      '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google Drive</span></div>' +
+      '<div class="ad-field"><label class="ad-lbl">Drive API key</label>' +
+      '<input class="ad-in" id="ad-drivekey" value="' + escA(key) + '" placeholder="AIza…" autocomplete="off"/></div>' +
+      '<p class="ad-sub" style="margin:10px 0 0">Used by the <b>Policies</b> page to list the Drive folder’s contents as cards. Enable the <b>Google Drive API</b> in Google Cloud Console and share the folder as “Anyone with the link → Viewer”. Leave blank to fall back to the embedded Drive viewer.</p></div>';
+  }
+
   function panelHtml(key) {
     const kind = (TYPES.find(t => t.key === key) || {}).kind;
     if (kind === 'flat') return flatPanel(key);
@@ -254,6 +286,7 @@
     if (kind === 'pres') return presPanel(key);
     if (kind === 'docs') return docsPanel(key);
     if (kind === 'designs') return designsPanel(key);
+    if (kind === 'settings') return settingsPanel();
     return '';
   }
 
@@ -276,6 +309,12 @@
   /* ---------- bind ---------- */
   function bindEditor() {
     const main = document.getElementById('ad-main');
+    if (state.active === 'settings') {
+      const k = document.getElementById('ad-drivekey'); if (k) k.addEventListener('input', function () { S.set('driveApiKey', k.value.trim()); flashSaved(); });
+      const gc = document.getElementById('ad-gclient'); if (gc) gc.addEventListener('input', function () { S.set('googleClientId', gc.value.trim()); flashSaved(); });
+      const ge = document.getElementById('ad-gemails'); if (ge) ge.addEventListener('input', function () { S.set('adminEmails', ge.value.trim()); flashSaved(); });
+      return;
+    }
     main.querySelectorAll('[data-toggle]').forEach(h => h.addEventListener('click', e => { if (e.target.closest('.ad-item-tools')) return; h.parentNode.classList.toggle('open'); }));
     const addBtn = document.getElementById('ad-add-btn');
     if (addBtn) addBtn.addEventListener('click', () => { wd(state.active).unshift(newItem(state.active)); commit(state.active); renderEditor(); });
@@ -342,7 +381,7 @@
       '<input type="file" id="ad-file" accept="application/json" style="display:none"/></div></div>';
     document.querySelectorAll('.ad-nav-item').forEach(b => b.addEventListener('click', () => { state.active = b.getAttribute('data-type'); renderEditor(); }));
     document.getElementById('ad-close').addEventListener('click', close);
-    document.getElementById('ad-logout').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); renderShell(); });
+    document.getElementById('ad-logout').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem('tgn-admin-user'); renderShell(); });
     document.getElementById('ad-publish').addEventListener('click', () => { location.reload(); });
     document.getElementById('ad-export').addEventListener('click', exportJson);
     document.getElementById('ad-import').addEventListener('click', () => document.getElementById('ad-file').click());
@@ -352,17 +391,33 @@
   }
 
   function loginHtml() {
+    const cid = googleClientId();
+    let body;
+    if (cid) {
+      body = '<p>Sign in with your authorised St George\u2019s Google account.</p>' +
+        '<div class="ad-err" id="ad-err"></div>' +
+        '<div id="ad-google" class="ad-google"></div>' +
+        '<p class="ad-note">Only authorised accounts can access the Back Office.</p>';
+    } else {
+      body = '<p>Enter the Marketing team email and password to edit the intranet content.</p>' +
+        '<div class="ad-err" id="ad-err"></div>' +
+        '<input class="ad-in" id="ad-email" type="email" placeholder="marketing@stgeorges.edu.ar" autocomplete="off"/>' +
+        '<input class="ad-in" id="ad-pass" type="password" placeholder="Password" autocomplete="off"/>' +
+        '<button class="ad-login-btn" id="ad-enter">Enter</button>' +
+        '<p class="ad-note">Tip: set up <b>Google sign-in</b> in Settings for secure access without a shared password.</p>';
+    }
     return '<div class="ad-shell" style="max-width:520px;margin:auto;align-self:center"><div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.lock + '</span>Back Office</div><div class="ad-top-actions"><button class="ad-x" id="ad-close">' + IC.x + '</button></div></div>' +
-      '<div class="ad-login"><div class="ad-login-ico">' + IC.lock + '</div><h2>Marketing access</h2>' +
-      '<p>Enter the Marketing team email and password to edit the intranet content.</p>' +
-      '<div class="ad-err" id="ad-err"></div>' +
-      '<input class="ad-in" id="ad-email" type="email" placeholder="marketing@stgeorges.edu.ar" autocomplete="off"/>' +
-      '<input class="ad-in" id="ad-pass" type="password" placeholder="Password" autocomplete="off"/>' +
-      '<button class="ad-login-btn" id="ad-enter">Enter</button>' +
-      '<p class="ad-note">Edits are saved on this device and applied to the site on reload. Use “Export JSON” to share or back up your changes.</p></div></div>';
+      '<div class="ad-login"><div class="ad-login-ico">' + IC.lock + '</div><h2>Marketing access</h2>' + body + '</div></div>';
   }
   function bindLogin() {
     document.getElementById('ad-close').addEventListener('click', close);
+    const cid = googleClientId();
+    if (cid) {
+      loadGIS().then(function () {
+        try { google.accounts.id.initialize({ client_id: cid, callback: handleGoogleCredential }); google.accounts.id.renderButton(document.getElementById('ad-google'), { theme: 'filled_blue', size: 'large', text: 'signin_with', shape: 'pill', width: 300 }); } catch (e) {}
+      }).catch(function () {});
+      return;
+    }
     const go = () => {
       const v = (document.getElementById('ad-email').value || '').trim().toLowerCase();
       const p = (document.getElementById('ad-pass').value || '');

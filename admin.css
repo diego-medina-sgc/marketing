@@ -90,6 +90,9 @@
 .ad-login-btn{width:100%;background:var(--red);color:#fff;border:none;cursor:pointer;font-family:'Asap',sans-serif;font-weight:700;font-size:.9rem;padding:13px;border-radius:10px;box-shadow:0 8px 20px rgba(220,30,51,.22);transition:transform .15s;}
 .ad-login-btn:hover{transform:translateY(-2px);}
 .ad-err{color:var(--red);font-size:.8rem;font-weight:600;margin-bottom:12px;min-height:1em;}
+.ad-google{display:flex;justify-content:center;margin-bottom:14px;min-height:44px;}
+.ad-or{display:flex;align-items:center;text-align:center;gap:12px;margin:0 0 14px;color:var(--gray);font-family:'Asap Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+.ad-or::before,.ad-or::after{content:'';flex:1;height:1px;background:var(--line);}
 .ad-note{font-size:.7rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;margin-top:16px;line-height:1.5;}
 
 /* footer bar */

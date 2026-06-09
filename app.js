@@ -83,9 +83,24 @@
   }
 
   /* ---------- RENDER: panels ---------- */
-  function tile(accent, abbr, name, desc, url) {
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function rootDomain(host) {
+    var p = host.split('.');
+    var sld = ['com', 'edu', 'co', 'org', 'net', 'gov', 'ac'];
+    if (p.length > 2 && sld.indexOf(p[p.length - 2]) > -1 && p[p.length - 1].length === 2) return p.slice(-3).join('.');
+    return p.slice(-2).join('.');
+  }
+  function tile(accent, abbr, name, desc, url, favicon) {
+    var ico;
+    if (favicon) {
+      var host = rootDomain(String(url || '').replace(/^https?:\/\//, '').split('/')[0]);
+      var fb = "if(!this.dataset.f){this.dataset.f=1;this.src='https://www.google.com/s2/favicons?sz=64&domain=" + host + "';}else{this.parentNode.classList.remove('has-fav');this.parentNode.textContent='" + abbr + "';}";
+      ico = '<div class="tile-ico has-fav"><img class="tile-fav" src="https://icons.duckduckgo.com/ip3/' + host + '.ico" alt="" referrerpolicy="no-referrer" onerror="' + fb + '"/></div>';
+    } else {
+      ico = '<div class="tile-ico">' + abbr + '</div>';
+    }
     return '<a class="tile" style="--accent:' + accent + '" href="' + url + '" target="_blank" rel="noopener">' +
-      '<div class="tile-top"><div class="tile-ico">' + abbr + '</div>' +
+      '<div class="tile-top">' + ico +
       '<span class="tile-arrow">' + IC.arrow + '</span></div>' +
       '<div class="tile-name">' + name + '</div>' +
       '<div class="tile-desc">' + desc + '</div></a>';
@@ -217,13 +232,56 @@
     h += '<p class="intro">' + L(p.intro) + '</p>';
     h += '<section class="sec" style="--accent:var(--navy)">' +
       '<div class="sec-hd"><h2 class="sec-title">' + IC.folder + (lang === 'es' ? 'Documentos' : 'Documents') + '</h2>' +
-      '<a class="sec-link" href="https://docs.google.com/folderview?id=' + p.folderId + '" target="_blank" rel="noopener">' + T().open_folder + ' ' + IC.ext + '</a></div>' +
-      '<div class="cc"><div class="cc-hd"><div class="cc-ttl">' + (lang === 'es' ? 'Carpeta de Políticas' : 'Policies Folder') + '</div>' +
-      '<div class="cc-sub">Google Drive</div></div>' +
-      '<div class="embed-frame"><iframe src="https://drive.google.com/embeddedfolderview?id=' + p.folderId + '#list" height="420" title="Policies"></iframe></div></div>' +
+      '<a class="sec-link" href="https://drive.google.com/drive/folders/' + p.folderId + '" target="_blank" rel="noopener">' + T().open_folder + ' ' + IC.ext + '</a></div>' +
+      '<div id="drive-cards" class="dual-grid" data-folder="' + p.folderId + '"><div class="drive-loading">' + (lang === 'es' ? 'Cargando carpeta…' : 'Loading folder…') + '</div></div>' +
       '</section>';
     h += contactStrip();
     return h;
+  }
+
+  function driveKey() { return (window.TGNStore && TGNStore.get('driveApiKey', '')) || (D.config && D.config.driveApiKey) || ''; }
+  function driveTypeLabel(mime) {
+    if (/folder/.test(mime)) return lang === 'es' ? 'Carpeta' : 'Folder';
+    if (/spreadsheet/.test(mime)) return 'Sheet';
+    if (/presentation/.test(mime)) return 'Slides';
+    if (/document/.test(mime)) return 'Doc';
+    if (/pdf/.test(mime)) return 'PDF';
+    return lang === 'es' ? 'Archivo' : 'File';
+  }
+  function driveCard(f) {
+    const isFolder = /folder/.test(f.mimeType);
+    const ic = isFolder ? IC.folder : (/presentation/.test(f.mimeType) ? IC.slides : IC.doc);
+    const c = isFolder ? 'var(--navy)' : 'var(--teal)';
+    let when = '';
+    if (f.modifiedTime) { try { when = new Date(f.modifiedTime).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) {} }
+    return '<a class="doc-card" style="--c:' + c + '" href="' + (f.webViewLink || '#') + '" target="_blank" rel="noopener">' +
+      '<div class="doc-ico">' + ic + '</div>' +
+      '<div class="doc-info"><div class="doc-campus">' + driveTypeLabel(f.mimeType) + (when ? ' · ' + when : '') + '</div><div class="doc-name">' + esc(f.name) + '</div></div>' +
+      '<span class="doc-arrow">' + IC.arrow + '</span></a>';
+  }
+  function driveEmbedFallback(folderId, note) {
+    return '<div class="cc" style="grid-column:1/-1">' + (note ? '<div class="drive-note">' + note + '</div>' : '') +
+      '<div class="embed-frame"><iframe src="https://drive.google.com/embeddedfolderview?id=' + folderId + '#list" height="420" title="Drive folder"></iframe></div></div>';
+  }
+  async function loadDriveCards() {
+    const box = document.getElementById('drive-cards');
+    if (!box) return;
+    const folderId = box.getAttribute('data-folder');
+    const key = driveKey();
+    if (!key) { box.innerHTML = driveEmbedFallback(folderId, ''); return; }
+    try {
+      const url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent("'" + folderId + "' in parents and trashed=false") +
+        '&key=' + key + '&fields=' + encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink)') +
+        '&orderBy=folder,name&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const data = await res.json();
+      const files = (data.files || []);
+      if (!files.length) { box.innerHTML = '<div class="drive-loading">' + (lang === 'es' ? 'La carpeta está vacía.' : 'The folder is empty.') + '</div>'; return; }
+      box.innerHTML = files.map(driveCard).join('');
+    } catch (e) {
+      box.innerHTML = driveEmbedFallback(folderId, lang === 'es' ? 'No se pudo leer la carpeta con la API — mostrando el visor de Drive.' : 'Could not read the folder via the API — showing the Drive viewer.');
+    }
   }
 
   function renderResources() {
@@ -235,7 +293,7 @@
       '<p class="intro" style="margin-bottom:18px">' + L(p.isamsNote) + '</p>' +
       '<div class="tile-grid">';
     D.QUICK_LINKS.forEach(function (t) {
-      h += tile(t.accent, t.abbr, t.name, L(t.desc), t.url);
+      h += tile(t.accent, t.abbr, t.name, L(t.desc), t.url, true);
     });
     h += '</div></section>';
 
@@ -355,6 +413,7 @@
       const mr = document.getElementById('mkt-root');
       if (mr) window.MKT.mount(mr, lang);
     }
+    if (current === 'policies') { loadDriveCards(); }
   }
 
   /* ---------- NEWS MODAL ---------- */
