@@ -11,6 +11,7 @@
   var TOKEN_KEY = 'tgn-publish-token';
   var REV_KEY = 'tgn-remote-rev';
   var APPLIED = 'tgn-remote-applied';
+  var BACKUP_KEY = 'tgn-cms-v1-backup-before-remote';
 
   function jsonp(url, cb) {
     var name = '__tgnCb' + Date.now();
@@ -25,6 +26,7 @@
   }
 
   function applyContent(content, rev) {
+    try { localStorage.setItem(BACKUP_KEY, localStorage.getItem(window.TGNStore.KEY) || '{}'); } catch (e) {}
     try { localStorage.setItem(window.TGNStore.KEY, JSON.stringify(content || {})); } catch (e) {}
     try { localStorage.setItem(REV_KEY, String(rev)); } catch (e) {}
   }
@@ -45,41 +47,23 @@
     });
   }
 
-  // Publish current local content to everyone. Returns a promise resolving to boolean.
+  // Publish current local content to everyone. Returns true if a request was sent.
   function publish() {
-    if (!URL) return Promise.resolve(false);
+    if (!URL) return false;
     var token = localStorage.getItem(TOKEN_KEY) || '';
-    if (!token) return Promise.resolve(false);
+    if (!token) return false;
     var content = window.TGNStore.all();
     var rev = Date.now();
-
-    return fetch(URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify({ 
-        token: token, 
-        rev: rev, 
-        content: content 
-      })
-    })
-    .then(function (response) { return response.json(); })
-    .then(function (data) {
-      if (data && data.ok) {
-        console.log("Sincronización remota exitosa:", data);
-        localStorage.setItem(REV_KEY, String(rev));
-        return true;
-      } else {
-        console.error("Error en la respuesta del servidor:", data.error);
-        return false;
-      }
-    })
-    .catch(function (err) {
-      console.error("Error de red en la sincronización:", err);
-      return false;
-    });
+    try {
+      fetch(URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'save', token: token, rev: rev, content: content })
+      });
+      localStorage.setItem(REV_KEY, String(rev));
+      return { ok: true, mode: 'sent' };
+    } catch (e) { return { ok: false, error: e }; }
   }
 
   window.TGNRemote = {
