@@ -123,7 +123,31 @@
   const CATCOLORS = [{ v: 'red', l: 'Red · Community/Action' }, { v: 'teal', l: 'Teal · Announcement' }, { v: 'navy', l: 'Navy · Event' }];
   const CAMPUS2 = [{ v: 'q', l: 'Quilmes' }, { v: 'n', l: 'North' }];
   const CAMPUS3 = [{ v: 'q', l: 'Quilmes (red)' }, { v: 'n', l: 'North (navy)' }, { v: 'one', l: 'One School (black)' }];
-  const DEPTS = [{ v: 'P', l: 'Prep' }, { v: 'S', l: 'Secondary' }, { v: 'M', l: 'Admin' }, { v: 'Bd', l: 'Boarding' }, { v: 'EF', l: 'PE' }];
+  const DEPTS = [
+  { v: 'A', l: 'Administración' },
+  { v: 'Bd', l: 'Boarding House' },
+  { v: 'C', l: 'Catequesis' },
+  { v: 'Coun', l: 'School Counsellor' },
+  { v: 'EF', l: 'Educación Física' },
+  { v: 'G', l: 'Guardería' },
+  { v: 'Gu', l: 'Guardavida' },
+  { v: 'H', l: 'Headmaster' },
+  { v: 'IC', l: 'Isams Coordinator' },
+  { v: 'ICT', l: 'Tecnologías de la Información y Comunicación' },
+  { v: 'K', l: 'Kindergarten' },
+  { v: 'L', l: 'Library' },
+  { v: 'M', l: 'Maestranza' },
+  { v: 'MKT', l: 'Marketing & Admissions' },
+  { v: 'P', l: 'Primary' },
+  { v: 'Pr', l: 'Principal' },
+  { v: 'PS', l: 'Psicología' },
+  { v: 'S', l: 'Secondary' },
+  { v: 'San', l: 'Sanatorio' },
+  { v: 'SC', l: 'Sports Club' },
+  { v: 'Sh', l: 'Shop' },
+  { v: 'TA', l: 'Teaching Assistant' },
+  { v: 'The', l: 'Teatro' }
+];
 
   /* ---------- per-type item forms ---------- */
   function itemForm(key, it) {
