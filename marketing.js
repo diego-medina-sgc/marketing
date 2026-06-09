@@ -586,22 +586,14 @@
     chat._busy = true;
     renderChatOnly(true);
     try {
-      const sys = SYSTEM + '\nDatos del usuario — Nombre: ' + user.name + ', Campus: ' + user.campus + ', Rol: ' + user.role + '.';
-      const msgs = chat.filter(function (m) { return !m.typing; }).map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', text: m.text }; });
+      const msgs = chat.filter(function (m) { return !m.typing; }).map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', text: m.text }; }).slice(-14);
       let out;
       const remoteUrl = (window.TGN && window.TGN.config && window.TGN.config.remoteUrl) || '';
       if (remoteUrl) {
-        const res = await fetch(remoteUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'chat', system: sys, messages: msgs })
-        });
-        const data = await res.json();
-        if (!data || data.ok === false) throw new Error((data && data.error) || 'backend');
-        out = data.text;
+        out = await chatViaBackend(remoteUrl, msgs);
       } else if (window.claude && window.claude.complete) {
         const convo = msgs.map(function (m) { return (m.role === 'user' ? 'Usuario' : 'Asistente') + ': ' + m.text; }).join('\n\n');
-        out = await window.claude.complete(sys + '\n\n[Conversación]\n' + convo + '\n\nAsistente:');
+        out = await window.claude.complete(SYSTEM + '\nDatos del usuario — Nombre: ' + user.name + ', Campus: ' + user.campus + ', Rol: ' + user.role + '.\n\n[Conversación]\n' + convo + '\n\nAsistente:');
       } else {
         throw new Error('no-backend');
       }
@@ -614,6 +606,25 @@
       chat._busy = false;
       renderChatOnly(false);
     }
+  }
+  /* JSONP GET to the Apps Script backend (works cross-origin from a static site) */
+  function chatViaBackend(remoteUrl, msgs) {
+    return new Promise(function (resolve, reject) {
+      const cbName = '__mktChat' + Date.now() + Math.floor(Math.random() * 1000);
+      let done = false;
+      window[cbName] = function (data) {
+        done = true; cleanup();
+        if (data && data.ok && data.text) resolve(data.text);
+        else reject(new Error((data && data.error) || 'backend'));
+      };
+      const q = encodeURIComponent(JSON.stringify({ messages: msgs, user: { name: user.name, campus: user.campus, role: user.role } }));
+      const s = document.createElement('script');
+      s.src = remoteUrl + (remoteUrl.indexOf('?') > -1 ? '&' : '?') + 'action=chat&cb=' + cbName + '&q=' + q;
+      s.onerror = function () { cleanup(); reject(new Error('network')); };
+      function cleanup() { try { delete window[cbName]; } catch (e) { window[cbName] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); }
+      document.head.appendChild(s);
+      setTimeout(function () { if (!done) { cleanup(); reject(new Error('timeout')); } }, 30000);
+    });
   }
   function renderChatOnly(typing) {
     const scroll = document.getElementById('mk-chat-scroll');
