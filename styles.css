@@ -172,7 +172,7 @@ img{max-width:100%;}
 .panel-card-hd{display:flex;align-items:center;gap:9px;padding:14px 17px;border-bottom:1px solid var(--hairline);}
 .panel-card-hd svg{width:17px;height:17px;color:var(--accent,var(--navy));flex-shrink:0;}
 .panel-card-ttl{font-size:.82rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;}
-.panel-card-meta{margin-left:auto;font-size:.62rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;font-weight:600;letter-spacing:.05em;text-transform:uppercase;}
+.panel-card-meta{margin-left:auto;font-size:1.00rem;color:var(--gray);font-family:'Asap Condensed',sans-serif;font-weight:600;letter-spacing:.05em;text-transform:uppercase;}
 .panel-card-body{padding:6px 8px;}
 
 /* ─── BIRTHDAYS (2-column, campus-coloured) ─── */
