@@ -10,20 +10,24 @@
   const AUTH_KEY = 'tgn-admin-ok';
 
   /* ── Google SSO (only access path) ──
-     Same OAuth client as the Admissions Dashboard — both sites live on
-     https://diego-medina-sgc.github.io so the origin is already authorised. */
+     Same OAuth client AND same token flow as the Admissions Dashboard —
+     proven to work on this origin (https://diego-medina-sgc.github.io). */
   const ADMIN_CLIENT_ID = '451910290982-vudb6uk5047r19ruujlae16ouhdh0km8.apps.googleusercontent.com';
   const ADMIN_ALLOWED = ['marketing@stgeorges.edu.ar', 'diego.medina@stgeorges.edu.ar'];
-  function googleClientId() { return ADMIN_CLIENT_ID; }
   function adminEmails() { return ADMIN_ALLOWED; }
-  function emailAllowed(e) { e = (e || '').toLowerCase(); const list = adminEmails(); if (list.indexOf(e) > -1) return true; return list.some(function (a) { return a.charAt(0) === '@' && e.slice(-a.length) === a; }); }
-  function decodeJwt(t) { try { const p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(p)))); } catch (e) { return null; } }
-  function loadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.id) return res(); const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = function () { res(); }; s.onerror = function () { rej(); }; document.head.appendChild(s); }); }
-  function handleGoogleCredential(resp) {
-    const data = decodeJwt(resp.credential); const email = data && data.email;
-    const err = document.getElementById('ad-err');
-    if (email && data.email_verified !== false && emailAllowed(email)) { localStorage.setItem(AUTH_KEY, '1'); localStorage.setItem('tgn-admin-user', email); renderShell(); }
-    else if (err) { err.textContent = email ? (email + ' is not authorised for the Back Office.') : 'Could not sign in with Google.'; }
+  function loadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.oauth2) return res(); const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = function () { res(); }; s.onerror = function () { rej(); }; document.head.appendChild(s); }); }
+  let tokenClient = null;
+  function loginErr(msg) { const err = document.getElementById('ad-err'); if (err) err.textContent = msg || ''; }
+  function onGoogleToken(resp) {
+    if (!resp || resp.error || !resp.access_token) { loginErr('Could not sign in with Google.'); return; }
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
+      .then(function (r) { return r.json(); })
+      .then(function (info) {
+        const email = (info && info.email || '').toLowerCase().trim();
+        if (ADMIN_ALLOWED.indexOf(email) > -1) { localStorage.setItem(AUTH_KEY, '1'); localStorage.setItem('tgn-admin-user', email); renderShell(); }
+        else { loginErr((email || 'This account') + ' is not authorised for the Back Office.'); }
+      })
+      .catch(function () { loginErr('Could not verify your Google account. Try again.'); });
   }
 
   const IC = {
@@ -444,9 +448,10 @@
   }
 
   function loginHtml() {
+    const gIcon = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
     const body = '<p>Sign in with your authorised St George\u2019s Google account.</p>' +
       '<div class="ad-err" id="ad-err"></div>' +
-      '<div id="ad-google" class="ad-google"></div>' +
+      '<button class="ad-login-btn" id="ad-google-btn" style="display:flex;align-items:center;justify-content:center;gap:10px">' + gIcon + ' Sign in with Google</button>' +
       '<p class="ad-note">Only authorised accounts can access the Back Office.</p>';
     return '<div class="ad-shell" style="max-width:520px;margin:auto;align-self:center"><div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.lock + '</span>Back Office</div><div class="ad-top-actions"><button class="ad-x" id="ad-close">' + IC.x + '</button></div></div>' +
       '<div class="ad-login"><div class="ad-login-ico">' + IC.lock + '</div><h2>Marketing access</h2>' + body + '</div></div>';
@@ -454,10 +459,14 @@
   function bindLogin() {
     document.getElementById('ad-close').addEventListener('click', close);
     loadGIS().then(function () {
-      try { google.accounts.id.initialize({ client_id: googleClientId(), callback: handleGoogleCredential }); google.accounts.id.renderButton(document.getElementById('ad-google'), { theme: 'filled_blue', size: 'large', text: 'signin_with', shape: 'pill', width: 300 }); } catch (e) {}
+      try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: ADMIN_CLIENT_ID, scope: 'openid email profile', callback: onGoogleToken }); } catch (e) {}
     }).catch(function () {
-      const err = document.getElementById('ad-err');
-      if (err) err.textContent = 'Could not load Google sign-in. Check your connection and reload.';
+      loginErr('Could not load Google sign-in. Check your connection and reload.');
+    });
+    document.getElementById('ad-google-btn').addEventListener('click', function () {
+      if (!tokenClient) { loginErr('Google sign-in is still loading \u2014 try again in a second.'); return; }
+      loginErr('');
+      tokenClient.requestAccessToken();
     });
   }
 
