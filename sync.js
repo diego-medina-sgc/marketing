@@ -4,6 +4,11 @@
    publishes Back Office changes to it. Falls back silently to
    local-only mode when no backend URL is configured.
    Loads AFTER data.js (needs TGN.config.remoteUrl), BEFORE app.js.
+
+   Publishing uses fetch POST with Content-Type text/plain: Apps
+   Script serves the (redirected) response with CORS * so the result
+   IS readable — we wait for it, detect a wrong password, and only
+   mark the device as synced when the server confirms the save.
    ============================================================ */
 (function () {
   'use strict';
@@ -47,23 +52,39 @@
     });
   }
 
-  // Publish current local content to everyone. Returns true if a request was sent.
+  /* Publish current local content to everyone.
+     Returns a Promise resolving to {ok:true, rev} or {ok:false, error}. */
   function publish() {
-    if (!URL) return false;
+    if (!URL) return Promise.resolve({ ok: false, error: 'not-configured' });
     var token = localStorage.getItem(TOKEN_KEY) || '';
-    if (!token) return false;
+    if (!token) return Promise.resolve({ ok: false, error: 'no-token' });
     var content = window.TGNStore.all();
     var rev = Date.now();
-    try {
-      fetch(URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'save', token: token, rev: rev, content: content })
+    return fetch(URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save', token: token, rev: rev, content: content })
+    }).then(function (r) { return r.json(); }).then(function (resp) {
+      if (resp && resp.ok) {
+        var srvRev = resp.rev || rev;
+        try { localStorage.setItem(REV_KEY, String(srvRev)); } catch (e) {}
+        return { ok: true, rev: srvRev };
+      }
+      return { ok: false, error: (resp && resp.error) || 'save-failed' };
+    }).catch(function (e) {
+      return { ok: false, error: 'network (' + (e && e.message ? e.message : 'fetch') + ')' };
+    });
+  }
+
+  /* Re-read the backend and confirm the published revision is live.
+     Resolves to true/false. */
+  function verify(expectedRev) {
+    return new Promise(function (resolve) {
+      if (!URL) return resolve(false);
+      jsonp(URL + '?action=get&_=' + Date.now(), function (resp) {
+        resolve(!!(resp && +resp.rev === +expectedRev));
       });
-      localStorage.setItem(REV_KEY, String(rev));
-      return { ok: true, mode: 'sent' };
-    } catch (e) { return { ok: false, error: e }; }
+    });
   }
 
   window.TGNRemote = {
@@ -71,7 +92,8 @@
     hasToken: function () { return !!localStorage.getItem(TOKEN_KEY); },
     setToken: function (t) { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); },
     getToken: function () { return localStorage.getItem(TOKEN_KEY) || ''; },
-    publish: publish
+    publish: publish,
+    verify: verify
   };
 
   pull();

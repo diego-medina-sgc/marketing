@@ -601,29 +601,33 @@
       if (parts.length > 1) parts.forEach(function (p) { chat.push({ role: 'model', text: p }); });
       else chat.push({ role: 'model', text: out || (lang === 'es' ? 'No pude generar una respuesta. Probá de nuevo.' : 'Could not generate a reply. Try again.') });
     } catch (e) {
-      chat.push({ role: 'model', text: lang === 'es' ? 'Hubo un error al procesar. Probá de nuevo.' : 'There was an error. Please try again.' });
+      const friendly = (e && e.friendly) ? e.friendly : '';
+      chat.push({ role: 'model', text: friendly || (lang === 'es' ? 'Hubo un error al procesar. Probá de nuevo.' : 'There was an error. Please try again.') });
     } finally {
       chat._busy = false;
       renderChatOnly(false);
     }
   }
-  /* JSONP GET to the Apps Script backend (works cross-origin from a static site) */
+  /* POST to the Apps Script backend. text/plain avoids a CORS preflight and
+     Apps Script serves the redirected response with CORS *, so the JSON result
+     is readable — no JSONP URL-length limit, full conversations travel fine. */
   function chatViaBackend(remoteUrl, msgs) {
-    return new Promise(function (resolve, reject) {
-      const cbName = '__mktChat' + Date.now() + Math.floor(Math.random() * 1000);
-      let done = false;
-      window[cbName] = function (data) {
-        done = true; cleanup();
-        if (data && data.ok && data.text) resolve(data.text);
-        else reject(new Error((data && data.error) || 'backend'));
-      };
-      const q = encodeURIComponent(JSON.stringify({ messages: msgs, user: { name: user.name, campus: user.campus, role: user.role } }));
-      const s = document.createElement('script');
-      s.src = remoteUrl + (remoteUrl.indexOf('?') > -1 ? '&' : '?') + 'action=chat&cb=' + cbName + '&q=' + q;
-      s.onerror = function () { cleanup(); reject(new Error('network')); };
-      function cleanup() { try { delete window[cbName]; } catch (e) { window[cbName] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); }
-      document.head.appendChild(s);
-      setTimeout(function () { if (!done) { cleanup(); reject(new Error('timeout')); } }, 30000);
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 45000) : null;
+    return fetch(remoteUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'chat', messages: msgs, user: { name: user.name, campus: user.campus, role: user.role } }),
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (timer) clearTimeout(timer);
+      if (data && data.ok && data.text) return data.text;
+      const err = new Error((data && data.error) || 'backend');
+      err.friendly = (data && data.text) || '';
+      throw err;
+    }).catch(function (e) {
+      if (timer) clearTimeout(timer);
+      throw e;
     });
   }
   function renderChatOnly(typing) {

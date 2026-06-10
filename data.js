@@ -407,7 +407,7 @@ window.TGN = {
   config: {
     driveApiKey: '',
     remoteUrl: 'https://script.google.com/macros/s/AKfycbweYv9vKruF54ln44O6LlEDRbYaasrBYy6FS-7na2JzprLq3VzEQaIKgG2mQxVjl0mV/exec'
-  },   // ← ESTA COMA
+  },
 
   NEWS: _ov('news', NEWS),
   BIRTHDAYS: _ov('birthdays', BIRTHDAYS),

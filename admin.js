@@ -7,13 +7,15 @@
 (function () {
   'use strict';
   const S = window.TGNStore;
-  const ADMIN_EMAIL = 'marketing@stgeorges.edu.ar';
-  const ADMIN_PASS = 'marketingsgc2024';
   const AUTH_KEY = 'tgn-admin-ok';
 
-  /* ── Google SSO helpers ── */
-  function googleClientId() { return (S.get('googleClientId', '') || '').trim(); }
-  function adminEmails() { const raw = S.get('adminEmails', 'marketing@stgeorges.edu.ar'); return String(raw).split(',').map(s => s.trim().toLowerCase()).filter(Boolean); }
+  /* ── Google SSO (only access path) ──
+     Same OAuth client as the Admissions Dashboard — both sites live on
+     https://diego-medina-sgc.github.io so the origin is already authorised. */
+  const ADMIN_CLIENT_ID = '451910290982-vudb6uk5047r19ruujlae16ouhdh0km8.apps.googleusercontent.com';
+  const ADMIN_ALLOWED = ['marketing@stgeorges.edu.ar', 'diego.medina@stgeorges.edu.ar'];
+  function googleClientId() { return ADMIN_CLIENT_ID; }
+  function adminEmails() { return ADMIN_ALLOWED; }
   function emailAllowed(e) { e = (e || '').toLowerCase(); const list = adminEmails(); if (list.indexOf(e) > -1) return true; return list.some(function (a) { return a.charAt(0) === '@' && e.slice(-a.length) === a; }); }
   function decodeJwt(t) { try { const p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(p)))); } catch (e) { return null; } }
   function loadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.id) return res(); const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = function () { res(); }; s.onerror = function () { rej(); }; document.head.appendChild(s); }); }
@@ -288,8 +290,6 @@
 
   function settingsPanel() {
     const key = S.get('driveApiKey', '');
-    const cid = S.get('googleClientId', '');
-    const emails = S.get('adminEmails', 'marketing@stgeorges.edu.ar');
     const R = window.TGNRemote || {};
     const syncOn = !!R.configured;
     const syncBlock = '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Publish to everyone</span></div>' +
@@ -301,11 +301,7 @@
       '</div>';
     return syncBlock +
       '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google sign-in (SSO)</span></div>' +
-      '<div class="ad-field"><label class="ad-lbl">OAuth Client ID</label>' +
-      '<input class="ad-in" id="ad-gclient" value="' + escA(cid) + '" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off"/></div>' +
-      '<div class="ad-field"><label class="ad-lbl">Authorised admin emails</label>' +
-      '<input class="ad-in" id="ad-gemails" value="' + escA(emails) + '" placeholder="marketing@stgeorges.edu.ar, @stgeorges.edu.ar" autocomplete="off"/></div>' +
-      '<p class="ad-sub" style="margin:6px 0 0">Comma-separated. Use a full address (marketing@stgeorges.edu.ar) or a whole domain (@stgeorges.edu.ar). With a Client ID set, a “Sign in with Google” button appears on the login. Add your site’s URL to “Authorised JavaScript origins” in Google Cloud Console.</p></div>' +
+      '<p class="ad-sub" style="margin:0">Access to this Back Office is restricted to: <b>' + adminEmails().join('</b>, <b>') + '</b>. To change the list, edit <b>ADMIN_ALLOWED</b> at the top of <b>admin.js</b>.</p></div>' +
       '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">Google Drive</span></div>' +
       '<div class="ad-field"><label class="ad-lbl">Drive API key</label>' +
       '<input class="ad-in" id="ad-drivekey" value="' + escA(key) + '" placeholder="AIza…" autocomplete="off"/></div>' +
@@ -345,8 +341,6 @@
     const main = document.getElementById('ad-main');
     if (state.active === 'settings') {
       const k = document.getElementById('ad-drivekey'); if (k) k.addEventListener('input', function () { S.set('driveApiKey', k.value.trim()); flashSaved(); });
-      const gc = document.getElementById('ad-gclient'); if (gc) gc.addEventListener('input', function () { S.set('googleClientId', gc.value.trim()); flashSaved(); });
-      const ge = document.getElementById('ad-gemails'); if (ge) ge.addEventListener('input', function () { S.set('adminEmails', ge.value.trim()); flashSaved(); });
       const pt = document.getElementById('ad-pubtoken'); if (pt && window.TGNRemote) pt.addEventListener('input', function () { window.TGNRemote.setToken(pt.value.trim()); flashSaved(); });
       return;
     }
@@ -417,13 +411,30 @@
     document.querySelectorAll('.ad-nav-item').forEach(b => b.addEventListener('click', () => { state.active = b.getAttribute('data-type'); renderEditor(); }));
     document.getElementById('ad-close').addEventListener('click', close);
     document.getElementById('ad-logout').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem('tgn-admin-user'); renderShell(); });
-    document.getElementById('ad-publish').addEventListener('click', () => {
-      if (window.TGNRemote && window.TGNRemote.configured) {
-        if (!window.TGNRemote.hasToken()) { alert('Set the Publish password in Settings first to apply changes for everyone.'); state.active = 'settings'; renderEditor(); return; }
-        window.TGNRemote.publish();
-        alert('Changes published. The site will reload — everyone will see them on their next visit.');
-      }
-      location.reload();
+    document.getElementById('ad-publish').addEventListener('click', function () {
+      const btn = document.getElementById('ad-publish');
+      if (!(window.TGNRemote && window.TGNRemote.configured)) { location.reload(); return; }
+      if (!window.TGNRemote.hasToken()) { alert('Set the Publish password in Settings first to apply changes for everyone.'); state.active = 'settings'; renderEditor(); return; }
+      btn.disabled = true;
+      const prev = btn.innerHTML;
+      btn.innerHTML = 'Publishing…';
+      window.TGNRemote.publish().then(function (res) {
+        if (res && res.ok) {
+          return window.TGNRemote.verify(res.rev).then(function (confirmed) {
+            alert(confirmed
+              ? 'Published and verified ✔ Everyone will see the changes on their next visit. The site will reload now.'
+              : 'Published. The backend accepted the changes but verification timed out — if others don’t see them in a few minutes, publish again.');
+            location.reload();
+          });
+        }
+        btn.disabled = false; btn.innerHTML = prev;
+        if (res && res.error === 'unauthorized') {
+          alert('The Publish password is incorrect — the changes were NOT applied for everyone. Fix it in Settings and press “Apply to site” again.');
+          state.active = 'settings'; renderEditor();
+        } else {
+          alert('Could not publish (' + ((res && res.error) || 'unknown error') + '). Your edits are still saved on this device — try again.');
+        }
+      });
     });
     document.getElementById('ad-export').addEventListener('click', exportJson);
     document.getElementById('ad-import').addEventListener('click', () => document.getElementById('ad-file').click());
@@ -433,43 +444,21 @@
   }
 
   function loginHtml() {
-    const cid = googleClientId();
-    let body;
-    if (cid) {
-      body = '<p>Sign in with your authorised St George\u2019s Google account.</p>' +
-        '<div class="ad-err" id="ad-err"></div>' +
-        '<div id="ad-google" class="ad-google"></div>' +
-        '<p class="ad-note">Only authorised accounts can access the Back Office.</p>';
-    } else {
-      body = '<p>Enter the Marketing team email and password to edit the intranet content.</p>' +
-        '<div class="ad-err" id="ad-err"></div>' +
-        '<input class="ad-in" id="ad-email" type="email" placeholder="marketing@stgeorges.edu.ar" autocomplete="off"/>' +
-        '<input class="ad-in" id="ad-pass" type="password" placeholder="Password" autocomplete="off"/>' +
-        '<button class="ad-login-btn" id="ad-enter">Enter</button>' +
-        '<p class="ad-note">Tip: set up <b>Google sign-in</b> in Settings for secure access without a shared password.</p>';
-    }
+    const body = '<p>Sign in with your authorised St George\u2019s Google account.</p>' +
+      '<div class="ad-err" id="ad-err"></div>' +
+      '<div id="ad-google" class="ad-google"></div>' +
+      '<p class="ad-note">Only authorised accounts can access the Back Office.</p>';
     return '<div class="ad-shell" style="max-width:520px;margin:auto;align-self:center"><div class="ad-top"><div class="ad-title"><span class="ad-lock">' + IC.lock + '</span>Back Office</div><div class="ad-top-actions"><button class="ad-x" id="ad-close">' + IC.x + '</button></div></div>' +
       '<div class="ad-login"><div class="ad-login-ico">' + IC.lock + '</div><h2>Marketing access</h2>' + body + '</div></div>';
   }
   function bindLogin() {
     document.getElementById('ad-close').addEventListener('click', close);
-    const cid = googleClientId();
-    if (cid) {
-      loadGIS().then(function () {
-        try { google.accounts.id.initialize({ client_id: cid, callback: handleGoogleCredential }); google.accounts.id.renderButton(document.getElementById('ad-google'), { theme: 'filled_blue', size: 'large', text: 'signin_with', shape: 'pill', width: 300 }); } catch (e) {}
-      }).catch(function () {});
-      return;
-    }
-    const go = () => {
-      const v = (document.getElementById('ad-email').value || '').trim().toLowerCase();
-      const p = (document.getElementById('ad-pass').value || '');
-      if (v === ADMIN_EMAIL && p === ADMIN_PASS) { localStorage.setItem(AUTH_KEY, '1'); renderShell(); }
-      else { document.getElementById('ad-err').textContent = (v === ADMIN_EMAIL && p !== ADMIN_PASS) ? 'Incorrect password.' : 'Those credentials do not have access.'; }
-    };
-    document.getElementById('ad-enter').addEventListener('click', go);
-    document.getElementById('ad-email').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('ad-pass').focus(); });
-    document.getElementById('ad-pass').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
-    document.getElementById('ad-email').focus();
+    loadGIS().then(function () {
+      try { google.accounts.id.initialize({ client_id: googleClientId(), callback: handleGoogleCredential }); google.accounts.id.renderButton(document.getElementById('ad-google'), { theme: 'filled_blue', size: 'large', text: 'signin_with', shape: 'pill', width: 300 }); } catch (e) {}
+    }).catch(function () {
+      const err = document.getElementById('ad-err');
+      if (err) err.textContent = 'Could not load Google sign-in. Check your connection and reload.';
+    });
   }
 
   function exportJson() {

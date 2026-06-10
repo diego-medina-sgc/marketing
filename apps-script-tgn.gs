@@ -1,0 +1,152 @@
+/* ============================================================
+   The Georgian Network — Backend (Google Apps Script)
+   REFERENCE COPY — the live code runs in the owner's Apps Script
+   account. SECRET and GEMINI_KEY below are placeholders here;
+   never commit the real values to this public repo.
+
+   Two jobs:
+     1) Store the intranet content centrally so Back Office edits
+        apply to EVERY visitor.
+     2) Run the Marketing chat through Google Gemini, keeping the
+        Gemini API key private (it never touches the website).
+
+   ── HOW TO DEPLOY / UPDATE (~5 min) ──────────────────────────
+   1. Go to https://script.google.com  →  open your project
+      (or New project and paste THIS whole file).
+   2. Set the two values below:
+        - SECRET     : a long private password (Back Office uses it
+                       to publish content for everyone).
+        - GEMINI_KEY : your Gemini API key from
+                       https://aistudio.google.com/apikey  (AIza…).
+   3. Click  Deploy → Manage deployments → (edit, pencil icon) →
+      Version: NEW VERSION → Deploy.   [first time: New deployment
+      → Web app · Execute as: Me · Who has access: Anyone]
+      Copy the Web app URL (https://script.google.com/macros/s/…/exec).
+   4. In the website's data.js, paste that URL into config.remoteUrl.
+   5. In the intranet: Back Office → Settings → "Publish password"
+      → paste the same SECRET.
+   IMPORTANT: every time you change this file you must re-deploy
+   choosing "New version", otherwise the live URL keeps the old code.
+   ============================================================ */
+
+var SECRET = 'SECRET_HERE';
+var GEMINI_KEY = 'GEMINI_KEY_HERE';   // AIza…
+
+/* Models tried in order. If one answers 429 (quota exhausted), 404
+   (retired model) or 5xx, the next one is tried automatically.
+   Free-tier daily quotas grow down the list; quality is best at the top. */
+var GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemma-3-27b-it'];
+
+var PROP_KEY = 'tgn_content';
+var REV_KEY = 'tgn_rev';
+var MAX_HISTORY = 14;     // messages kept per request
+var MAX_MSG_CHARS = 8000; // per-message cap, keeps token use sane
+
+/* The communications-assistant instructions live here (server-side)
+   so the website only sends the short conversation, not this prompt. */
+var SYSTEM_PROMPT =
+  "You are the Communications Assistant for St George's College. Help draft institutional communications aligned with the St George's voice, standards and community values.\n" +
+  "OUTPUT: respond only with the final communication content first; no conversational intros, no 'Here is a proposal', no feedback inside the draft. Begin directly with the title or greeting. Write like an institutional communications writer.\n" +
+  "VOICE: warm, professional, clear, organised, human, community-oriented; calm and reassuring. Avoid American English, neutral Spanish, robotic AI phrasing, overly dramatic writing, excessive exclamation marks/adjectives, 'school spirit', 'super excited', 'thrilled'. Use 'We are pleased to invite' / 'Nos alegra invitarlos'.\n" +
+  "LANGUAGE: For families/external -> British English FIRST, Argentinian Spanish SECOND. For internal staff -> Argentinian Spanish FIRST, British English SECOND. Separate languages with '---'. Adapt naturally, never literal.\n" +
+  "STYLE GUIDE: British English ('students','school','families'); Argentinian Spanish ('alumnos','colegio','uniforme del colegio'); 'Queremos informarles','Les pedimos por favor','Nos alegra contarles'; use masculine plural for families. Dates: Friday, 14 June. Time: 24h (15:30). Emojis moderate, as bullets, BEFORE the text. Bold ONLY for dates/times/required actions/deadlines. Always 'St George's College' (no dot after St).\n" +
+  "FLOW: 1) If info is missing (what/who/where/when/how/why), ask professionally - start with '¿Qué te gustaría comunicar?'. 2) When drafting, split your reply with //--SPLIT--//: PART 1 = subject suggestion + greeting/title + bilingual body (Version1 --- Version2), nothing else; PART 2 = '¿El texto refleja lo que buscás o hay algo que quieras ajustar?'. 3) When the user confirms, reply with //--SPLIT--// parts: subject line; then [FINAL_CONTENT] pure bilingual body [/FINAL_CONTENT]; then '¿Hay algo más en lo que pueda ayudarte?'. Inside [FINAL_CONTENT] only the bilingual content. Authorised closings: 'Kind regards','Warm regards','Saludos cordiales'.\n" +
+  "FORMATTING: write for chat display using simple markdown - short paragraphs separated by a blank line, '- ' for bullet points, **bold** only for key labels/dates/actions. Never use markdown headings (#) or tables. Keep messages concise and well spaced.\n";
+
+/* ---------- GET: read content (JSONP) OR run chat (JSONP) ---------- */
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  var cb = p.cb;
+
+  if (p.action === 'chat') {
+    var result;
+    try { result = handleChat(JSON.parse(p.q || '{}')); }
+    catch (err) { result = { ok: false, error: String(err), text: 'Error al procesar el mensaje.' }; }
+    return reply(result, cb);
+  }
+
+  var props = PropertiesService.getScriptProperties();
+  var content = props.getProperty(PROP_KEY) || '{}';
+  var rev = props.getProperty(REV_KEY) || '0';
+  var payload = '{"rev":' + rev + ',"content":' + content + '}';
+  if (cb) return ContentService.createTextOutput(cb + '(' + payload + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return ContentService.createTextOutput(payload).setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ---------- POST: publish content (Back Office) OR run chat ---------- */
+function doPost(e) {
+  var out = { ok: false };
+  try {
+    var body = JSON.parse(e.postData.contents);
+    if (body.action === 'chat') return reply(handleChat(body), null);
+    if (body.token !== SECRET) { out.error = 'unauthorized'; }
+    else {
+      var props = PropertiesService.getScriptProperties();
+      props.setProperty(PROP_KEY, JSON.stringify(body.content || {}));
+      var rev = String(body.rev || Date.now());
+      props.setProperty(REV_KEY, rev);
+      out.ok = true; out.rev = rev;
+    }
+  } catch (err) { out.error = String(err); }
+  return reply(out, null);
+}
+
+/* ---------- Gemini chat (with model fallback) ---------- */
+function handleChat(body) {
+  if (!GEMINI_KEY || GEMINI_KEY.indexOf('GEMINI_KEY') === 0 || GEMINI_KEY.indexOf('PASTE') === 0) {
+    return { ok: false, error: 'no_key', text: 'El asistente todavía no está configurado (falta la API key de Gemini).' };
+  }
+  var u = body.user || {};
+  var sys = SYSTEM_PROMPT + '\nDatos del usuario - Nombre: ' + (u.name || '') + ', Campus: ' + (u.campus || '') + ', Rol: ' + (u.role || '') + '.';
+
+  var msgs = (body.messages || []).slice(-MAX_HISTORY);
+  var contents = msgs.map(function (m) {
+    var txt = String(m.text || '');
+    if (txt.length > MAX_MSG_CHARS) txt = txt.slice(0, MAX_MSG_CHARS);
+    return { role: (m.role === 'user' ? 'user' : 'model'), parts: [{ text: txt }] };
+  });
+
+  var lastErr = 'unavailable';
+  for (var i = 0; i < GEMINI_MODELS.length; i++) {
+    var model = GEMINI_MODELS[i];
+    var res = callGemini(model, sys, contents);
+    if (res.ok) return res;
+    // 429 = quota exhausted, 404 = retired model, 5xx = transient,
+    // anything else is also worth one shot on the next model.
+    lastErr = res.error;
+  }
+  return { ok: false, error: lastErr, text: 'El asistente no está disponible en este momento. Probá de nuevo en unos minutos.' };
+}
+
+function callGemini(model, sys, contents) {
+  var isGemma = model.indexOf('gemma') === 0;
+  var req = { contents: contents, generationConfig: { temperature: 0.7, maxOutputTokens: 2048 } };
+  if (isGemma) {
+    // Gemma models don't accept systemInstruction — prepend it to the first message.
+    req.contents = JSON.parse(JSON.stringify(contents));
+    if (req.contents.length) req.contents[0].parts[0].text = sys + '\n\n[Conversación]\n' + req.contents[0].parts[0].text;
+    else req.contents = [{ role: 'user', parts: [{ text: sys }] }];
+  } else {
+    req.systemInstruction = { parts: [{ text: sys }] };
+  }
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + GEMINI_KEY;
+  var res;
+  try {
+    res = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', payload: JSON.stringify(req), muteHttpExceptions: true });
+  } catch (e) {
+    return { ok: false, error: 'fetch_error' };
+  }
+  var code = res.getResponseCode();
+  var data; try { data = JSON.parse(res.getContentText()); } catch (e2) { data = null; }
+  if (code !== 200 || !data) return { ok: false, error: 'gemini_http_' + code };
+  var text = '';
+  try { text = data.candidates[0].content.parts.map(function (x) { return x.text || ''; }).join(''); } catch (e3) { text = ''; }
+  if (!text) return { ok: false, error: 'gemini_http_empty' };
+  return { ok: true, text: text, model: model };
+}
+
+function reply(obj, cb) {
+  var s = JSON.stringify(obj);
+  if (cb) return ContentService.createTextOutput(cb + '(' + s + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return ContentService.createTextOutput(s).setMimeType(ContentService.MimeType.JSON);
+}
