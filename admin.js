@@ -25,7 +25,7 @@
       .then(function (info) {
         const email = (info && info.email || '').toLowerCase().trim();
         if (ADMIN_ALLOWED.indexOf(email) > -1) { localStorage.setItem(AUTH_KEY, '1'); localStorage.setItem('tgn-admin-user', email); renderShell(); }
-        else { loginErr((email || 'This account') + ' is not authorised for the Back Office.'); }
+        else { loginErr((email || 'This account') + ' is not authorised for the Back Office. Press the button again and choose an authorised account.'); }
       })
       .catch(function () { loginErr('Could not verify your Google account. Try again.'); });
   }
@@ -466,7 +466,9 @@
     document.getElementById('ad-google-btn').addEventListener('click', function () {
       if (!tokenClient) { loginErr('Google sign-in is still loading \u2014 try again in a second.'); return; }
       loginErr('');
-      tokenClient.requestAccessToken();
+      // Always show the account chooser so users signed into a non-authorised
+      // account can switch to the right one.
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
     });
   }
 
