@@ -49,11 +49,11 @@
   const DEFAULT_CANVA = {
     'Flyers y Carteles': [
       { name: 'Flyer | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI5pxvIEI', preview: 'https://drive.google.com/file/d/1ucx9-jXxic0qUaMhL1BHXybephRARl5U/view', usage: 'Variante sin foto', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
-      { name: 'Flyer | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJizGKnrU', preview: '', usage: '', fields: [] },
+      { name: 'Flyer | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJizGKnrU', preview: 'https://drive.google.com/file/d/1ucx9-jXxic0qUaMhL1BHXybephRARl5U/view', usage: 'Variante del mismo template', fields: [] },
       { name: 'Flyer | Opción 3', url: 'https://www.canva.com/brand/brand-templates/EAHI5twdtsQ', preview: 'https://drive.google.com/file/d/1EjRjfVL-NHqACrQEHWpItGQ6NxmA54np/view', usage: 'Comunicaciones generales sin foto', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
       { name: 'Flyer | Opción 4', url: 'https://www.canva.com/brand/brand-templates/EAHI6uG-Ubo', preview: 'https://drive.google.com/file/d/1dhJPr7_-Gzmz46g0NVwJB7z3BQfSTgLI/view', usage: 'Eventos institucionales generales', fields: ['Título 1', 'Título 2', 'Subtítulo', 'Fecha', 'Hora', 'Ubicación | Campus'] },
       { name: 'Flyer | Con foto | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI5SOaZSY', preview: 'https://drive.google.com/file/d/1Ps0Moj17kVqomPcxXpSlzV-RQZ9nnP9T/view', usage: 'Flyer horizontal con foto', fields: ['Foto', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
-      { name: 'Flyer | Con foto | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHI6lbyXCs', preview: '', usage: '', fields: [] },
+      { name: 'Flyer | Con foto | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHI6lbyXCs', preview: 'https://drive.google.com/file/d/1Ps0Moj17kVqomPcxXpSlzV-RQZ9nnP9T/view', usage: 'Variante del mismo template', fields: [] },
       { name: 'Flyer | Save the Date', url: 'https://www.canva.com/brand/brand-templates/EAHJFX4UhCI', preview: 'https://drive.google.com/file/d/1ID671l0RgxKGq954s2OjG3su9GPv5jAo/view', usage: 'Anuncios anticipados de eventos', fields: ['Nombre del evento', 'Fecha', 'Hora', 'Ubicación', 'Campus'] },
       { name: 'Flyer | Vertical con foto', url: 'https://www.canva.com/brand/brand-templates/EAHI5bFuOJc', preview: 'https://drive.google.com/file/d/1RM9OWqYhZqy9cKKcduHHdk0rdex_WgmC/view', usage: 'Eventos con foto vertical', fields: ['Foto', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
       { name: 'Flyer | Prep & Kinder', url: 'https://www.canva.com/brand/brand-templates/EAHI5uNdOmE', usage: '4 estilos para nivel inicial', fields: ['Título', 'Subtítulo', 'Fecha', 'Campus'], variations: [
@@ -84,7 +84,7 @@
     ],
     'Credenciales': [
       { name: 'Name tags | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI5fY39MI', preview: 'https://drive.google.com/file/d/1YMghiHbolaSDt_axqAfHaMx0c41jzDKg/view', usage: 'Credenciales eventos', fields: ['Nombre', 'Apellido', 'Rol', 'Campus'] },
-      { name: 'Name tags | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJjAqx4tE', preview: '', usage: '', fields: [] },
+      { name: 'Name tags | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJjAqx4tE', preview: 'https://drive.google.com/file/d/1YMghiHbolaSDt_axqAfHaMx0c41jzDKg/view', usage: 'Variante del mismo template', fields: [] },
       { name: 'Credencial', url: 'https://www.canva.com/brand/brand-templates/EAHJjudKeDg', preview: '', usage: '', fields: [] }
     ],
     'Diplomas': [
@@ -92,11 +92,8 @@
       { name: 'Diploma graduación', url: 'https://www.canva.com/brand/brand-templates/EAHI5n5TcS8', preview: 'https://drive.google.com/file/d/1k6NvE1J6HxGUqyFzq8bEEcDzoMtbqmIq/view', usage: 'Ceremonia graduación', fields: ['Nombre', 'Año', 'Fecha', 'Firma'] }
     ],
     'Hojas y Encabezados': [
-      { name: 'Encabezado Google Docs | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI_J1AFpg', usage: 'Banner para Google Docs', fields: [], variations: [
-        { label: 'A', preview: 'https://drive.google.com/file/d/1y0bmNY17RWVnsYnQQaVIbw8PtILQAc59/view' },
-        { label: 'B', preview: 'https://drive.google.com/file/d/1f_EbZi8U5LqxhXu1Mf2d4olPRtn16GWm/view' }
-      ] },
-      { name: 'Encabezado Google Docs | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJGF6BDy0', preview: '', usage: 'Banner para Google Docs', fields: [] },
+      { name: 'Encabezado Google Docs | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI_J1AFpg', preview: 'https://drive.google.com/file/d/1y0bmNY17RWVnsYnQQaVIbw8PtILQAc59/view', usage: 'Banner para Google Docs', fields: [] },
+      { name: 'Encabezado Google Docs | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJGF6BDy0', preview: 'https://drive.google.com/file/d/1f_EbZi8U5LqxhXu1Mf2d4olPRtn16GWm/view', usage: 'Banner para Google Docs', fields: [] },
       { name: 'Hojas membretadas docs', url: 'https://www.canva.com/brand/brand-templates/EAHI_M4jq0o', preview: 'https://drive.google.com/file/d/1z_HGXSnGUvyTTt9bLVy8auwl664JoDkr/view', usage: 'Documentos con membrete', fields: ['Contenido'] }
     ],
     'Etiquetas': [
