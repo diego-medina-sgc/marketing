@@ -237,7 +237,7 @@
 .mk-chat-input{padding:16px 22px;background:var(--surface);border-top:1px solid var(--hairline);}
 .mk-chat-box{display:flex;align-items:flex-end;gap:10px;background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:9px 10px 9px 14px;transition:border-color .15s,box-shadow .15s;}
 .mk-chat-box:focus-within{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,30,51,.1);}
-.mk-chat-ta{flex:1;border:none;background:none;outline:none;resize:none;font-family:'Asap',sans-serif;font-size:.9rem;color:var(--ink);line-height:1.5;max-height:160px;padding:5px 0;}
+.mk-chat-ta{flex:1;border:none;background:none;outline:none;resize:none;font-family:'Asap',sans-serif;font-size:.9rem;color:var(--ink);line-height:1.5;max-height:160px;padding:10px 0;}
 .mk-chat-ta::placeholder{color:var(--gray);}
 .mk-chat-send{width:42px;height:42px;border-radius:11px;border:none;background:var(--red);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s,background .15s;}
 .mk-chat-send:hover{transform:scale(1.05);}
