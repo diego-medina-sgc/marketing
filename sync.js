@@ -36,16 +36,30 @@
     try { localStorage.setItem(REV_KEY, String(rev)); } catch (e) {}
   }
 
+  /* True while reloading would disrupt the user: the Back Office is open
+     (an admin is editing) or an assistant chat conversation is underway. */
+  function uiBusy() {
+    if (document.querySelector('.ad-overlay.open')) return true;
+    var chat = document.getElementById('mk-chat-scroll');
+    if (chat && chat.children && chat.children.length > 1) return true;
+    return false;
+  }
+
+  var lastPull = 0;
   function pull() {
     if (!URL) return;
-    jsonp(URL + '?action=get', function (resp) {
+    var now = Date.now();
+    if (now - lastPull < 60000) return; // at most once a minute
+    lastPull = now;
+    jsonp(URL + '?action=get&_=' + now, function (resp) {
       if (!resp || resp.error || !resp.content) return;
       var rev = +(resp.rev || 0);
       var localRev = +(localStorage.getItem(REV_KEY) || 0);
       if (rev > localRev) {
+        if (uiBusy()) { lastPull = 0; return; } // retry on next trigger
         applyContent(resp.content, rev);
-        if (!sessionStorage.getItem(APPLIED)) {
-          sessionStorage.setItem(APPLIED, '1');
+        if (sessionStorage.getItem(APPLIED) !== String(rev)) {
+          sessionStorage.setItem(APPLIED, String(rev));
           location.reload();
         }
       }
@@ -97,4 +111,9 @@
   };
 
   pull();
+
+  /* Keep open tabs fresh: re-check when the tab regains focus and
+     every 10 minutes. pull() itself throttles to once a minute. */
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) pull(); });
+  setInterval(pull, 600000);
 })();

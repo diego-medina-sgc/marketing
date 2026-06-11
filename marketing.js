@@ -146,8 +146,9 @@
       if (!name || !/^https?:/i.test(url)) return;
       const colPv = (r[3] || '').trim();
       const preview = (/^https?:/i.test(colPv) ? colPv : '') || PREVIEW_MAP[canvaId(url)] || '';
+      const usage = (r[4] || '').trim();
       const cat = categorize(name);
-      (out[cat] = out[cat] || []).push({ name: name, url: url, preview: preview, usage: '', fields: [] });
+      (out[cat] = out[cat] || []).push({ name: name, url: url, preview: preview, usage: usage, fields: [] });
     });
     const ordered = {};
     order.forEach(function (c) { if (out[c]) ordered[c] = out[c]; });
