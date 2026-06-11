@@ -161,7 +161,9 @@
     info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
     send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>',
     sync: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
-    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>'
   };
 
   /* ---------- i18n ---------- */
@@ -466,6 +468,8 @@
 
   /* ---------- DRAFTING (AI chat) ---------- */
   let chat = null;
+  let pendingMedia = null;
+  let isRecording = false, mediaRec = null, recChunks = [], recSecs = 0, recInterval = null;
   const SYSTEM = "You are the Communications Assistant for St George's College. Help draft institutional communications aligned with the St George's voice, standards and community values.\n" +
     "OUTPUT: respond only with the final communication content first; no conversational intros, no 'Here is a proposal', no feedback inside the draft. Begin directly with the title or greeting. Write like an institutional communications writer.\n" +
     "VOICE: warm, professional, clear, organised, human, community-oriented; calm and reassuring. Avoid American English, neutral Spanish, robotic AI phrasing, overly dramatic writing, excessive exclamation marks/adjectives, 'school spirit', 'super excited', 'thrilled'. Use 'We are pleased to invite' / 'Nos alegra invitarlos'.\n" +
@@ -483,7 +487,10 @@
     }
     let h = '<div class="mk-chat"><div class="mk-chat-scroll" id="mk-chat-scroll">';
     chat.forEach(function (m, i) { h += bubble(m, i); });
-    h += '</div><div class="mk-chat-input"><div class="mk-chat-box">' +
+    h += '</div><div class="mk-chat-input"><div id="mk-pend-zone"></div><div class="mk-chat-box">' +
+      '<input type="file" id="mk-img-in" accept="image/*" style="display:none">' +
+      '<button class="mk-chat-tool" id="mk-btn-img" title="' + (lang === 'es' ? 'Adjuntar imagen' : 'Attach image') + '">' + I.clip + '</button>' +
+      '<button class="mk-chat-tool' + (isRecording ? ' mk-tool-rec' : '') + '" id="mk-btn-mic" title="' + (lang === 'es' ? 'Grabar audio' : 'Record audio') + '">' + (isRecording ? '<span class="mk-rec-dot"></span><span id="mk-rec-secs">' + recSecs + 's</span>' : I.mic) + '</button>' +
       '<textarea id="mk-chat-text" class="mk-chat-ta" rows="1" placeholder="' + (lang === 'es' ? 'Escribí tu respuesta…' : 'Type your reply…') + '"></textarea>' +
       '<button class="mk-chat-send" id="mk-chat-send">' + I.send + '</button></div>' +
       '<p class="mk-chat-hint">' + (lang === 'es' ? 'Enter para enviar · Shift+Enter nueva línea' : 'Enter to send · Shift+Enter new line') + '</p></div></div>';
@@ -507,18 +514,30 @@
     if (!isUser && i > 0 && /\[FINAL_CONTENT\]/.test(m.text)) {
       copyBtn = '<div class="mk-bub-foot"><button class="mk-copy-final" data-copy-msg="' + i + '">' + I.copy + ' ' + (lang === 'es' ? 'Copiar para FIDU/Email' : 'Copy for FIDU/Email') + '</button></div>';
     }
-    return '<div class="mk-msg ' + (isUser ? 'user' : 'model') + '"><div class="mk-bub ' + (isUser ? 'user' : 'model') + '">' + inner + copyBtn + '</div></div>';
+    let mediaPart = '';
+    if (isUser && m.image && m.image.preview) mediaPart = '<div class="mk-bub-media"><img class="mk-bub-img" src="' + m.image.preview + '" alt=""></div>';
+    if (isUser && m.audio && m.audio.preview) mediaPart = '<div class="mk-bub-media"><audio class="mk-bub-audio" src="' + m.audio.preview + '" controls></audio></div>';
+    return '<div class="mk-msg ' + (isUser ? 'user' : 'model') + '"><div class="mk-bub ' + (isUser ? 'user' : 'model') + '">' + mediaPart + inner + copyBtn + '</div></div>';
   }
   async function sendChat() {
     const ta = document.getElementById('mk-chat-text');
     if (!ta) return;
     const val = ta.value.trim();
-    if (!val || chat._busy) return;
-    chat.push({ role: 'user', text: val });
+    if ((!val && !pendingMedia) || chat._busy) return;
+    const msg = { role: 'user', text: val };
+    if (pendingMedia) { msg[pendingMedia.type] = { mime: pendingMedia.mime, data: pendingMedia.data, preview: pendingMedia.preview }; pendingMedia = null; renderPendingZone(); }
+    chat.push(msg);
     chat._busy = true;
     renderChatOnly(true);
     try {
-      const msgs = chat.filter(function (m) { return !m.typing; }).map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', text: m.text }; }).slice(-14);
+      const msgs = chat.filter(function (m) { return !m.typing; }).map(function (m, idx, arr) {
+        var o = { role: m.role === 'user' ? 'user' : 'model', text: m.text };
+        if (idx === arr.length - 1) {
+          if (m.image) o.image = { mime: m.image.mime, data: m.image.data };
+          if (m.audio) o.audio = { mime: m.audio.mime, data: m.audio.data };
+        }
+        return o;
+      }).slice(-14);
       let out;
       const remoteUrl = (window.TGN && window.TGN.config && window.TGN.config.remoteUrl) || '';
       if (remoteUrl) {
@@ -654,6 +673,95 @@
       ta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
     }
     if (send) send.addEventListener('click', sendChat);
+    bindChatMedia();
+    renderPendingZone();
+  }
+  function bindChatMedia() {
+    const imgIn = document.getElementById('mk-img-in');
+    const btnImg = document.getElementById('mk-btn-img');
+    const btnMic = document.getElementById('mk-btn-mic');
+    if (btnImg && imgIn) {
+      btnImg.addEventListener('click', function () { imgIn.click(); });
+      imgIn.addEventListener('change', function () {
+        const file = imgIn.files && imgIn.files[0];
+        if (!file) return;
+        if (file.size > 4 * 1024 * 1024) { alert(lang === 'es' ? 'La imagen no puede superar 4 MB.' : 'Image must be under 4 MB.'); imgIn.value = ''; return; }
+        const fr = new FileReader();
+        fr.onload = function (e) {
+          pendingMedia = { type: 'image', mime: file.type || 'image/jpeg', data: e.target.result.split(',')[1], preview: e.target.result };
+          renderPendingZone();
+        };
+        fr.readAsDataURL(file);
+        imgIn.value = '';
+      });
+    }
+    if (btnMic) {
+      btnMic.addEventListener('click', function () { if (!isRecording) startRecording(); else stopRecording(); });
+    }
+  }
+  function renderPendingZone() {
+    const zone = document.getElementById('mk-pend-zone');
+    if (!zone) return;
+    if (!pendingMedia) { zone.innerHTML = ''; return; }
+    if (pendingMedia.type === 'image') {
+      zone.innerHTML = '<div class="mk-pend-media"><img class="mk-pend-img" src="' + pendingMedia.preview + '" alt=""><button class="mk-pend-clear" id="mk-pend-clear">&#10005;</button></div>';
+    } else {
+      zone.innerHTML = '<div class="mk-pend-media"><audio class="mk-pend-audio" src="' + pendingMedia.preview + '" controls></audio><button class="mk-pend-clear" id="mk-pend-clear">&#10005;</button></div>';
+    }
+    const clr = document.getElementById('mk-pend-clear');
+    if (clr) clr.addEventListener('click', function () { pendingMedia = null; zone.innerHTML = ''; });
+  }
+  function updateMicBtn() {
+    const btn = document.getElementById('mk-btn-mic');
+    if (!btn) return;
+    if (isRecording) {
+      btn.classList.add('mk-tool-rec');
+      btn.innerHTML = '<span class="mk-rec-dot"></span><span id="mk-rec-secs">' + recSecs + 's</span>';
+    } else {
+      btn.classList.remove('mk-tool-rec');
+      btn.innerHTML = I.mic;
+    }
+  }
+  function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert(lang === 'es' ? 'Tu navegador no soporta grabación de audio.' : 'Your browser does not support audio recording.');
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      const mime = (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) ? 'audio/webm;codecs=opus' : 'audio/webm';
+      mediaRec = new MediaRecorder(stream, { mimeType: mime });
+      recChunks = []; recSecs = 0;
+      mediaRec.ondataavailable = function (e) { if (e.data && e.data.size > 0) recChunks.push(e.data); };
+      mediaRec.onstop = function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        clearInterval(recInterval); recInterval = null;
+        const baseMime = mime.split(';')[0];
+        const blob = new Blob(recChunks, { type: baseMime });
+        const url = URL.createObjectURL(blob);
+        const fr = new FileReader();
+        fr.onload = function (ev) {
+          pendingMedia = { type: 'audio', mime: baseMime, data: ev.target.result.split(',')[1], preview: url };
+          isRecording = false;
+          updateMicBtn();
+          renderPendingZone();
+        };
+        fr.readAsDataURL(blob);
+      };
+      mediaRec.start(200);
+      isRecording = true;
+      updateMicBtn();
+      recInterval = setInterval(function () {
+        recSecs++;
+        const el = document.getElementById('mk-rec-secs');
+        if (el) el.textContent = recSecs + 's';
+        if (recSecs >= 120) stopRecording();
+      }, 1000);
+    }).catch(function () {
+      alert(lang === 'es' ? 'No se pudo acceder al micrófono.' : 'Could not access the microphone.');
+    });
+  }
+  function stopRecording() {
+    if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop();
   }
 
   /* ---------- MOUNT ---------- */
