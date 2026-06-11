@@ -10,9 +10,10 @@
   const AUTH_KEY = 'tgn-admin-ok';
 
   /* ── Google SSO (only access path) ──
-     Same OAuth client AND same token flow as the Admissions Dashboard —
-     proven to work on this origin (https://diego-medina-sgc.github.io). */
-  const ADMIN_CLIENT_ID = '451910290982-vudb6uk5047r19ruujlae16ouhdh0km8.apps.googleusercontent.com';
+     OAuth client "MKT Intranet" (project 404998433567) — its authorised
+     JavaScript origins include both diego-medina-sgc.github.io and
+     sgc-intranet.vercel.app. Same token flow as the Admissions Dashboard. */
+  const ADMIN_CLIENT_ID = '404998433567-9vmmh3jopml6hi8nvrvpcp97mpf3tjob.apps.googleusercontent.com';
   const ADMIN_ALLOWED = ['marketing@stgeorges.edu.ar', 'diego.medina@stgeorges.edu.ar'];
   function adminEmails() { return ADMIN_ALLOWED; }
   function loadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.oauth2) return res(); const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = function () { res(); }; s.onerror = function () { rej(); }; document.head.appendChild(s); }); }
