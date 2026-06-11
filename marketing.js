@@ -133,7 +133,7 @@
     { id: 'pres', t: { en: 'Presentations', es: 'Presentaciones' }, ico: 'slides', c: 'var(--green)' },
     { id: 'docs', t: { en: 'Documents', es: 'Documentos' }, ico: 'doc', c: 'var(--navy)' },
     { id: 'canva', t: { en: 'Designs', es: 'Diseños' }, ico: 'palette', c: 'var(--violet)' },
-    { id: 'draft', t: { en: 'Drafting', es: 'Redacciones' }, ico: 'chat', c: 'var(--red)' },
+    { id: 'draft', t: { en: 'Communications ', es: 'Comunicaciones' }, ico: 'chat', c: 'var(--red)' },
     { id: 'event', t: { en: 'Events', es: 'Eventos' }, ico: 'calendar', c: 'var(--amber)' },
     { id: 'custom', t: { en: 'Other request', es: 'Otra solicitud' }, ico: 'plus', c: 'var(--teal)' }
   ];
