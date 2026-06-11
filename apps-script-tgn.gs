@@ -37,6 +37,9 @@ var GEMINI_KEY = 'GEMINI_KEY_HERE';   // AIza…
    Free-tier daily quotas grow down the list; quality is best at the top. */
 var GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemma-3-27b-it'];
 
+var BACKEND_V = 2;            // bumped when the API grows; the site checks it
+var PREVIEWS_FOLDER = 'TGN Previews';  // Drive folder for uploaded preview images
+
 var PROP_KEY = 'tgn_content';
 var REV_KEY = 'tgn_rev';
 var MAX_HISTORY = 14;     // messages kept per request
@@ -68,27 +71,47 @@ function doGet(e) {
   var props = PropertiesService.getScriptProperties();
   var content = props.getProperty(PROP_KEY) || '{}';
   var rev = props.getProperty(REV_KEY) || '0';
-  var payload = '{"rev":' + rev + ',"content":' + content + '}';
+  var payload = '{"v":' + BACKEND_V + ',"rev":' + rev + ',"content":' + content + '}';
   if (cb) return ContentService.createTextOutput(cb + '(' + payload + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
   return ContentService.createTextOutput(payload).setMimeType(ContentService.MimeType.JSON);
 }
 
-/* ---------- POST: publish content (Back Office) OR run chat ---------- */
+/* ---------- POST: publish content, upload preview image, or chat ---------- */
 function doPost(e) {
   var out = { ok: false };
   try {
     var body = JSON.parse(e.postData.contents);
     if (body.action === 'chat') return reply(handleChat(body), null);
     if (body.token !== SECRET) { out.error = 'unauthorized'; }
-    else {
+    else if (body.action === 'upload') {
+      out = handleUpload(body);
+    } else if (body.action === 'save') {
       var props = PropertiesService.getScriptProperties();
       props.setProperty(PROP_KEY, JSON.stringify(body.content || {}));
       var rev = String(body.rev || Date.now());
       props.setProperty(REV_KEY, rev);
       out.ok = true; out.rev = rev;
+    } else {
+      out.error = 'unknown_action';  // never treat unknown actions as a save
     }
   } catch (err) { out.error = String(err); }
   return reply(out, null);
+}
+
+/* ---------- Upload: store a preview image in Drive, return its link ---------- */
+function handleUpload(body) {
+  try {
+    if (!body.data) return { ok: false, error: 'no_data' };
+    var folder;
+    var it = DriveApp.getFoldersByName(PREVIEWS_FOLDER);
+    folder = it.hasNext() ? it.next() : DriveApp.createFolder(PREVIEWS_FOLDER);
+    var bytes = Utilities.base64Decode(body.data);
+    var name = String(body.filename || ('preview-' + Date.now() + '.png')).replace(/[^\w.\- ]+/g, '_');
+    var blob = Utilities.newBlob(bytes, body.mime || 'image/png', name);
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return { ok: true, url: 'https://drive.google.com/file/d/' + file.getId() + '/view' };
+  } catch (err) { return { ok: false, error: 'upload: ' + String(err) }; }
 }
 
 /* ---------- Gemini chat (with model fallback) ---------- */

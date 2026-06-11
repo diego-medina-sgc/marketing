@@ -96,7 +96,7 @@
     interviewforms: 'Admissions interview forms, grouped by level. Each form is a link.',
     presentations: 'Direct presentation templates in Marketing › Presentations.',
     documents: 'Letterhead documents in Marketing › Documents, grouped by campus.',
-    designs: 'Canva templates shown in Marketing › Designs. These sync live from the Google Sheet “Canva Brand Templates”. Edits here act only as a fallback if the sheet can’t be reached.',
+    designs: 'Canva templates shown in Marketing › Designs. Managed here: edit names/links, upload a preview image (stored in Drive automatically) and press “Apply to site” to publish for everyone.',
     settings: 'Site-wide settings. The Google Drive API key lets the Policies page list a Drive folder’s contents as live cards.'
   };
 
@@ -285,12 +285,57 @@
           '<div class="ad-sub-item" style="margin-bottom:8px"><span class="ad-item-name" style="font-weight:700">' + escH(t.name || '—') + (t.variations ? ' · ' + t.variations.length + ' var.' : '') + '</span>' +
           '<button class="ad-tool del" data-desdel="' + escA(cat) + ':' + ti + '">' + IC.trash + '</button></div>' +
           fld('Name', inp(t, 'name')) + '<div class="ad-row2">' + fld('Template URL', inp(t, 'url', '', 'https://canva…')) + fld('Preview URL (Drive)', inp(t, 'preview', '', 'https://drive…')) + '</div>' +
+          '<button class="ad-mini-add" data-upload="' + escA(cat) + ':' + ti + '" style="margin:2px 0 10px">' + IC.upload + ' Upload preview (PNG/JPG)</button>' +
           fld('Usage note', inp(t, 'usage')) + '</div>';
       });
       h += '<button class="ad-mini-add" data-desadd="' + escA(cat) + '">' + IC.plus + ' Add template</button></div>';
     });
     h += '<button class="ad-mini-add" data-catadd="1">' + IC.plus + ' Add category</button>';
+    h += '<input type="file" id="ad-upfile" accept="image/png,image/jpeg,image/webp" style="display:none"/>';
     return h;
+  }
+
+  /* ---------- preview upload (designs) ---------- */
+  let backendV = 0; // 0 = unknown; checked once per session
+  function checkBackendVersion() {
+    return new Promise(function (resolve) {
+      if (backendV) return resolve(backendV);
+      if (!(window.TGN && TGN.config && TGN.config.remoteUrl)) return resolve(0);
+      const name = '__tgnVer' + Date.now();
+      window[name] = function (resp) { try { delete window[name]; } catch (e) {} backendV = (resp && +resp.v) || 1; resolve(backendV); };
+      const s = document.createElement('script');
+      s.src = TGN.config.remoteUrl + '?action=get&cb=' + name + '&_=' + Date.now();
+      s.onerror = function () { resolve(0); };
+      document.head.appendChild(s);
+      setTimeout(function () { if (window[name]) { try { delete window[name]; } catch (e) {} resolve(0); } }, 8000);
+    });
+  }
+  function uploadPreview(file, cat, idx, btn) {
+    if (!/^image\//.test(file.type)) { alert('Choose an image file (PNG or JPG).'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Image is too big — max 5 MB. Tip: export the Canva preview as PNG at standard size.'); return; }
+    const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Checking backend…';
+    checkBackendVersion().then(function (v) {
+      if (v < 2) {
+        btn.disabled = false; btn.innerHTML = orig;
+        alert('Your Apps Script backend does not support uploads yet. Paste the latest backend file in script.google.com and Deploy → New version, then try again.');
+        return;
+      }
+      btn.innerHTML = 'Uploading…';
+      const reader = new FileReader();
+      reader.onload = function () {
+        const b64 = String(reader.result).split(',')[1] || '';
+        fetch(TGN.config.remoteUrl, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'upload', token: window.TGNRemote.getToken(), filename: file.name, mime: file.type, data: b64 })
+        }).then(function (r) { return r.json(); }).then(function (resp) {
+          btn.disabled = false; btn.innerHTML = orig;
+          if (resp && resp.ok && resp.url) { wd('designs')[cat][idx].preview = resp.url; commit('designs'); repanel(); }
+          else if (resp && resp.error === 'unauthorized') { alert('The Publish password is incorrect — fix it in Settings, then try again.'); state.active = 'settings'; renderEditor(); }
+          else alert('Upload failed (' + ((resp && resp.error) || 'unknown') + '). Try again.');
+        }).catch(function (e) { btn.disabled = false; btn.innerHTML = orig; alert('Upload failed: ' + e.message); });
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function settingsPanel() {
@@ -389,6 +434,22 @@
     main.querySelectorAll('[data-desdel]').forEach(b => b.addEventListener('click', () => { const p = b.getAttribute('data-desdel').split(':'); if (!confirm('Delete this template?')) return; wd(state.active)[p[0]].splice(+p[1], 1); commit(state.active); repanel(); }));
     main.querySelectorAll('[data-catadd]').forEach(b => b.addEventListener('click', () => { const n = prompt('New category name:'); if (!n) return; wd(state.active)[n] = []; commit(state.active); repanel(); }));
     main.querySelectorAll('[data-catdel]').forEach(b => b.addEventListener('click', () => { if (!confirm('Delete this whole category?')) return; delete wd(state.active)[b.getAttribute('data-catdel')]; commit(state.active); repanel(); }));
+    // designs: upload preview image → backend stores it in Drive and returns the link
+    const upFile = document.getElementById('ad-upfile');
+    if (upFile) {
+      let upTarget = null;
+      main.querySelectorAll('[data-upload]').forEach(b => b.addEventListener('click', () => {
+        if (!(window.TGNRemote && window.TGNRemote.configured)) { alert('Backend not configured — uploads need the Apps Script backend.'); return; }
+        if (!window.TGNRemote.hasToken()) { alert('Set the Publish password in Settings first — uploads are stored in Drive through the backend.'); state.active = 'settings'; renderEditor(); return; }
+        upTarget = { btn: b, key: b.getAttribute('data-upload') };
+        upFile.value = ''; upFile.click();
+      }));
+      upFile.addEventListener('change', () => {
+        if (!upTarget || !upFile.files || !upFile.files[0]) return;
+        const p = upTarget.key.split(':');
+        uploadPreview(upFile.files[0], p[0], +p[1], upTarget.btn);
+      });
+    }
   }
 
   /* ---------- shell ---------- */

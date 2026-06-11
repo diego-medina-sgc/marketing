@@ -43,137 +43,76 @@
 
   const CANVA_BRAND_KIT = 'https://www.canva.com/brand/kAFKKx1idKs';
 
+  /* Managed in the Back Office (Designs panel) and published for everyone.
+     This object is only the factory default / seed — migrated from the
+     "Canva Brand Templates" sheet on 2026-06-11. */
   const DEFAULT_CANVA = {
     'Flyers y Carteles': [
-      { name: 'FLYER SAVE THE DATE', url: 'https://www.canva.com/brand/brand-templates/EAHJFX4UhCI', preview: 'https://drive.google.com/file/d/1ID671l0RgxKGq954s2OjG3su9GPv5jAo/view', usage: 'Anuncios anticipados de eventos', fields: ['Nombre del evento', 'Fecha', 'Hora', 'Ubicación', 'Campus'] },
-      { name: 'FLYER KINDER/PREP', url: 'https://www.canva.com/brand/brand-templates/EAHJF6VCHjk', preview: 'https://drive.google.com/file/d/1R1panfZohfsFrU6KLU93iRWKxAvaUdPd/view', usage: 'Eventos del nivel inicial', fields: ['Nombre del evento', 'Fecha', 'Hora', 'Ubicación', 'Campus'] },
-      { name: 'FLYER INSTITUCIONAL', url: 'https://www.canva.com/brand/brand-templates/EAHI6uG-Ubo', preview: 'https://drive.google.com/file/d/1dhJPr7_-Gzmz46g0NVwJB7z3BQfSTgLI/view', usage: 'Eventos institucionales generales', fields: ['Título 1', 'Título 2', 'Subtítulo', 'Fecha', 'Hora', 'Ubicación | Campus'] },
-      { name: 'FLYER GENÉRICO', url: 'https://www.canva.com/brand/brand-templates/EAHI5twdtsQ', preview: 'https://drive.google.com/file/d/1EjRjfVL-NHqACrQEHWpItGQ6NxmA54np/view', usage: 'Comunicaciones generales sin foto', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
-      { name: 'FLYER GENÉRICO 2', url: 'https://www.canva.com/brand/brand-templates/EAHI5pxvIEI', preview: 'https://drive.google.com/file/d/1ucx9-jXxic0qUaMhL1BHXybephRARl5U/view', usage: 'Variante sin foto', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
-      { name: 'FLYER VERTICAL CON FOTO', url: 'https://www.canva.com/brand/brand-templates/EAHI5bFuOJc', preview: 'https://drive.google.com/file/d/1RM9OWqYhZqy9cKKcduHHdk0rdex_WgmC/view', usage: 'Eventos con foto vertical', fields: ['Foto', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
-      { name: 'FLYER CON FOTO', url: 'https://www.canva.com/brand/brand-templates/EAHI5SOaZSY', preview: 'https://drive.google.com/file/d/1Ps0Moj17kVqomPcxXpSlzV-RQZ9nnP9T/view', usage: 'Flyer horizontal con foto', fields: ['Foto', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
-      { name: 'PREP/KINDER FLYER (A-D)', url: 'https://www.canva.com/brand/brand-templates/EAHI5uNdOmE', usage: '4 estilos para nivel inicial', fields: ['Título', 'Subtítulo', 'Fecha', 'Campus'], variations: [
+      { name: 'Flyer | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI5pxvIEI', preview: 'https://drive.google.com/file/d/1ucx9-jXxic0qUaMhL1BHXybephRARl5U/view', usage: 'Variante sin foto', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
+      { name: 'Flyer | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJizGKnrU', preview: '', usage: '', fields: [] },
+      { name: 'Flyer | Opción 3', url: 'https://www.canva.com/brand/brand-templates/EAHI5twdtsQ', preview: 'https://drive.google.com/file/d/1EjRjfVL-NHqACrQEHWpItGQ6NxmA54np/view', usage: 'Comunicaciones generales sin foto', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
+      { name: 'Flyer | Opción 4', url: 'https://www.canva.com/brand/brand-templates/EAHI6uG-Ubo', preview: 'https://drive.google.com/file/d/1dhJPr7_-Gzmz46g0NVwJB7z3BQfSTgLI/view', usage: 'Eventos institucionales generales', fields: ['Título 1', 'Título 2', 'Subtítulo', 'Fecha', 'Hora', 'Ubicación | Campus'] },
+      { name: 'Flyer | Con foto | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI5SOaZSY', preview: 'https://drive.google.com/file/d/1Ps0Moj17kVqomPcxXpSlzV-RQZ9nnP9T/view', usage: 'Flyer horizontal con foto', fields: ['Foto', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
+      { name: 'Flyer | Con foto | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHI6lbyXCs', preview: '', usage: '', fields: [] },
+      { name: 'Flyer | Save the Date', url: 'https://www.canva.com/brand/brand-templates/EAHJFX4UhCI', preview: 'https://drive.google.com/file/d/1ID671l0RgxKGq954s2OjG3su9GPv5jAo/view', usage: 'Anuncios anticipados de eventos', fields: ['Nombre del evento', 'Fecha', 'Hora', 'Ubicación', 'Campus'] },
+      { name: 'Flyer | Vertical con foto', url: 'https://www.canva.com/brand/brand-templates/EAHI5bFuOJc', preview: 'https://drive.google.com/file/d/1RM9OWqYhZqy9cKKcduHHdk0rdex_WgmC/view', usage: 'Eventos con foto vertical', fields: ['Foto', 'Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'] },
+      { name: 'Flyer | Prep & Kinder', url: 'https://www.canva.com/brand/brand-templates/EAHI5uNdOmE', usage: '4 estilos para nivel inicial', fields: ['Título', 'Subtítulo', 'Fecha', 'Campus'], variations: [
         { label: 'A', preview: 'https://drive.google.com/file/d/1gr1w_Mi5ds4Wo2avt4B4akb6sgUodcbU/view' },
         { label: 'B', preview: 'https://drive.google.com/file/d/1T3UIhbwfrStUYaVCPqWM6BBOq5FhjgyZ/view' },
         { label: 'C', preview: 'https://drive.google.com/file/d/1ZqTFpJ4lUmyQ1aS8-8gQyjXji1CciWF4/view' },
         { label: 'D', preview: 'https://drive.google.com/file/d/1Tn7azzrTPZp2TSXnUW1AUH4GrcsfX_6F/view' }
       ] },
-      { name: 'CARTEL INSTITUCIONAL (A-C)', url: 'https://www.canva.com/brand/brand-templates/EAHI5Siy2bY', usage: 'Cartel cuadrado para redes/impresión', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'], variations: [
+      { name: 'Flyer | evento Prep & Kinder', url: 'https://www.canva.com/brand/brand-templates/EAHJF6VCHjk', preview: 'https://drive.google.com/file/d/1R1panfZohfsFrU6KLU93iRWKxAvaUdPd/view', usage: 'Eventos del nivel inicial', fields: ['Nombre del evento', 'Fecha', 'Hora', 'Ubicación', 'Campus'] },
+      { name: 'Flyer | Actos patrios', url: 'https://www.canva.com/brand/brand-templates/EAHJdlW7xkk', preview: '', usage: 'Efemérides y actos escolares', fields: [] },
+      { name: 'Flyer | A5', url: 'https://www.canva.com/brand/brand-templates/EAHJeAoSHwA', preview: '', usage: '', fields: [] },
+      { name: 'Cartel institucional', url: 'https://www.canva.com/brand/brand-templates/EAHI5Siy2bY', usage: 'Cartel cuadrado para redes/impresión', fields: ['Título', 'Subtítulo', 'Fecha', 'Hora', 'Campus'], variations: [
         { label: 'A', preview: 'https://drive.google.com/file/d/1HTGWj9Dwa2ijfFePsu9-PYHetRUNFup0/view' },
         { label: 'B', preview: 'https://drive.google.com/file/d/19NvndngX1ZxGQ1WgMLepkP46dKID0j-X/view' },
         { label: 'C', preview: 'https://drive.google.com/file/d/1j0pQ1IxYysMwLq0FCppAO3s9ALQ6O9b4/view' }
-      ] },
-      { name: 'UPCOMING EVENTS', url: 'https://www.canva.com/brand/brand-templates/EAHI0jyKJjg', preview: 'https://drive.google.com/file/d/1slWrJ1XbiwT03XhcIAaiEEcv_TDApxX7/view', usage: 'Resumen de calendario', fields: ['Lista de eventos'] }
+      ] }
     ],
-    'Diplomas': [
-      { name: 'DIPLOMA GENÉRICO', url: 'https://www.canva.com/brand/brand-templates/EAHI5jzhC-c', preview: 'https://drive.google.com/file/d/18Dc9oqD1TMEJsHwkofhv98CPEmalfsqR/view', usage: 'Reconocimientos generales', fields: ['Nombre', 'Motivo', 'Fecha', 'Firma'] },
-      { name: 'DIPLOMA GRADUATION', url: 'https://www.canva.com/brand/brand-templates/EAHI5n5TcS8', preview: 'https://drive.google.com/file/d/1k6NvE1J6HxGUqyFzq8bEEcDzoMtbqmIq/view', usage: 'Ceremonia graduación', fields: ['Nombre', 'Año', 'Fecha', 'Firma'] }
-    ],
-    'Hojas y Encabezados': [
-      { name: 'HOJAS MEMBRETADAS DOC', url: 'https://www.canva.com/brand/brand-templates/EAHI_M4jq0o', preview: 'https://drive.google.com/file/d/1z_HGXSnGUvyTTt9bLVy8auwl664JoDkr/view', usage: 'Documentos con membrete', fields: ['Contenido'] },
-      { name: 'ENCABEZADO DOCS (A-B)', url: 'https://www.canva.com/brand/brand-templates/EAHI_J1AFpg', usage: 'Banner para Google Docs', fields: ['N/A'], variations: [
-        { label: 'A', preview: 'https://drive.google.com/file/d/1y0bmNY17RWVnsYnQQaVIbw8PtILQAc59/view' },
-        { label: 'B', preview: 'https://drive.google.com/file/d/1f_EbZi8U5LqxhXu1Mf2d4olPRtn16GWm/view' }
-      ] },
-      { name: 'BANNERS GOOGLE FORM (A-F)', url: 'https://www.canva.com/brand/brand-templates/EAHI5kDWJ8k', usage: 'Encabezado formularios', fields: ['N/A'], variations: [
+    'Banners': [
+      { name: 'Banners | Google Forms', url: 'https://www.canva.com/brand/brand-templates/EAHI5kDWJ8k', usage: 'Encabezado formularios', fields: [], variations: [
         { label: 'A', preview: 'https://drive.google.com/file/d/1Vbhyo1tn5lKXG6gTZa7k9Jn51iSz0m3f/view' },
         { label: 'B', preview: 'https://drive.google.com/file/d/1mvz1Nkc_VJlP5TLMEfTy286B_BPwkx5c/view' },
         { label: 'C', preview: 'https://drive.google.com/file/d/124dgjHVhXVrbxCpI98MHPDk4ipeRUZw7/view' },
         { label: 'D', preview: 'https://drive.google.com/file/d/16-0Y_BKzxYUhWd14jfjwGARAImuqls9K/view' },
         { label: 'E', preview: 'https://drive.google.com/file/d/1LkDrnQ7Xd4U7IZufaWIlgsrSdW_g9kb6/view' },
         { label: 'F', preview: 'https://drive.google.com/file/d/1rK8ggkoecPqnUI50CVAEqjNzpKqohkQw/view' }
-      ] }
+      ] },
+      { name: 'Banners | LinkedIn', url: 'https://www.canva.com/brand/brand-templates/EAHJjiHARxc', preview: '', usage: '', fields: [] }
+    ],
+    'Credenciales': [
+      { name: 'Name tags | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI5fY39MI', preview: 'https://drive.google.com/file/d/1YMghiHbolaSDt_axqAfHaMx0c41jzDKg/view', usage: 'Credenciales eventos', fields: ['Nombre', 'Apellido', 'Rol', 'Campus'] },
+      { name: 'Name tags | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJjAqx4tE', preview: '', usage: '', fields: [] },
+      { name: 'Credencial', url: 'https://www.canva.com/brand/brand-templates/EAHJjudKeDg', preview: '', usage: '', fields: [] }
+    ],
+    'Diplomas': [
+      { name: 'Diploma genérico', url: 'https://www.canva.com/brand/brand-templates/EAHI5jzhC-c', preview: 'https://drive.google.com/file/d/18Dc9oqD1TMEJsHwkofhv98CPEmalfsqR/view', usage: 'Reconocimientos generales', fields: ['Nombre', 'Motivo', 'Fecha', 'Firma'] },
+      { name: 'Diploma graduación', url: 'https://www.canva.com/brand/brand-templates/EAHI5n5TcS8', preview: 'https://drive.google.com/file/d/1k6NvE1J6HxGUqyFzq8bEEcDzoMtbqmIq/view', usage: 'Ceremonia graduación', fields: ['Nombre', 'Año', 'Fecha', 'Firma'] }
+    ],
+    'Hojas y Encabezados': [
+      { name: 'Encabezado Google Docs | Opción 1', url: 'https://www.canva.com/brand/brand-templates/EAHI_J1AFpg', usage: 'Banner para Google Docs', fields: [], variations: [
+        { label: 'A', preview: 'https://drive.google.com/file/d/1y0bmNY17RWVnsYnQQaVIbw8PtILQAc59/view' },
+        { label: 'B', preview: 'https://drive.google.com/file/d/1f_EbZi8U5LqxhXu1Mf2d4olPRtn16GWm/view' }
+      ] },
+      { name: 'Encabezado Google Docs | Opción 2', url: 'https://www.canva.com/brand/brand-templates/EAHJGF6BDy0', preview: '', usage: 'Banner para Google Docs', fields: [] },
+      { name: 'Hojas membretadas docs', url: 'https://www.canva.com/brand/brand-templates/EAHI_M4jq0o', preview: 'https://drive.google.com/file/d/1z_HGXSnGUvyTTt9bLVy8auwl664JoDkr/view', usage: 'Documentos con membrete', fields: ['Contenido'] }
+    ],
+    'Etiquetas': [
+      { name: 'Etiquetas individuales', url: 'https://www.canva.com/brand/brand-templates/EAHJjMkgvMo', preview: '', usage: '', fields: [] },
+      { name: 'Etiquetas premios', url: 'https://www.canva.com/brand/brand-templates/EAHJjHIpwcQ', preview: '', usage: '', fields: [] }
     ],
     'Otros': [
-      { name: 'PORTADA VIDEOS', url: 'https://www.canva.com/brand/brand-templates/EAHI_OGAKG0', preview: 'https://drive.google.com/file/d/1pkjzQQZJLXS9WY2JBy1sY5q_E3GviTEq/view', usage: 'YouTube / Reels', fields: ['Título', 'Fecha', 'Campus'] },
-      { name: 'NAME TAGS FORMAL', url: 'https://www.canva.com/brand/brand-templates/EAHI5fY39MI', preview: 'https://drive.google.com/file/d/1YMghiHbolaSDt_axqAfHaMx0c41jzDKg/view', usage: 'Credenciales eventos', fields: ['Nombre', 'Apellido', 'Rol', 'Campus'] }
+      { name: 'Lunch menu', url: 'https://www.canva.com/brand/brand-templates/EAHKB1G7LpE', preview: '', usage: '', fields: [] },
+      { name: 'Mapa | North Campus', url: 'https://www.canva.com/brand/brand-templates/EAHJwujbuHA', preview: '', usage: '', fields: [] },
+      { name: 'Portada para videos', url: 'https://www.canva.com/brand/brand-templates/EAHI_OGAKG0', preview: 'https://drive.google.com/file/d/1pkjzQQZJLXS9WY2JBy1sY5q_E3GviTEq/view', usage: 'YouTube / Reels', fields: ['Título', 'Fecha', 'Campus'] },
+      { name: 'Upcoming Events', url: 'https://www.canva.com/brand/brand-templates/EAHI0jyKJjg', preview: 'https://drive.google.com/file/d/1slWrJ1XbiwT03XhcIAaiEEcv_TDApxX7/view', usage: 'Resumen de calendario', fields: ['Lista de eventos'] }
     ]
   };
 
-  /* ─── Canva designs: live-synced from Google Sheet ─── */
-  const SHEET_ID = '11eJKBpKVm1byo0yremn9eZ3zPl_5T9Bs2k0W_9N3AHg';
-  const DESIGNS_CACHE = 'tgn-canva-sheet-v2';
-  const SHEET_LINK = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/edit';
-  function designsFallback() { return (window.TGNStore ? TGNStore.get('designs', DEFAULT_CANVA) : DEFAULT_CANVA); }
-  function cachedDesigns() { try { const c = JSON.parse(localStorage.getItem(DESIGNS_CACHE) || 'null'); return (c && c.data && Object.keys(c.data).length) ? c : null; } catch (e) { return null; } }
-  const _cache0 = cachedDesigns();
-  let CANVA = (_cache0 && _cache0.data) || designsFallback();
-  let _designsSynced = false, _designsSyncing = false, _designsTs = _cache0 ? _cache0.t : 0, _designsErr = false;
-
-  function parseCSV(text) {
-    const rows = []; let row = [], cur = '', q = false;
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
-      else if (c === '"') q = true;
-      else if (c === ',') { row.push(cur); cur = ''; }
-      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
-      else if (c !== '\r') cur += c;
-    }
-    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
-    return rows;
-  }
-  function categorize(name) {
-    const n = (name || '').toLowerCase();
-    if (/^flyer/.test(n) || /cartel/.test(n)) return 'Flyers y Carteles';
-    if (/diploma/.test(n)) return 'Diplomas';
-    if (/banner/.test(n)) return 'Banners';
-    if (/name tag|credencial/.test(n)) return 'Credenciales';
-    if (/encabezado|membret/.test(n)) return 'Hojas y Encabezados';
-    if (/etiqueta/.test(n)) return 'Etiquetas';
-    return 'Otros';
-  }
-  function canvaId(url) { const m = String(url || '').match(/brand-templates\/([\w-]+)/) || String(url || '').match(/([\w-]{6,})\/?$/); return m ? m[1] : ''; }
-  const PREVIEW_MAP = (function () {
-    const map = {};
-    try {
-      Object.keys(DEFAULT_CANVA).forEach(function (cat) {
-        (DEFAULT_CANVA[cat] || []).forEach(function (t) {
-          const id = canvaId(t.url); if (!id) return;
-          const pv = t.preview || (t.variations && t.variations[0] && t.variations[0].preview) || '';
-          if (pv) map[id] = pv;
-        });
-      });
-    } catch (e) {}
-    return map;
-  })();
-  function rowsToDesigns(rows) {
-    const order = ['Flyers y Carteles', 'Diplomas', 'Banners', 'Credenciales', 'Hojas y Encabezados', 'Etiquetas', 'Otros'];
-    const out = {};
-    rows.forEach(function (r) {
-      if (!r || r.length < 3) return;
-      const name = (r[1] || '').trim(), url = (r[2] || '').trim();
-      if (!name || !/^https?:/i.test(url)) return;
-      const colPv = (r[3] || '').trim();
-      const preview = (/^https?:/i.test(colPv) ? colPv : '') || PREVIEW_MAP[canvaId(url)] || '';
-      const usage = (r[4] || '').trim();
-      const cat = categorize(name);
-      (out[cat] = out[cat] || []).push({ name: name, url: url, preview: preview, usage: usage, fields: [] });
-    });
-    const ordered = {};
-    order.forEach(function (c) { if (out[c]) ordered[c] = out[c]; });
-    Object.keys(out).forEach(function (c) { if (!ordered[c]) ordered[c] = out[c]; });
-    return ordered;
-  }
-  async function syncDesigns(force) {
-    if (_designsSyncing || (_designsSynced && !force)) return;
-    _designsSyncing = true; _designsErr = false;
-    if (step === 'canva') { const b = document.getElementById('mk-sync-btn'); if (b) b.classList.add('spin'); }
-    try {
-      const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&headers=1&_=' + Date.now();
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error('http ' + res.status);
-      const grouped = rowsToDesigns(parseCSV(await res.text()));
-      if (grouped && Object.keys(grouped).length) {
-        CANVA = grouped; _designsTs = Date.now(); _designsSynced = true;
-        try { localStorage.setItem(DESIGNS_CACHE, JSON.stringify({ t: _designsTs, data: grouped })); } catch (e) {}
-        if (step === 'canva') render();
-      } else { throw new Error('empty'); }
-    } catch (e) {
-      _designsErr = true;
-      if (step === 'canva') { const b = document.getElementById('mk-sync-btn'); if (b) b.classList.remove('spin'); const s = document.getElementById('mk-sync-state'); if (s) s.textContent = (lang === 'es' ? 'No se pudo sincronizar' : 'Sync failed'); }
-    } finally { _designsSyncing = false; }
-  }
+  /* ─── Canva designs: managed in the Back Office, published for everyone ─── */
+  const CANVA = (window.TGNStore ? TGNStore.get('designs', DEFAULT_CANVA) : DEFAULT_CANVA);
 
   const LOGOS = [
     { name: 'Logotipo · Blanco horizontal (sin fondo)', url: 'https://drive.google.com/file/d/1vCsh-n9K4I_I8_D-zWfB1-yLNR9b_1yA/view' },
@@ -383,15 +322,9 @@
   };
 
   views.canva = function () {
-    syncDesigns();
-    const tsLabel = _designsTs ? new Date(_designsTs).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     let h = '<div class="mk-hero slate mk-hero-row"><div class="mk-hero-l"><div class="mk-hero-ico">' + I.palette + '</div>' +
       '<div><h3 class="mk-hero-t">Canva Brand Kit</h3><p class="mk-hero-p">' + (lang === 'es' ? 'Accedé a todos los logos y recursos oficiales.' : 'Access all official logos and resources.') + '</p></div></div>' +
       '<a class="mk-btn mk-btn-red" href="' + CANVA_BRAND_KIT + '" target="_blank" rel="noopener">' + (lang === 'es' ? 'Abrir Brand Kit' : 'Open Brand Kit') + ' ' + I.ext + '</a></div>';
-    h += '<div class="mk-sync"><span class="mk-sync-ico">' + I.sync + '</span>' +
-      '<span class="mk-sync-state" id="mk-sync-state">' + (lang === 'es' ? 'Sincronizado con Google Sheets' : 'Synced with Google Sheets') + (tsLabel ? ' · ' + tsLabel : '') + '</span>' +
-      '<a class="mk-sync-link" href="' + SHEET_LINK + '" target="_blank" rel="noopener">' + (lang === 'es' ? 'Abrir planilla' : 'Open sheet') + '</a>' +
-      '<button class="mk-sync-btn" id="mk-sync-btn" data-act="sync-designs" title="' + (lang === 'es' ? 'Actualizar' : 'Refresh') + '">' + I.sync + '</button></div>';
     // procedure
     const steps = lang === 'es'
       ? ['Clic en el link del template', 'Clic en "Usar esta plantilla de la marca"', 'Editá textos y elementos', 'Descargá (PNG digital, PDF impresión)']
@@ -419,6 +352,7 @@
     } else { media = '<div class="mk-canva-media mk-noimg"></div>'; }
     return '<div class="mk-canva"><div class="mk-canva-top">' + media + '</div>' +
       '<div class="mk-canva-body"><h4 class="mk-canva-name">' + esc(tpl.name) + '</h4>' +
+      (tpl.usage ? '<p class="mk-canva-fields">' + esc(tpl.usage) + '</p>' : '') +
       (tpl.fields && tpl.fields.length ? '<p class="mk-canva-fields"><b>' + (lang === 'es' ? 'Campos:' : 'Fields:') + '</b> ' + esc(tpl.fields.join(', ')) + '</p>' : '') +
       '<a class="mk-canva-use" href="' + tpl.url + '" target="_blank" rel="noopener">' + t('use') + ' ' + I.ext + '</a></div></div>';
   }
@@ -670,7 +604,6 @@
         else if (a === 'reset') { localStorage.removeItem('tgn-mkt-user'); user = { name: '', campus: '', role: '' }; step = 'id'; history = []; render(); }
         else if (a === 'send-event') { if (validateEvent()) { formState._sent = 'event'; render(); } }
         else if (a === 'send-custom') { if (validateCustom()) { formState._sent = 'custom'; render(); } }
-        else if (a === 'sync-designs') { syncDesigns(true); }
       });
     });
     root.querySelectorAll('[data-go]').forEach(function (b) {
