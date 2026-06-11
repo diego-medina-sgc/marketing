@@ -245,13 +245,13 @@ const MENUS = [
 
 /* ─── RESOURCES ─── */
 const QUICK_LINKS = [
-  { abbr: 'iS', name: 'iSAMS · Parents', desc: { en: 'Parents portal', es: 'Portal de familias' }, url: 'https://stgeorgescollege.parents.isamshosting.cloud/', accent: 'var(--navy)' },
-  { abbr: 'iS', name: 'iSAMS · Teacher', desc: { en: 'Staff framework', es: 'Framework del staff' }, url: 'https://stgeorgescollege.isamshosting.cloud/main/framework', accent: 'var(--navy)' },
-  { abbr: 'iS', name: 'iSAMS · Students', desc: { en: 'Students homepage', es: 'Inicio de alumnos' }, url: 'https://stgeorgescollege.students.isamshosting.cloud/api/homepage/', accent: 'var(--navy)' },
-  { abbr: 'Mb', name: 'ManageBac', desc: { en: 'IB management', es: 'Gestión IB' }, url: 'https://stgeorges.managebac.com/login', accent: 'var(--teal)' },
-  { abbr: 'Td', name: 'Toddle', desc: { en: 'Teaching & learning', es: 'Enseñanza y aprendizaje' }, url: 'https://web.toddleapp.com/?type=loginHome', accent: 'var(--violet)' },
-  { abbr: 'SG', name: "St George's App", desc: { en: 'Family communications', es: 'Comunicación con familias' }, url: 'https://app.fidu.la/login', accent: 'var(--red)' },
-  { abbr: '$', name: 'Payslip Portal', desc: { en: 'Portia · payroll', es: 'Portia · liquidaciones' }, url: 'https://stgeorges.aj5portia.com.ar/index.aspx', accent: 'var(--green)' }
+  { abbr: 'iS', name: 'iSAMS · Parents',  desc: { en: 'Parents portal',          es: 'Portal de familias' },       url: 'https://stgeorgescollege.parents.isamshosting.cloud/',          accent: 'var(--navy)',   img: 'assets/isams parents.jpg' },
+  { abbr: 'iS', name: 'iSAMS · Teacher',  desc: { en: 'Staff framework',          es: 'Framework del staff' },      url: 'https://stgeorgescollege.isamshosting.cloud/main/framework',     accent: 'var(--navy)',   img: 'assets/isams teacher.jpg' },
+  { abbr: 'iS', name: 'iSAMS · Students', desc: { en: 'Students homepage',        es: 'Inicio de alumnos' },        url: 'https://stgeorgescollege.students.isamshosting.cloud/api/homepage/', accent: 'var(--navy)', img: 'assets/isams student.jpg' },
+  { abbr: 'Mb', name: 'ManageBac',        desc: { en: 'IB management',            es: 'Gestión IB' },          url: 'https://stgeorges.managebac.com/login',                          accent: 'var(--teal)',   img: 'assets/managebac.jpg' },
+  { abbr: 'Td', name: 'Toddle',           desc: { en: 'Teaching & learning',      es: 'Enseñanza y aprendizaje' }, url: 'https://web.toddleapp.com/?type=loginHome',                 accent: 'var(--violet)' },
+  { abbr: 'SG', name: "St George's App",  desc: { en: 'Family communications',    es: 'Comunicación con familias' }, url: 'https://app.fidu.la/login',                              accent: 'var(--red)',    img: 'assets/st georges college app.png' },
+  { abbr: '$',  name: 'Payslip Portal',   desc: { en: 'Portia · payroll',    es: 'Portia · liquidaciones' }, url: 'https://stgeorges.aj5portia.com.ar/index.aspx',              accent: 'var(--green)', img: 'assets/portal de recibos.png' }
 ];
 
 const TOOL_GROUPS = [

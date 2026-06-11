@@ -92,7 +92,10 @@
   }
   function tile(accent, abbr, name, desc, url, favicon) {
     var ico;
-    if (favicon) {
+    if (typeof favicon === 'string') {
+      var fb2 = "this.onerror=null;this.parentNode.classList.remove('has-local-img');this.parentNode.textContent='" + abbr + "';";
+      ico = '<div class="tile-ico has-local-img"><img src="' + favicon + '" alt="" onerror="' + fb2 + '"/></div>';
+    } else if (favicon) {
       var host = rootDomain(String(url || '').replace(/^https?:\/\//, '').split('/')[0]);
       var fb = "if(!this.dataset.f){this.dataset.f=1;this.src='https://www.google.com/s2/favicons?sz=64&domain=" + host + "';}else{this.parentNode.classList.remove('has-fav');this.parentNode.textContent='" + abbr + "';}";
       ico = '<div class="tile-ico has-fav"><img class="tile-fav" src="https://icons.duckduckgo.com/ip3/' + host + '.ico" alt="" referrerpolicy="no-referrer" onerror="' + fb + '"/></div>';
@@ -198,8 +201,10 @@
       '<span class="panel-card-ttl">' + (lang === 'es' ? 'Cumpleaños' : 'Birthdays') + '</span>' +
        '<span class="panel-card-meta">' + (lang === 'es' ? '🥳' : '🥳') + '</span></div>' +
       '<div class="panel-card-body bday-grid">';
+    const MONS_EN = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const MONS_ES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
     D.BIRTHDAYS.forEach(function (b) {
-  const mon = lang === 'es' ? 'DIC' : 'DEC';
+  const mon = (lang === 'es' ? MONS_ES : MONS_EN)[(b.m || 12) - 1];
   const cc = (b.campus === 'q' || b.campus === 'n') ? b.campus : 'one';
   const dept = D.DEPTS.find(d => d.v === b.dept);
   h += '<div class="bday-row ' + cc + '"><div class="bday-date"><div class="bday-day">' + b.d + '</div><div class="bday-mon">' + mon + '</div></div>' +
@@ -262,7 +267,7 @@
   }
   function driveEmbedFallback(folderId, note) {
     return '<div class="cc" style="grid-column:1/-1">' + (note ? '<div class="drive-note">' + note + '</div>' : '') +
-      '<div class="embed-frame"><iframe src="https://drive.google.com/embeddedfolderview?id=' + folderId + '#list" height="420" title="Drive folder"></iframe></div></div>';
+      '<div class="embed-frame"><iframe src="https://drive.google.com/embeddedfolderview?id=' + folderId + '#grid" height="420" title="Drive folder"></iframe></div></div>';
   }
   async function loadDriveCards() {
     const box = document.getElementById('drive-cards');
@@ -293,8 +298,10 @@
       '<div class="sec-hd"><h2 class="sec-title">' + IC.sparkle + (lang === 'es' ? 'Accesos rápidos' : 'Quick links') + '</h2></div>' +
       '<p class="intro" style="margin-bottom:18px">' + L(p.isamsNote) + '</p>' +
       '<div class="tile-grid">';
+    var qlDefs = (window.TGN_DEFAULTS && window.TGN_DEFAULTS.quicklinks) || [];
     D.QUICK_LINKS.forEach(function (t) {
-      h += tile(t.accent, t.abbr, t.name, L(t.desc), t.url, true);
+      var def = qlDefs.find(function(d){ return d.url === t.url; });
+      h += tile(t.accent, t.abbr, t.name, L(t.desc), t.url, (def && def.img) || t.img || true);
     });
     h += '</div></section>';
 
@@ -342,7 +349,7 @@
     return '<div class="contact-strip" style="margin-top:8px">' +
       '<div class="contact-txt"><div class="contact-ttl">' + (lang === 'es' ? '¿Querés compartir algo con la red?' : 'Want to share something with the network?') + '</div>' +
       '<div class="contact-sub">' + (lang === 'es' ? 'Escribinos y lo sumamos.' : 'Write to us and we\'ll add it.') + '</div></div>' +
-      '<a class="contact-cta" href="mailto:marketing@stgeorges.edu.ar">' + IC.mail + ' marketing@stgeorges.edu.ar</a></div>';
+      '<a class="contact-cta" href="https://mail.google.com/mail/?view=cm&to=marketing%40stgeorges.edu.ar" target="_blank" rel="noopener">' + IC.mail + ' marketing@stgeorges.edu.ar</a></div>';
   }
 
   const RENDERERS = {
