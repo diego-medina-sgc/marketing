@@ -263,7 +263,7 @@
 [data-theme="dark"] .mk-copy-final{background:var(--surface2);border-color:var(--border);}
 
 /* ── CHAT TOOLS (attach / mic) ── */
-.mk-chat-tool{width:34px;height:34px;border-radius:9px;border:none;background:none;color:var(--gray);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s,background .15s;}
+.mk-chat-tool{width:34px;height:40px;border-radius:9px;border:none;background:none;color:var(--gray);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s,background .15s;}
 .mk-chat-tool:hover{color:var(--navy);background:var(--cream);}
 .mk-chat-tool svg{width:17px;height:17px;}
 .mk-chat-tool.mk-tool-rec{color:#fff;background:var(--red);border-radius:20px;padding:0 10px;width:auto;gap:6px;font-size:.74rem;font-weight:700;font-family:'Asap Condensed',sans-serif;}
