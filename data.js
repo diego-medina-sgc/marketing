@@ -6,7 +6,7 @@
 const I18N = {
   en: {
     net_sub: 'Staff Intranet',
-    search: 'Search the network…',
+    search: 'Search on Google…',
     live: 'Live',
     nav_label: 'Navigation',
     theme: 'Theme',
@@ -24,7 +24,7 @@ const I18N = {
   },
   es: {
     net_sub: 'Intranet del Staff',
-    search: 'Buscar en la red…',
+    search: 'Buscar en Google…',
     live: 'En vivo',
     nav_label: 'Navegación',
     theme: 'Tema',
