@@ -493,15 +493,17 @@
     document.getElementById('scrim').classList.toggle('show', sb.classList.contains('mobile-open'));
   }
 
-  /* ---------- SEARCH ---------- */
-  function doSearch(q) {
-    q = q.trim().toLowerCase();
-    if (!q) return;
-    // simple: jump to first matching panel by keyword
-    const map = { polic: 'policies', recurso: 'resources', resource: 'resources', admis: 'admissions', market: 'marketing', cumple: 'home', birthday: 'home', menu: 'home', interno: 'home', news: 'home', novedad: 'home' };
-    for (const k in map) { if (q.indexOf(k) > -1) { go(map[k]); return; } }
-    go('home');
-  }
+/* ---------- SEARCH ---------- */
+function doSearch(q) {
+  q = q.trim();
+
+  if (!q) return;
+
+  window.open(
+    'https://www.google.com/search?q=' + encodeURIComponent(q),
+    '_blank'
+  );
+}
 
   /* ---------- INIT ---------- */
   function init() {
