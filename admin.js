@@ -80,6 +80,8 @@
     { key: 'quicklinks', label: 'Resources', icon: 'grid', kind: 'flat' },
     { key: 'tools', label: 'Other Tools', icon: 'wrench', kind: 'groups' },
     { key: 'interviewforms', label: 'Interview Forms', icon: 'doc', kind: 'iforms' },
+    { key: 'menus', label: 'Dining Menus', icon: 'folder', kind: 'links' },
+    { key: 'extensions', label: 'Internal Directory', icon: 'doc', kind: 'links' },
     { sep: true },
     { key: 'presentations', label: 'Presentations', icon: 'slides', kind: 'pres' },
     { key: 'documents', label: 'Documents', icon: 'doc', kind: 'docs' },
@@ -97,6 +99,8 @@
     presentations: 'Direct presentation templates in Marketing › Presentations.',
     documents: 'Letterhead documents in Marketing › Documents, grouped by campus.',
     designs: 'Canva templates shown in Marketing › Designs. Managed here: edit names/links, upload a preview image (stored in Drive automatically) and press “Apply to site” to publish for everyone.',
+    menus: 'Links to the campus dining menus. Edit the Google Sheets URL for Quilmes and North.',
+    extensions: 'Links to the internal extension directory. Edit the URL for Quilmes and North.',
     settings: 'Site-wide settings. The Google Drive API key lets the Policies page list a Drive folder’s contents as live cards.'
   };
 
@@ -358,6 +362,16 @@
       '<p class="ad-sub" style="margin:10px 0 0">Used by the <b>Policies</b> page to list the Drive folder’s contents as cards. Enable the <b>Google Drive API</b> in Google Cloud Console and share the folder as “Anyone with the link → Viewer”. Leave blank to fall back to the embedded Drive viewer.</p></div>';
   }
 
+  function linksPanel(key) {
+    const items = wd(key);
+    let h = '';
+    items.forEach(function (it) {
+      const label = (it.label && (it.label.es || it.label.en)) || it.campus;
+      h += '<div class="ad-group-block"><div class="ad-group-hd"><span class="ad-h2">' + escH(label) + '</span></div>' +
+        fld('URL', inp(it, 'url', '', 'https://…')) + '</div>';
+    });
+    return h;
+  }
   function panelHtml(key) {
     const kind = (TYPES.find(t => t.key === key) || {}).kind;
     if (kind === 'flat') return flatPanel(key);
@@ -366,6 +380,7 @@
     if (kind === 'pres') return presPanel(key);
     if (kind === 'docs') return docsPanel(key);
     if (kind === 'designs') return designsPanel(key);
+    if (kind === 'links') return linksPanel(key);
     if (kind === 'settings') return settingsPanel();
     return '';
   }

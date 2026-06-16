@@ -240,7 +240,7 @@ const EXTENSIONS = [
 
 const MENUS = [
   { campus: 'q', label: { en: 'Quilmes', es: 'Quilmes' }, name: { en: 'Dining hall menu', es: 'Menú del comedor' }, url: 'https://docs.google.com/spreadsheets/d/10BfywG4-lwHkB5BjkJ2YR9j5r5ueE4bZ/edit' },
-  { campus: 'n', label: { en: 'North', es: 'North' }, name: { en: 'Dining hall menu', es: 'Menú del comedor' }, url: 'https://docs.google.com/spreadsheets/d/1pxC8GWFwV32mH2001q_KAzaBJ_glajMe/edit' }
+  { campus: 'n', label: { en: 'North', es: 'North' }, name: { en: 'Dining hall menu', es: 'Menú del comedor' }, url: 'https://docs.google.com/spreadsheets/d/1trcq6dXPSGpjniJqxcAYSm77Ah4KA_HA/edit?gid=1863534870' }
 ];
 
 /* ─── RESOURCES ─── */
@@ -394,14 +394,15 @@ const SOCIAL = [
 /* ─── CMS overlay: defaults above, edits from Back Office applied here ─── */
 window.TGN_DEFAULTS = {
   news: NEWS, birthdays: BIRTHDAYS, vacancies: VACANCIES,
-  quicklinks: QUICK_LINKS, tools: TOOL_GROUPS, interviewforms: ADMISSIONS.groups
+  quicklinks: QUICK_LINKS, tools: TOOL_GROUPS, interviewforms: ADMISSIONS.groups,
+  menus: MENUS, extensions: EXTENSIONS
 };
 const _ov = function (k, def) { return (window.TGNStore ? TGNStore.get(k, def) : def); };
 window.TGN = {
   I18N: I18N,
   DEPTS: DEPTS,
-  EXTENSIONS: EXTENSIONS,
-  MENUS: MENUS,
+  EXTENSIONS: _ov('extensions', EXTENSIONS),
+  MENUS: _ov('menus', MENUS),
   PAGES: PAGES,
   SOCIAL: SOCIAL,
   config: {

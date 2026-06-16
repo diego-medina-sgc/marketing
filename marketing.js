@@ -448,7 +448,7 @@
   function buildCustomEmail() {
     const f = formState.custom;
     const subject = 'Otra Solicitud de Comunicación - ' + f.title;
-    const body = 'Estimado equipo de Marketing,\n\nSolicito una solicitud de comunicación.\n\nDebajo toda la info recopilada:\n--------------------------------------------------\n' +
+    const body = 'Estimado equipo de Marketing,\n\nSolicitud de soporte de marketing y comunicación.\n\nDebajo toda la info recopilada:\n--------------------------------------------------\n' +
       '• Título: ' + f.title + '\n• Descripción: ' + f.description + '\n• Fecha de entrega deseada: ' + f.deadline +
       '\n• ¿Contiene adjuntos?: ' + (f.hasAttachments ? 'Sí' : 'No') +
       '\n--------------------------------------------------\n\nSaludos,\n\n--\n' + user.name + '\n' + user.role + '\nCampus ' + user.campus;
