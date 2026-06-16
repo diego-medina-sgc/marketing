@@ -571,6 +571,8 @@
     if (!document.getElementById('ad-overlay')) { const d = document.createElement('div'); d.id = 'ad-overlay'; d.className = 'ad-overlay'; document.body.appendChild(d); }
     const btn = document.getElementById('btn-admin');
     if (btn) { btn.innerHTML = IC.cog; btn.addEventListener('click', open); }
+    const btnSb = document.getElementById('btn-admin-sb');
+    if (btnSb) { btnSb.innerHTML = IC.cog + '<span>Back office</span>'; btnSb.addEventListener('click', open); }
     if (location.hash === '#admin') open();
     window.addEventListener('hashchange', () => { if (location.hash === '#admin') open(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { const ov = document.getElementById('ad-overlay'); if (ov && ov.classList.contains('open')) close(); } });

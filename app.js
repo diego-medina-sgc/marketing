@@ -142,6 +142,12 @@
       '<p class="hero-sub">' + L(p.sub) + '</p>' +
       '</div></div>';
 
+    if (document.body.classList.contains('embedded')) {
+      h += '<div class="home-embed-search-row"><label class="hdr-search home-embed-search">' +
+        IC.search + '<input id="home-search-input" type="text" placeholder="' + T().search + '" aria-label="Search"/>' +
+        '</label></div>';
+    }
+
     h += '<div class="home-cols"><div class="home-main">';
 
     // newsfeed
@@ -457,6 +463,7 @@
     document.getElementById('net-sub').textContent = T().net_sub;
     document.getElementById('search-input').placeholder = T().search;
     document.getElementById('live-badge').textContent = T().live;
+    var hsi = document.getElementById('home-search-input'); if (hsi) hsi.placeholder = T().search;
     document.getElementById('sb-update').textContent = T().updated;
     document.getElementById('theme-name').textContent = T().theme;
     document.querySelectorAll('[data-lang]').forEach(function (b) {
@@ -529,6 +536,9 @@ function doSearch(q) {
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNews(); });
     const si = document.getElementById('search-input');
     si.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(si.value); });
+    document.getElementById('panel').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.id === 'home-search-input') doSearch(e.target.value);
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
