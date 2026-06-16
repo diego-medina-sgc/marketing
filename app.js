@@ -507,7 +507,9 @@ function doSearch(q) {
 
   /* ---------- INIT ---------- */
   function init() {
-    if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    let inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+    if (inIframe || new URLSearchParams(window.location.search).get('embed') === '1') {
       document.body.classList.add('embedded');
     }
     applyTheme();
