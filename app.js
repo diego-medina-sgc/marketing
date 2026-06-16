@@ -271,16 +271,21 @@
       '<div class="doc-info"><div class="doc-campus">' + driveTypeLabel(f.mimeType) + (when ? ' · ' + when : '') + '</div><div class="doc-name">' + esc(f.name) + '</div></div>' +
       '<span class="doc-arrow">' + IC.arrow + '</span></a>';
   }
-  function driveEmbedFallback(folderId, note) {
-    return '<div class="cc" style="grid-column:1/-1">' + (note ? '<div class="drive-note">' + note + '</div>' : '') +
-      '<div class="embed-frame"><iframe src="https://drive.google.com/embeddedfolderview?id=' + folderId + '#grid" height="420" title="Drive folder"></iframe></div></div>';
+  function driveFolderBtn(folderId) {
+    const url = 'https://drive.google.com/drive/folders/' + folderId;
+    return '<div style="grid-column:1/-1;padding:8px 0 4px">' +
+      '<a class="drive-open-card" href="' + url + '" target="_blank" rel="noopener">' +
+      '<span class="drive-open-ico">' + IC.folder + '</span>' +
+      '<span class="drive-open-txt"><span class="drive-open-lbl">' + (lang === 'es' ? 'Carpeta de documentos' : 'Documents folder') + '</span>' +
+      '<span class="drive-open-sub">Google Drive · ' + (lang === 'es' ? 'Abre en una nueva pestaña' : 'Opens in a new tab') + '</span></span>' +
+      '<span class="drive-open-arr">' + IC.ext + '</span></a></div>';
   }
   async function loadDriveCards() {
     const box = document.getElementById('drive-cards');
     if (!box) return;
     const folderId = box.getAttribute('data-folder');
     const key = driveKey();
-    if (!key) { box.innerHTML = driveEmbedFallback(folderId, ''); return; }
+    if (!key) { box.innerHTML = driveFolderBtn(folderId); return; }
     try {
       const url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent("'" + folderId + "' in parents and trashed=false") +
         '&key=' + key + '&fields=' + encodeURIComponent('files(id,name,mimeType,modifiedTime,webViewLink)') +
@@ -289,10 +294,10 @@
       if (!res.ok) throw new Error('http ' + res.status);
       const data = await res.json();
       const files = (data.files || []);
-      if (!files.length) { box.innerHTML = '<div class="drive-loading">' + (lang === 'es' ? 'La carpeta está vacía.' : 'The folder is empty.') + '</div>'; return; }
+      if (!files.length) { box.innerHTML = driveFolderBtn(folderId); return; }
       box.innerHTML = files.map(driveCard).join('');
     } catch (e) {
-      box.innerHTML = driveEmbedFallback(folderId, lang === 'es' ? 'No se pudo leer la carpeta con la API — mostrando el visor de Drive.' : 'Could not read the folder via the API — showing the Drive viewer.');
+      box.innerHTML = driveFolderBtn(folderId);
     }
   }
 
