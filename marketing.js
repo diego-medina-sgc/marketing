@@ -169,7 +169,7 @@
   /* ---------- i18n ---------- */
   const L = {
     en: { back: 'Back', menu_back: 'Back to menu', cont: 'Continue', name: 'Full name', role: 'Role or area', campus: 'Campus',
-      welcome: 'Welcome', wsub: 'Marketing & Communications Support', hi: 'Hi', q: 'How can Marketing help you?',
+      welcome: 'Welcome', wsub: 'Marketing & Communications Support', hi: 'Hello', q: 'How can Marketing help you?',
       brand_manual: 'Brand Manual', palette: 'Colour Palette', logos: 'SGC Logos', open: 'Open', use: 'Use template',
       ext_gallery: 'Open gallery', proc: 'Procedure', send_req: 'Send request', open_gmail: 'Open in Gmail', copy_body: 'Copy body to paste',
       ready: 'Request ready!', ready_sub: 'To finish, send the email we prepared for you.', copied: 'Copied!',
