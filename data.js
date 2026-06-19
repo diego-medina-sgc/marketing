@@ -18,7 +18,7 @@ const I18N = {
     open_folder: 'Open Drive folder',
     contact_us: 'Contact us',
     nav: {
-      home: 'Home', policies: 'Policies', resources: 'Resources',
+      home: 'Home', gmail: 'Gmail', policies: 'Policies', resources: 'Resources',
       admissions: 'Admissions', marketing: 'Marketing'
     }
   },
@@ -36,7 +36,7 @@ const I18N = {
     open_folder: 'Abrir carpeta de Drive',
     contact_us: 'Contacto',
     nav: {
-      home: 'Inicio', policies: 'Políticas', resources: 'Recursos',
+      home: 'Inicio', gmail: 'Gmail', policies: 'Políticas', resources: 'Recursos',
       admissions: 'Admisiones', marketing: 'Marketing'
     }
   }

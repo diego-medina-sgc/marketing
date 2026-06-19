@@ -12,6 +12,7 @@
   /* ---------- ICONS ---------- */
   const IC = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
     policies: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>',
     resources: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
     admissions: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5z"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5"/></svg>',
@@ -46,6 +47,7 @@
   /* ---------- NAV STRUCTURE ---------- */
   const NAV = [
     { id: 'home', icon: 'home' },
+    { id: 'gmail', icon: 'mail', url: 'https://mail.google.com/', external: true },
     { id: 'policies', icon: 'policies' },
     { id: 'resources', icon: 'resources' },
     { id: 'admissions', icon: 'admissions' },
@@ -58,6 +60,10 @@
     let h = '<div class="sb-lbl">' + T().nav_label + '</div>';
     NAV.forEach(function (item) {
       const active = current === item.id || (item.children && item.children.indexOf(current) > -1);
+      if (item.external) {
+        h += '<a class="nav-item" href="' + item.url + '" target="_blank" rel="noopener">' + IC[item.icon] + '<span>' + T().nav[item.id] + '</span></a>';
+        return;
+      }
       h += '<button class="nav-item' + (active ? ' active' : '') + (item.children ? (active ? ' open' : '') : '') + '" data-nav="' + item.id + '"' + (item.children ? ' data-group="1"' : '') + '>' +
         IC[item.icon] + '<span>' + T().nav[item.id] + '</span>' +
         (item.children ? '<span class="nav-caret">' + IC.chevron + '</span>' : '') +

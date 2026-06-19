@@ -185,7 +185,7 @@
   /* ---------- STATE ---------- */
   let root = null, lang = 'es';
   let user = JSON.parse(localStorage.getItem('tgn-mkt-user') || '{"name":"","campus":"","role":""}');
-  let step = user.name && user.campus && user.role ? 'menu' : 'id';
+  let step = 'menu';
   let history = [];
   const t = (k) => (L[lang] && L[lang][k]) || L.es[k] || k;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -528,6 +528,7 @@
     if (pendingMedia) { msg[pendingMedia.type] = { mime: pendingMedia.mime, data: pendingMedia.data, preview: pendingMedia.preview }; pendingMedia = null; renderPendingZone(); }
     chat.push(msg);
     chat._busy = true;
+    ta.value = ''; ta.style.height = 'auto';
     renderChatOnly(true);
     try {
       const msgs = chat.filter(function (m) { return !m.typing; }).map(function (m, idx, arr) {
@@ -767,7 +768,7 @@
   /* ---------- MOUNT ---------- */
   function mount(container, language) {
     root = container; lang = language || 'es';
-    if (!(user.name && user.campus && user.role) && step !== 'id') step = 'id';
+    step = 'menu';
     render();
   }
   window.MKT = { mount: mount };
