@@ -264,10 +264,8 @@
   };
 
   views.menu = function () {
-    const first = (user.name || '').split(' ')[0] || '';
-    let h = '<div class="mk-menu-head"><div><h2 class="mk-h2"><span class="mk-accent-n">¡</span><span class="mk-accent-r">' + t('hi') + ' ' + esc(first) + '</span><span class="mk-accent-n">!</span></h2>' +
-      '<p class="mk-sub">' + t('q') + '</p></div>' +
-      '<button class="mk-pill-campus" data-act="reset" title="' + (lang === 'es' ? 'Editar nombre, rol y sede' : 'Edit name, role & campus') + '">' + I.user + '<span class="mk-pill-txt">' + esc(user.name || '') + '<span class="mk-pill-campus-tag">' + I.pin + esc(user.campus) + '</span></span>' + I.edit + '</button></div>';
+    let h = '<div class="mk-menu-head"><div><h2 class="mk-h2"><span class="mk-accent-n">¡</span><span class="mk-accent-r">' + t('hi') + '</span><span class="mk-accent-n">!</span></h2>' +
+      '<p class="mk-sub">' + t('q') + '</p></div></div>';
     h += '<div class="mk-opt-grid">';
     MENU_OPTIONS.forEach(function (o) {
       h += '<button class="mk-opt" style="--c:' + o.c + '" data-go="' + o.id + '"><span class="mk-opt-ico">' + I[o.ico] + '</span>' +
